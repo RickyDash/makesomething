@@ -3,18 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, CardBody, Chip } from "@heroui/react";
 import { motion } from "framer-motion";
+import {
+  getRandomWeekendQuestions,
+  initialWeekendQuestions,
+  type Question,
+} from "./f1-question-bank";
 
 type Stage = "formation" | "race" | "pitstop" | "finish_intro" | "finished";
 type FormationMode = "briefing" | "drill";
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
-
-type Question = {
-  prompt: string;
-  options: string[];
-  answer: number;
-  fact: string;
-  event: string;
-};
 
 type TutorialStep = {
   prompt: string;
@@ -22,66 +19,6 @@ type TutorialStep = {
   answer: number;
   note: string;
 };
-
-const questions: Question[] = [
-  {
-    prompt: "what does drs stand for in formula 1?",
-    options: [
-      "drag reduction system",
-      "driver response strategy",
-      "downforce recovery setup",
-      "dynamic racing sequence",
-    ],
-    answer: 0,
-    fact: "drs opens a flap in the rear wing to reduce drag and boost straight-line speed.",
-    event: "lap briefing",
-  },
-  {
-    prompt: "what color flag signals immediate race stoppage?",
-    options: ["yellow", "blue", "red", "black"],
-    answer: 2,
-    fact: "a red flag stops the session and sends everyone back to pit lane.",
-    event: "track control",
-  },
-  {
-    prompt: "which f1 circuit is famous for monaco harbor views?",
-    options: ["spa", "silverstone", "interlagos", "monte carlo"],
-    answer: 3,
-    fact: "the monaco grand prix runs through the streets of monte carlo.",
-    event: "street circuit",
-  },
-  {
-    prompt: "in qualifying, who starts p1 on race day?",
-    options: ["fastest q3 driver", "last year champion", "fastest pit crew", "sprint winner"],
-    answer: 0,
-    fact: "pole goes to the fastest driver in the final qualifying session.",
-    event: "grid battle",
-  },
-  {
-    prompt: "what is an undercut in race strategy?",
-    options: [
-      "staying out on old tires",
-      "pitting earlier for tire advantage",
-      "overtaking outside track limits",
-      "switching to wet tires mid-lap",
-    ],
-    answer: 1,
-    fact: "an undercut means pitting earlier to gain time on fresher tires.",
-    event: "strategy call",
-  },
-  {
-    prompt: "what does the chequered flag mean?",
-    options: [
-      "safety car deployed",
-      "session suspended",
-      "race finished",
-      "mandatory pit stop",
-    ],
-    answer: 2,
-    fact: "the chequered flag marks the end of the race session.",
-    event: "final lap",
-  },
-];
 
 const tutorialSteps: TutorialStep[] = [
   {
@@ -151,6 +88,7 @@ const getStoredBestScore = () => {
 export default function Home() {
   const [stage, setStage] = useState<Stage>("formation");
   const [formationMode, setFormationMode] = useState<FormationMode>("briefing");
+  const [weekendQuestions, setWeekendQuestions] = useState<Question[]>(initialWeekendQuestions);
 
   const [currentLap, setCurrentLap] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -180,9 +118,9 @@ export default function Home() {
   const finishTimerRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const totalLaps = questions.length;
+  const totalLaps = weekendQuestions.length;
   const pitStopLap = Math.floor(totalLaps / 2);
-  const question = questions[currentLap];
+  const question = weekendQuestions[currentLap] ?? weekendQuestions[0] ?? initialWeekendQuestions[0];
   const answeredLaps = currentLap + (selected !== null ? 1 : 0);
 
   const tutorialCurrent = tutorialSteps[tutorialStep];
@@ -352,6 +290,12 @@ export default function Home() {
     setTutorialSelected(null);
   };
 
+  const skipFormationLab = () => {
+    playArrowButtonSound();
+    setFormationMode("drill");
+    setTutorialSelected(null);
+  };
+
   const startReactionSequence = (withActivationBeep = true) => {
     if (stage !== "formation" || formationMode !== "drill") return;
 
@@ -375,7 +319,7 @@ export default function Home() {
     const goTimer = window.setTimeout(() => {
       setReactionLights(0);
       setReactionPhase("go");
-      goTimeRef.current = performance.now();
+      goTimeRef.current = getNowMs();
       playBeep(520, 180);
     }, lightsOutDelay);
     timersRef.current.push(goTimer);
@@ -526,6 +470,7 @@ export default function Home() {
 
     setStage("formation");
     setFormationMode("briefing");
+    setWeekendQuestions(getRandomWeekendQuestions());
 
     setCurrentLap(0);
     setSelected(null);
@@ -794,13 +739,22 @@ export default function Home() {
                       )}
                     </div>
 
-                    {tutorialSelected !== null && (
-                      <Button color="danger" onPress={goToNextBriefing} className="w-fit font-semibold">
-                        {tutorialStep === tutorialSteps.length - 1
-                          ? "line up on the grid ->"
-                          : "next briefing ->"}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {tutorialSelected !== null && (
+                        <Button color="danger" onPress={goToNextBriefing} className="w-fit font-semibold">
+                          {tutorialStep === tutorialSteps.length - 1
+                            ? "line up on the grid ->"
+                            : "next briefing ->"}
+                        </Button>
+                      )}
+                      <Button
+                        variant="flat"
+                        onPress={skipFormationLab}
+                        className="w-fit bg-zinc-800 text-zinc-100"
+                      >
+                        skip formation lap -&gt;
                       </Button>
-                    )}
+                    </div>
                   </div>
                 )}
 
