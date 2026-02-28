@@ -1227,7 +1227,7 @@ export default function Home() {
                 </div>
 
                 <div className="relative mx-2 mt-2 h-4 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-400 sm:hidden">
-                  <p className="absolute -left-1 whitespace-nowrap">formation</p>
+                  <p className="absolute -left-2 whitespace-nowrap">formation</p>
                   <p
                     style={{ left: `${grandPrixMarkerPos}%` }}
                     className="absolute -translate-x-1/2 whitespace-nowrap"
@@ -1240,7 +1240,7 @@ export default function Home() {
                   >
                     pit
                   </p>
-                  <p className="absolute -right-1 whitespace-nowrap">flag</p>
+                  <p className="absolute -right-2 whitespace-nowrap">flag</p>
                 </div>
               </div>
 
