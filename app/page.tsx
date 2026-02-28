@@ -58,7 +58,7 @@ const tireLabels = ["front left", "front right", "rear left", "rear right"] as c
 const pitOrder = [0, 1, 2, 3] as const;
 
 const DESKTOP_GRAND_PRIX_MARKER_POS = 24;
-const MOBILE_GRAND_PRIX_MARKER_POS = 28;
+const MOBILE_GRAND_PRIX_MARKER_POS = 30;
 const finishMarkerPos = 100;
 const DESKTOP_PIT_BANDS: PitBands = { greenUpper: 1800, yellowUpper: 2400 };
 const MOBILE_PIT_BANDS: PitBands = { greenUpper: 750, yellowUpper: 1000 };
@@ -186,7 +186,6 @@ export default function Home() {
   const [pitTimeMs, setPitTimeMs] = useState<number | null>(null);
   const [pitStopSkipped, setPitStopSkipped] = useState(false);
   const [isMobileTrack, setIsMobileTrack] = useState(false);
-  const [isMobileTabletTrackNudge, setIsMobileTabletTrackNudge] = useState(false);
   const [isTouchLikeDevice, setIsTouchLikeDevice] = useState(false);
 
   const [bestReactionMs, setBestReactionMs] = useState<number | null>(getStoredBestReaction);
@@ -235,8 +234,8 @@ export default function Home() {
   );
   const tutorialEdgeInset = isMobileTrack ? MOBILE_TUTORIAL_EDGE_INSET : 0;
   const raceEdgeInset = isMobileTrack ? MOBILE_RACE_EDGE_INSET : 0;
-  const tutorialMarkerNudge = isMobileTabletTrackNudge ? TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET : 0;
-  const postPitMarkerNudge = isMobileTabletTrackNudge ? -POST_PIT_NUDGE_LEFT_MOBILE_TABLET : 0;
+  const tutorialMarkerNudge = isMobileTrack ? TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET : 0;
+  const postPitMarkerNudge = isMobileTrack ? -POST_PIT_NUDGE_LEFT_MOBILE_TABLET : 0;
 
   const finishLabel = useMemo(() => {
     if (score === 0) return "DNF — did not finish";
@@ -406,30 +405,6 @@ export default function Home() {
     mobileTrackQuery.addListener(updateIsMobileTrack);
     return () => {
       mobileTrackQuery.removeListener(updateIsMobileTrack);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-
-    const mobileTabletNudgeQuery = window.matchMedia("(max-width: 1024px)");
-
-    const updateIsMobileTabletTrackNudge = () => {
-      setIsMobileTabletTrackNudge(mobileTabletNudgeQuery.matches);
-    };
-
-    updateIsMobileTabletTrackNudge();
-
-    if (typeof mobileTabletNudgeQuery.addEventListener === "function") {
-      mobileTabletNudgeQuery.addEventListener("change", updateIsMobileTabletTrackNudge);
-      return () => {
-        mobileTabletNudgeQuery.removeEventListener("change", updateIsMobileTabletTrackNudge);
-      };
-    }
-
-    mobileTabletNudgeQuery.addListener(updateIsMobileTabletTrackNudge);
-    return () => {
-      mobileTabletNudgeQuery.removeListener(updateIsMobileTabletTrackNudge);
     };
   }, []);
 
