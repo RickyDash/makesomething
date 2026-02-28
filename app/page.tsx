@@ -1097,7 +1097,7 @@ export default function Home() {
                       onClick={() => jumpToTrackCard({ kind: "formation_drill" })}
                       style={{ left: `${grandPrixMarkerPos}%` }}
                       className={`absolute h-5 w-5 -translate-x-1/2 rounded-full border-2 ${
-                        grandPrixActive ? "border-red-200 bg-red-500" : "border-zinc-500 bg-zinc-900"
+                        grandPrixActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
@@ -1107,7 +1107,7 @@ export default function Home() {
                       onClick={() => jumpToTrackCard({ kind: "pitstop" })}
                       style={{ left: `${pitStopMarkerPos}%` }}
                       className={`absolute h-5 w-5 -translate-x-1/2 rounded-full border-2 ${
-                        pitStopActive ? "border-amber-200 bg-amber-400" : "border-zinc-500 bg-zinc-900"
+                        pitStopActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
@@ -1116,7 +1116,7 @@ export default function Home() {
                       aria-label="Go to final race report"
                       onClick={() => jumpToTrackCard({ kind: "finish" })}
                       className={`h-5 w-5 rotate-45 border-2 ${
-                        chequeredActive ? "border-zinc-200 bg-zinc-100" : "border-zinc-500 bg-zinc-900"
+                        chequeredActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
                   </div>
