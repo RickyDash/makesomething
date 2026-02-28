@@ -66,6 +66,7 @@ const MOBILE_TUTORIAL_EDGE_INSET = 2;
 const MOBILE_RACE_EDGE_INSET = 1.5;
 const TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET = 2.0;
 const POST_PIT_NUDGE_LEFT_MOBILE_TABLET = 1.8;
+const MOBILE_PIT_STOP_LEFT_SHIFT = 1.0;
 
 const getReactionValueClass = (ms: number) =>
   ms < 250 ? "text-emerald-300" : ms < 300 ? "text-amber-300" : "text-red-300";
@@ -270,10 +271,15 @@ export default function Home() {
     });
   }, [finishTier]);
 
-  const pitStopMarkerPos = useMemo(
-    () => grandPrixMarkerPos + raceTrackWidth * (pitStopLap / totalLaps),
-    [grandPrixMarkerPos, pitStopLap, raceTrackWidth, totalLaps],
-  );
+  const pitStopMarkerPos = useMemo(() => {
+    const basePosition = grandPrixMarkerPos + raceTrackWidth * (pitStopLap / totalLaps);
+    if (!isMobileTrack) return basePosition;
+    return clampToSegment(
+      basePosition - MOBILE_PIT_STOP_LEFT_SHIFT,
+      grandPrixMarkerPos,
+      finishMarkerPos,
+    );
+  }, [grandPrixMarkerPos, isMobileTrack, pitStopLap, raceTrackWidth, totalLaps]);
 
   const formationAnchor = 0;
   const grandPrixAnchor = grandPrixMarkerPos;
