@@ -1172,7 +1172,7 @@ export default function Home() {
                       aria-label="Go to formation intro"
                       onClick={() => jumpToTrackCard({ kind: "formation_intro" })}
                       style={{ left: "0%" }}
-                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
+                      className={`absolute top-0 h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         formationActive
                           ? "border-zinc-400 bg-zinc-100"
                           : "border-zinc-500 bg-zinc-900"
@@ -1184,7 +1184,7 @@ export default function Home() {
                       aria-label="Go to starting-lights sequence"
                       onClick={() => jumpToTrackCard({ kind: "formation_drill" })}
                       style={{ left: `${grandPrixMarkerPos}%` }}
-                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
+                      className={`absolute top-0 h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
                         grandPrixActive && grandPrixBand
                           ? getBandMarkerClass(grandPrixBand)
                           : "border-zinc-500 bg-zinc-900"
@@ -1196,7 +1196,7 @@ export default function Home() {
                       aria-label="Go to pit stop"
                       onClick={() => jumpToTrackCard({ kind: "pitstop" })}
                       style={{ left: `${pitStopMarkerPos}%` }}
-                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
+                      className={`absolute top-0 h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
                         pitStopActive && pitStopBand
                           ? getBandMarkerClass(pitStopBand)
                           : "border-zinc-500 bg-zinc-900"
@@ -1208,7 +1208,7 @@ export default function Home() {
                       aria-label="Go to final race report"
                       onClick={() => jumpToTrackCard({ kind: "finish" })}
                       style={{ left: "100%" }}
-                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
+                      className={`absolute top-0 h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         chequeredActive ? "border-zinc-400 bg-zinc-100" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
