@@ -1571,7 +1571,7 @@ export default function Home() {
                       <motion.div
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-xl border border-zinc-600 bg-zinc-900/75 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100"
+                        className="-my-0.5 rounded-xl border border-zinc-600 bg-zinc-900/75 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100"
                       >
                         <p>
                           <span
@@ -1583,7 +1583,7 @@ export default function Home() {
                         </p>
                       </motion.div>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-zinc-600 bg-zinc-900/55 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-400">
+                      <div className="-my-0.5 rounded-xl border border-dashed border-zinc-600 bg-zinc-900/55 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-400">
                         race note: lock an answer and this note panel will update for the lap.
                       </div>
                     )}
