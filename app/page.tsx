@@ -1106,7 +1106,7 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-3 pb-0.5 pt-3.5 sm:px-4">
+              <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 pb-0.5 pt-3.5">
                 <div className="relative h-2 rounded-full bg-zinc-700">
                   <motion.div
                     className="absolute left-0 top-0 h-2 rounded-full bg-zinc-100"
