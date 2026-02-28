@@ -1166,12 +1166,13 @@ export default function Home() {
                     })}
                   </div>
 
-                  <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between">
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
                     <button
                       type="button"
                       aria-label="Go to formation intro"
                       onClick={() => jumpToTrackCard({ kind: "formation_intro" })}
-                      className={`h-4.5 w-4.5 rotate-45 border-2 sm:h-5 sm:w-5 ${
+                      style={{ left: "0%" }}
+                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         formationActive
                           ? "border-zinc-400 bg-zinc-100"
                           : "border-zinc-500 bg-zinc-900"
@@ -1206,7 +1207,8 @@ export default function Home() {
                       type="button"
                       aria-label="Go to final race report"
                       onClick={() => jumpToTrackCard({ kind: "finish" })}
-                      className={`h-4.5 w-4.5 rotate-45 border-2 sm:h-5 sm:w-5 ${
+                      style={{ left: "100%" }}
+                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         chequeredActive ? "border-zinc-400 bg-zinc-100" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
