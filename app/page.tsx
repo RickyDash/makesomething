@@ -77,6 +77,18 @@ const getPitBand = (ms: number, bands: PitBands): "green" | "yellow" | "red" => 
   return "red";
 };
 
+const getReactionBand = (ms: number): "green" | "yellow" | "red" => {
+  if (ms < 250) return "green";
+  if (ms < 300) return "yellow";
+  return "red";
+};
+
+const getBandMarkerClass = (band: "green" | "yellow" | "red") => {
+  if (band === "green") return "border-zinc-400 bg-emerald-400";
+  if (band === "yellow") return "border-zinc-400 bg-amber-400";
+  return "border-zinc-400 bg-red-500";
+};
+
 const getPitValueClass = (ms: number, bands: PitBands) => {
   const band = getPitBand(ms, bands);
   if (band === "green") return "text-emerald-300";
@@ -136,12 +148,12 @@ const getSegmentCheckpoints = (
 };
 
 const raceMiniBorderColors = [
-  "border-red-200",
-  "border-orange-200",
-  "border-amber-200",
-  "border-yellow-200",
-  "border-stone-200",
-  "border-zinc-200",
+  "border-zinc-400",
+  "border-zinc-400",
+  "border-zinc-400",
+  "border-zinc-400",
+  "border-zinc-400",
+  "border-zinc-400",
 ] as const;
 
 const getNowMs = () => performance.now();
@@ -389,6 +401,8 @@ export default function Home() {
   const grandPrixActive = reactionMs !== null;
   const pitStopActive = pitStopDone && !pitStopSkipped;
   const chequeredActive = stage === "finish_intro" || stage === "finished";
+  const grandPrixBand = reactionMs === null ? null : getReactionBand(reactionMs);
+  const pitStopBand = pitTimeMs === null ? null : getPitBand(pitTimeMs, activePitBands);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
@@ -1095,8 +1109,7 @@ export default function Home() {
               <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-3 py-3 sm:px-4">
                 <div className="relative h-2 rounded-full bg-zinc-700">
                   <motion.div
-                    className="absolute left-0 top-0 h-2 rounded-full"
-                    style={{ backgroundColor: "#5c9cad" }}
+                    className="absolute left-0 top-0 h-2 rounded-full bg-zinc-100"
                     animate={{ width: `${formationFillWidth}%` }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
                   />
@@ -1112,7 +1125,7 @@ export default function Home() {
                     {tutorialCheckpoints.map((leftPercent, stepIndex) => {
                       const tutorialState = tutorialMarkerStates[stepIndex] ?? "unanswered";
                       const tutorialRingClass =
-                        tutorialState === "unanswered" ? "border-zinc-500" : "border-[#8dc1cc]";
+                        tutorialState === "unanswered" ? "border-zinc-500" : "border-zinc-400";
 
                       return (
                         <button
@@ -1160,7 +1173,7 @@ export default function Home() {
                       onClick={() => jumpToTrackCard({ kind: "formation_intro" })}
                       className={`h-4.5 w-4.5 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         formationActive
-                          ? "border-[#8dc1cc] bg-[#5c9cad]"
+                          ? "border-zinc-400 bg-zinc-100"
                           : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
@@ -1171,7 +1184,9 @@ export default function Home() {
                       onClick={() => jumpToTrackCard({ kind: "formation_drill" })}
                       style={{ left: `${grandPrixMarkerPos}%` }}
                       className={`absolute h-4.5 w-4.5 -translate-x-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
-                        grandPrixActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
+                        grandPrixActive && grandPrixBand
+                          ? getBandMarkerClass(grandPrixBand)
+                          : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
@@ -1181,7 +1196,9 @@ export default function Home() {
                       onClick={() => jumpToTrackCard({ kind: "pitstop" })}
                       style={{ left: `${pitStopMarkerPos}%` }}
                       className={`absolute h-4.5 w-4.5 -translate-x-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
-                        pitStopActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
+                        pitStopActive && pitStopBand
+                          ? getBandMarkerClass(pitStopBand)
+                          : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
@@ -1190,7 +1207,7 @@ export default function Home() {
                       aria-label="Go to final race report"
                       onClick={() => jumpToTrackCard({ kind: "finish" })}
                       className={`h-4.5 w-4.5 rotate-45 border-2 sm:h-5 sm:w-5 ${
-                        chequeredActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
+                        chequeredActive ? "border-zinc-400 bg-zinc-100" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
                   </div>
