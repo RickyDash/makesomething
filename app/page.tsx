@@ -64,7 +64,7 @@ const DESKTOP_PIT_BANDS: PitBands = { greenUpper: 1800, yellowUpper: 2400 };
 const MOBILE_PIT_BANDS: PitBands = { greenUpper: 750, yellowUpper: 1000 };
 const MOBILE_TUTORIAL_EDGE_INSET = 2;
 const MOBILE_RACE_EDGE_INSET = 1.5;
-const TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET = 1.2;
+const TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET = 2.4;
 const POST_PIT_NUDGE_LEFT_MOBILE_TABLET = 1.8;
 
 const getReactionValueClass = (ms: number) =>
