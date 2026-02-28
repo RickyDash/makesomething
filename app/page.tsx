@@ -84,9 +84,9 @@ const getReactionBand = (ms: number): "green" | "yellow" | "red" => {
 };
 
 const getBandMarkerClass = (band: "green" | "yellow" | "red") => {
-  if (band === "green") return "border-zinc-400 bg-emerald-400";
-  if (band === "yellow") return "border-zinc-400 bg-amber-400";
-  return "border-zinc-400 bg-red-500";
+  if (band === "green") return "border-zinc-300 bg-emerald-400";
+  if (band === "yellow") return "border-zinc-300 bg-amber-400";
+  return "border-zinc-300 bg-red-500";
 };
 
 const getPitValueClass = (ms: number, bands: PitBands) => {
@@ -148,12 +148,12 @@ const getSegmentCheckpoints = (
 };
 
 const raceMiniBorderColors = [
-  "border-zinc-400",
-  "border-zinc-400",
-  "border-zinc-400",
-  "border-zinc-400",
-  "border-zinc-400",
-  "border-zinc-400",
+  "border-zinc-300",
+  "border-zinc-300",
+  "border-zinc-300",
+  "border-zinc-300",
+  "border-zinc-300",
+  "border-zinc-300",
 ] as const;
 
 const getNowMs = () => performance.now();
@@ -993,7 +993,7 @@ export default function Home() {
 
   const nextRaceButtonLabel =
     currentLap === totalLaps - 1
-      ? "take the chequered flag ->"
+      ? "chequered flag ->"
       : currentLap === pitStopLap - 1
         ? "box, box! ->"
         : "next lap ->";
@@ -1125,7 +1125,7 @@ export default function Home() {
                     {tutorialCheckpoints.map((leftPercent, stepIndex) => {
                       const tutorialState = tutorialMarkerStates[stepIndex] ?? "unanswered";
                       const tutorialRingClass =
-                        tutorialState === "unanswered" ? "border-zinc-500" : "border-zinc-400";
+                        tutorialState === "unanswered" ? "border-zinc-500" : "border-zinc-300";
 
                       return (
                         <button
@@ -1134,10 +1134,10 @@ export default function Home() {
                           aria-label={`Go to tutorial step ${stepIndex + 1}`}
                           onClick={() => jumpToTrackCard({ kind: "tutorial", stepIndex })}
                           style={{ left: `${leftPercent}%` }}
-                          className={`absolute top-0 z-[1] h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 sm:h-4 sm:w-4 ${tutorialRingClass}`}
+                          className={`absolute top-0 z-[1] h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[1.5px] bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 sm:h-3 sm:w-3 ${tutorialRingClass}`}
                         >
                           <span
-                            className={`pointer-events-none absolute inset-[1px] rounded-full ${getMarkerInnerClass(tutorialState)}`}
+                            className={`pointer-events-none absolute inset-[1px] ${getMarkerInnerClass(tutorialState)}`}
                           />
                         </button>
                       );
