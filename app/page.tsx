@@ -1047,7 +1047,7 @@ export default function Home() {
                           aria-label={`Go to tutorial step ${stepIndex + 1}`}
                           onClick={() => jumpToTrackCard({ kind: "tutorial", stepIndex })}
                           style={{ left: `${leftPercent}%` }}
-                          className={`absolute top-0 z-[1] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 ${tutorialRingClass}`}
+                          className={`absolute top-0 z-[1] h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 sm:h-4 sm:w-4 ${tutorialRingClass}`}
                         >
                           <span
                             className={`pointer-events-none absolute inset-[1px] rounded-full ${getMarkerInnerClass(tutorialState)}`}
@@ -1069,7 +1069,7 @@ export default function Home() {
                           aria-label={`Go to lap ${lapIndex + 1}`}
                           onClick={() => jumpToTrackCard({ kind: "lap", lapIndex })}
                           style={{ left: `${leftPercent}%` }}
-                          className={`absolute top-0 z-[1] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 ${raceRingClass}`}
+                          className={`absolute top-0 z-[1] h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 sm:h-4 sm:w-4 ${raceRingClass}`}
                         >
                           <span
                             className={`pointer-events-none absolute inset-[1px] rounded-full ${getMarkerInnerClass(raceState)}`}
@@ -1084,7 +1084,7 @@ export default function Home() {
                       type="button"
                       aria-label="Go to formation intro"
                       onClick={() => jumpToTrackCard({ kind: "formation_intro" })}
-                      className={`h-5 w-5 rotate-45 border-2 ${
+                      className={`h-4.5 w-4.5 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         formationActive
                           ? "border-[#8dc1cc] bg-[#5c9cad]"
                           : "border-zinc-500 bg-zinc-900"
@@ -1096,7 +1096,7 @@ export default function Home() {
                       aria-label="Go to starting-lights sequence"
                       onClick={() => jumpToTrackCard({ kind: "formation_drill" })}
                       style={{ left: `${grandPrixMarkerPos}%` }}
-                      className={`absolute h-5 w-5 -translate-x-1/2 rounded-full border-2 ${
+                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
                         grandPrixActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
@@ -1106,7 +1106,7 @@ export default function Home() {
                       aria-label="Go to pit stop"
                       onClick={() => jumpToTrackCard({ kind: "pitstop" })}
                       style={{ left: `${pitStopMarkerPos}%` }}
-                      className={`absolute h-5 w-5 -translate-x-1/2 rounded-full border-2 ${
+                      className={`absolute h-4.5 w-4.5 -translate-x-1/2 rounded-full border-2 sm:h-5 sm:w-5 ${
                         pitStopActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
@@ -1115,7 +1115,7 @@ export default function Home() {
                       type="button"
                       aria-label="Go to final race report"
                       onClick={() => jumpToTrackCard({ kind: "finish" })}
-                      className={`h-5 w-5 rotate-45 border-2 ${
+                      className={`h-4.5 w-4.5 rotate-45 border-2 sm:h-5 sm:w-5 ${
                         chequeredActive ? "border-emerald-200 bg-emerald-400" : "border-zinc-500 bg-zinc-900"
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
@@ -1133,11 +1133,21 @@ export default function Home() {
                   <p className="absolute right-0">chequered flag</p>
                 </div>
 
-                <div className="mt-3 grid grid-cols-4 gap-1 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 sm:hidden">
-                  <p>formation</p>
-                  <p>grand prix</p>
-                  <p>pit stop</p>
-                  <p>flag</p>
+                <div className="relative mt-2 h-4 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-400 sm:hidden">
+                  <p className="absolute left-0 whitespace-nowrap">formation</p>
+                  <p
+                    style={{ left: `${grandPrixMarkerPos}%` }}
+                    className="absolute -translate-x-1/2 whitespace-nowrap"
+                  >
+                    gp
+                  </p>
+                  <p
+                    style={{ left: `${pitStopMarkerPos}%` }}
+                    className="absolute -translate-x-1/2 whitespace-nowrap"
+                  >
+                    pit
+                  </p>
+                  <p className="absolute right-0 whitespace-nowrap">flag</p>
                 </div>
               </div>
 
