@@ -1107,7 +1107,7 @@ export default function Home() {
               </div>
 
               <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 pb-0.5 pt-3.5">
-                <div className="relative h-2 rounded-full bg-zinc-700">
+                <div className="relative mx-2 h-2 rounded-full bg-zinc-700">
                   <motion.div
                     className="absolute left-0 top-0 h-2 rounded-full bg-zinc-100"
                     animate={{ width: `${formationFillWidth}%` }}
@@ -1215,7 +1215,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="relative mt-3 hidden h-4 font-mono text-[10px] uppercase tracking-widest text-zinc-400 sm:block">
+                <div className="relative mx-2 mt-3 hidden h-4 font-mono text-[10px] uppercase tracking-widest text-zinc-400 sm:block">
                   <p className="absolute left-0">formation lap</p>
                   <p style={{ left: `${grandPrixMarkerPos}%` }} className="absolute -translate-x-1/2">
                     grand prix
@@ -1226,7 +1226,7 @@ export default function Home() {
                   <p className="absolute right-0">chequered flag</p>
                 </div>
 
-                <div className="relative mt-2 h-4 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-400 sm:hidden">
+                <div className="relative mx-2 mt-2 h-4 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-400 sm:hidden">
                   <p className="absolute left-0 whitespace-nowrap">formation</p>
                   <p
                     style={{ left: `${grandPrixMarkerPos}%` }}
