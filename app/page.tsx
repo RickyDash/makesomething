@@ -58,7 +58,7 @@ const tireLabels = ["front left", "front right", "rear left", "rear right"] as c
 const pitOrder = [0, 1, 2, 3] as const;
 
 const DESKTOP_GRAND_PRIX_MARKER_POS = 24;
-const MOBILE_GRAND_PRIX_MARKER_POS = 32;
+const MOBILE_GRAND_PRIX_MARKER_POS = 33;
 const finishMarkerPos = 100;
 const DESKTOP_PIT_BANDS: PitBands = { greenUpper: 1800, yellowUpper: 2400 };
 const MOBILE_PIT_BANDS: PitBands = { greenUpper: 750, yellowUpper: 1000 };
