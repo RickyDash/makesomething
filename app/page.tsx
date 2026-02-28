@@ -1515,7 +1515,7 @@ export default function Home() {
                     key={currentLap}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex h-full flex-col gap-3.5"
+                    className="flex h-full flex-col gap-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Chip variant="flat" color="danger" className="capitalize bg-red-400/25 text-red-100">
