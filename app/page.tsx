@@ -57,10 +57,13 @@ const tutorialSteps: TutorialStep[] = [
 const tireLabels = ["front left", "front right", "rear left", "rear right"] as const;
 const pitOrder = [0, 1, 2, 3] as const;
 
-const grandPrixMarkerPos = 24;
+const DESKTOP_GRAND_PRIX_MARKER_POS = 24;
+const MOBILE_GRAND_PRIX_MARKER_POS = 28;
 const finishMarkerPos = 100;
 const DESKTOP_PIT_BANDS: PitBands = { greenUpper: 1800, yellowUpper: 2400 };
 const MOBILE_PIT_BANDS: PitBands = { greenUpper: 750, yellowUpper: 1000 };
+const MOBILE_TUTORIAL_EDGE_INSET = 2;
+const MOBILE_RACE_EDGE_INSET = 1.5;
 
 const getReactionValueClass = (ms: number) =>
   ms < 250 ? "text-emerald-300" : ms < 300 ? "text-amber-300" : "text-red-300";
@@ -103,6 +106,25 @@ const getMarkerInnerClass = (state: MarkerState) =>
   state === "correct" ? "bg-emerald-400" : state === "incorrect" ? "bg-red-500" : "bg-zinc-900";
 
 const clampPercent = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+const getSegmentCheckpoints = (
+  start: number,
+  end: number,
+  count: number,
+  edgeInsetPercent: number,
+) => {
+  if (count <= 0) return [];
+
+  const segmentWidth = Math.max(end - start, 0);
+  const maxInset = Math.max(segmentWidth / 2 - 0.01, 0);
+  const safeInset = Math.min(Math.max(edgeInsetPercent, 0), maxInset);
+  const innerStart = start + safeInset;
+  const innerEnd = end - safeInset;
+
+  return Array.from({ length: count }, (_, index) => {
+    return innerStart + ((innerEnd - innerStart) * (index + 1)) / (count + 1);
+  });
+};
 
 const raceMiniBorderColors = [
   "border-red-200",
@@ -155,6 +177,7 @@ export default function Home() {
   const [pitMessage, setPitMessage] = useState("pit window open. hit begin when you're ready.");
   const [pitTimeMs, setPitTimeMs] = useState<number | null>(null);
   const [pitStopSkipped, setPitStopSkipped] = useState(false);
+  const [isMobileTrack, setIsMobileTrack] = useState(false);
   const [isTouchLikeDevice, setIsTouchLikeDevice] = useState(false);
 
   const [bestReactionMs, setBestReactionMs] = useState<number | null>(getStoredBestReaction);
@@ -169,6 +192,9 @@ export default function Home() {
 
   const totalLaps = weekendQuestions.length;
   const pitStopLap = Math.floor(totalLaps / 2);
+  const grandPrixMarkerPos = isMobileTrack
+    ? MOBILE_GRAND_PRIX_MARKER_POS
+    : DESKTOP_GRAND_PRIX_MARKER_POS;
   const raceTrackWidth = finishMarkerPos - grandPrixMarkerPos;
   const question = weekendQuestions[currentLap] ?? weekendQuestions[0] ?? initialWeekendQuestions[0];
   const selectedForCurrentLap = lapAnswers[currentLap] ?? null;
@@ -198,6 +224,8 @@ export default function Home() {
     () => (isTouchLikeDevice ? MOBILE_PIT_BANDS : DESKTOP_PIT_BANDS),
     [isTouchLikeDevice],
   );
+  const tutorialEdgeInset = isMobileTrack ? MOBILE_TUTORIAL_EDGE_INSET : 0;
+  const raceEdgeInset = isMobileTrack ? MOBILE_RACE_EDGE_INSET : 0;
 
   const finishLabel = useMemo(() => {
     if (score === 0) return "DNF — did not finish";
@@ -234,7 +262,7 @@ export default function Home() {
 
   const pitStopMarkerPos = useMemo(
     () => grandPrixMarkerPos + raceTrackWidth * (pitStopLap / totalLaps),
-    [pitStopLap, raceTrackWidth, totalLaps],
+    [grandPrixMarkerPos, pitStopLap, raceTrackWidth, totalLaps],
   );
 
   const formationAnchor = 0;
@@ -263,32 +291,20 @@ export default function Home() {
   );
 
   const tutorialCheckpoints = useMemo(
-    () =>
-      tutorialSteps.map((_, stepIndex) => {
-        const markerCount = tutorialSteps.length;
-        return (
-          formationAnchor + ((grandPrixAnchor - formationAnchor) * (stepIndex + 1)) / (markerCount + 1)
-        );
-      }),
-    [formationAnchor, grandPrixAnchor],
+    () => getSegmentCheckpoints(formationAnchor, grandPrixAnchor, tutorialSteps.length, tutorialEdgeInset),
+    [formationAnchor, grandPrixAnchor, tutorialEdgeInset],
   );
 
   const prePitCheckpoints = useMemo(
-    () =>
-      Array.from({ length: pitStopLap }, (_, lapIndex) => {
-        return grandPrixAnchor + ((pitAnchor - grandPrixAnchor) * (lapIndex + 1)) / (pitStopLap + 1);
-      }),
-    [grandPrixAnchor, pitAnchor, pitStopLap],
+    () => getSegmentCheckpoints(grandPrixAnchor, pitAnchor, pitStopLap, raceEdgeInset),
+    [grandPrixAnchor, pitAnchor, pitStopLap, raceEdgeInset],
   );
 
   const postPitLapCount = Math.max(totalLaps - pitStopLap, 0);
 
   const postPitCheckpoints = useMemo(
-    () =>
-      Array.from({ length: postPitLapCount }, (_, lapIndex) => {
-        return pitAnchor + ((finishAnchor - pitAnchor) * (lapIndex + 1)) / (postPitLapCount + 1);
-      }),
-    [finishAnchor, pitAnchor, postPitLapCount],
+    () => getSegmentCheckpoints(pitAnchor, finishAnchor, postPitLapCount, raceEdgeInset),
+    [finishAnchor, pitAnchor, postPitLapCount, raceEdgeInset],
   );
 
   const raceCheckpoints = useMemo(
@@ -339,6 +355,30 @@ export default function Home() {
   const grandPrixActive = reactionMs !== null;
   const pitStopActive = pitStopDone && !pitStopSkipped;
   const chequeredActive = stage === "finish_intro" || stage === "finished";
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const mobileTrackQuery = window.matchMedia("(max-width: 639px)");
+
+    const updateIsMobileTrack = () => {
+      setIsMobileTrack(mobileTrackQuery.matches);
+    };
+
+    updateIsMobileTrack();
+
+    if (typeof mobileTrackQuery.addEventListener === "function") {
+      mobileTrackQuery.addEventListener("change", updateIsMobileTrack);
+      return () => {
+        mobileTrackQuery.removeEventListener("change", updateIsMobileTrack);
+      };
+    }
+
+    mobileTrackQuery.addListener(updateIsMobileTrack);
+    return () => {
+      mobileTrackQuery.removeListener(updateIsMobileTrack);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
