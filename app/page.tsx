@@ -1014,7 +1014,7 @@ export default function Home() {
 
         <Card className="min-h-0 flex-1 border border-zinc-900/10 bg-zinc-950 text-white">
           <CardBody className="h-full min-h-0 p-4 sm:p-5">
-            <div className="flex h-full min-h-0 flex-col gap-3">
+            <div className="flex h-full min-h-0 flex-col gap-1.5 sm:gap-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-mono text-[11px] uppercase tracking-widest text-zinc-300">{stageTitle}</p>
                 {stage === "formation" && formationMode === "intro" && (
@@ -1106,7 +1106,7 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-3 py-3 sm:px-4">
+              <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-3 pb-0.5 pt-3.5 sm:px-4">
                 <div className="relative h-2 rounded-full bg-zinc-700">
                   <motion.div
                     className="absolute left-0 top-0 h-2 rounded-full bg-zinc-100"
@@ -1524,7 +1524,7 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-[1.325rem] font-semibold leading-tight text-white">
+                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-lg font-semibold leading-tight text-white sm:text-[1.325rem]">
                       {question.prompt}
                     </h2>
 
