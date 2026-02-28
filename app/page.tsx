@@ -1007,7 +1007,7 @@ export default function Home() {
           transition={{ duration: 0.35 }}
           className="flex"
         >
-          <h1 className="w-fit rounded-full bg-red-600/95 px-4 py-1.5 font-[family-name:var(--font-space-grotesk)] text-lg font-bold tracking-tight text-white sm:text-xl">
+          <h1 className="w-fit rounded-full bg-red-600/95 px-3.5 py-1 font-[family-name:var(--font-space-grotesk)] text-base font-bold tracking-tight text-white sm:text-xl sm:px-4 sm:py-1.5">
             ricky&apos;s f1 quiz grand prix
           </h1>
         </motion.div>
