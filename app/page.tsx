@@ -10,14 +10,27 @@ import {
 } from "./f1-question-bank";
 
 type Stage = "formation" | "race" | "pitstop" | "finish_intro" | "finished";
-type FormationMode = "briefing" | "drill";
+type FormationMode = "intro" | "briefing" | "drill";
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
+type MarkerState = "unanswered" | "correct" | "incorrect";
+type TrackTarget =
+  | { kind: "formation_intro" }
+  | { kind: "formation_drill" }
+  | { kind: "pitstop" }
+  | { kind: "finish" }
+  | { kind: "tutorial"; stepIndex: number }
+  | { kind: "lap"; lapIndex: number };
 
 type TutorialStep = {
   prompt: string;
   options: string[];
   answer: number;
   note: string;
+};
+
+type PitBands = {
+  greenUpper: number;
+  yellowUpper: number;
 };
 
 const tutorialSteps: TutorialStep[] = [
@@ -46,12 +59,24 @@ const pitOrder = [0, 1, 2, 3] as const;
 
 const grandPrixMarkerPos = 24;
 const finishMarkerPos = 100;
+const DESKTOP_PIT_BANDS: PitBands = { greenUpper: 1800, yellowUpper: 2400 };
+const MOBILE_PIT_BANDS: PitBands = { greenUpper: 750, yellowUpper: 1000 };
 
 const getReactionValueClass = (ms: number) =>
   ms < 250 ? "text-emerald-300" : ms < 300 ? "text-amber-300" : "text-red-300";
 
-const getPitValueClass = (ms: number) =>
-  ms < 1800 ? "text-emerald-300" : ms < 2400 ? "text-amber-300" : "text-red-300";
+const getPitBand = (ms: number, bands: PitBands): "green" | "yellow" | "red" => {
+  if (ms < bands.greenUpper) return "green";
+  if (ms < bands.yellowUpper) return "yellow";
+  return "red";
+};
+
+const getPitValueClass = (ms: number, bands: PitBands) => {
+  const band = getPitBand(ms, bands);
+  if (band === "green") return "text-emerald-300";
+  if (band === "yellow") return "text-amber-300";
+  return "text-red-300";
+};
 
 const getScoreValueClass = (value: number) =>
   value >= 5 ? "text-emerald-300" : value >= 3 ? "text-amber-300" : "text-red-300";
@@ -63,12 +88,30 @@ const getReactionFeedback = (ms: number) =>
       ? "solid start. beat 250ms for green."
       : "you can be faster. get under 300ms for yellow, under 250ms for green.";
 
-const getPitFeedback = (ms: number) =>
-  ms < 1800
-    ? "that's rapid. green band is under 1800ms."
-    : ms < 2400
-      ? "solid stop. beat 1800ms for green."
-      : "you can be faster. get under 2400ms for yellow, under 1800ms for green.";
+const getPitFeedback = (ms: number, bands: PitBands) => {
+  const band = getPitBand(ms, bands);
+  if (band === "green") {
+    return `that's rapid. green band is under ${bands.greenUpper}ms.`;
+  }
+  if (band === "yellow") {
+    return `solid stop. beat ${bands.greenUpper}ms for green.`;
+  }
+  return `you can be faster. get under ${bands.yellowUpper}ms for yellow, under ${bands.greenUpper}ms for green.`;
+};
+
+const getMarkerInnerClass = (state: MarkerState) =>
+  state === "correct" ? "bg-emerald-400" : state === "incorrect" ? "bg-red-500" : "bg-zinc-900";
+
+const clampPercent = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+const raceMiniBorderColors = [
+  "border-red-200",
+  "border-orange-200",
+  "border-amber-200",
+  "border-yellow-200",
+  "border-stone-200",
+  "border-zinc-200",
+] as const;
 
 const getNowMs = () => performance.now();
 const getReactionLightsOutDelayMs = () => 3500 + 900 + Math.random() * 900;
@@ -87,19 +130,23 @@ const getStoredBestScore = () => {
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>("formation");
-  const [formationMode, setFormationMode] = useState<FormationMode>("briefing");
+  const [formationMode, setFormationMode] = useState<FormationMode>("intro");
   const [weekendQuestions, setWeekendQuestions] = useState<Question[]>(initialWeekendQuestions);
 
   const [currentLap, setCurrentLap] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
+  const [lapAnswers, setLapAnswers] = useState<(number | null)[]>(() =>
+    initialWeekendQuestions.map(() => null),
+  );
 
   const [tutorialStep, setTutorialStep] = useState(0);
-  const [tutorialSelected, setTutorialSelected] = useState<number | null>(null);
+  const [tutorialAnswers, setTutorialAnswers] = useState<(number | null)[]>(() =>
+    tutorialSteps.map(() => null),
+  );
 
   const [reactionPhase, setReactionPhase] = useState<ReactionPhase>("idle");
   const [reactionLights, setReactionLights] = useState(0);
   const [reactionMs, setReactionMs] = useState<number | null>(null);
+  const [startDrillSkipped, setStartDrillSkipped] = useState(false);
 
   const [pitStopDone, setPitStopDone] = useState(false);
   const [pitStarted, setPitStarted] = useState(false);
@@ -107,6 +154,8 @@ export default function Home() {
   const [pitPenalty, setPitPenalty] = useState(0);
   const [pitMessage, setPitMessage] = useState("pit window open. hit begin when you're ready.");
   const [pitTimeMs, setPitTimeMs] = useState<number | null>(null);
+  const [pitStopSkipped, setPitStopSkipped] = useState(false);
+  const [isTouchLikeDevice, setIsTouchLikeDevice] = useState(false);
 
   const [bestReactionMs, setBestReactionMs] = useState<number | null>(getStoredBestReaction);
   const [bestScore, setBestScore] = useState(getStoredBestScore);
@@ -120,55 +169,211 @@ export default function Home() {
 
   const totalLaps = weekendQuestions.length;
   const pitStopLap = Math.floor(totalLaps / 2);
+  const raceTrackWidth = finishMarkerPos - grandPrixMarkerPos;
   const question = weekendQuestions[currentLap] ?? weekendQuestions[0] ?? initialWeekendQuestions[0];
-  const answeredLaps = currentLap + (selected !== null ? 1 : 0);
+  const selectedForCurrentLap = lapAnswers[currentLap] ?? null;
+  const isCurrentLapCorrect =
+    selectedForCurrentLap !== null && selectedForCurrentLap === question.answer;
+
+  const score = useMemo(
+    () =>
+      lapAnswers.reduce<number>((total, answer, lapIndex) => {
+        if (answer === null) return total;
+        return answer === weekendQuestions[lapIndex]?.answer ? total + 1 : total;
+      }, 0),
+    [lapAnswers, weekendQuestions],
+  );
 
   const tutorialCurrent = tutorialSteps[tutorialStep];
-  const tutorialAnswered = tutorialStep + (tutorialSelected !== null ? 1 : 0);
+  const tutorialSelected = tutorialAnswers[tutorialStep] ?? null;
+  const isCurrentTutorialCorrect =
+    tutorialSelected !== null && tutorialSelected === tutorialCurrent.answer;
 
-  const formationSegmentProgress = useMemo(() => {
-    if (stage !== "formation") return 100;
-    if (formationMode === "drill") return 100;
-    return (tutorialAnswered / tutorialSteps.length) * 100;
-  }, [stage, formationMode, tutorialAnswered]);
+  const hasCompletedStartDrill = reactionMs !== null;
+  const hasPitStopCheckpoint = pitStopDone || pitStopSkipped || pitTimeMs !== null;
+  const hasCompletedPitStop = pitTimeMs !== null;
 
-  const raceSegmentProgress = useMemo(() => {
-    if (stage === "formation") return 0;
+  const quizProgress = useMemo(() => ((currentLap + 1) / totalLaps) * 100, [currentLap, totalLaps]);
+  const activePitBands = useMemo(
+    () => (isTouchLikeDevice ? MOBILE_PIT_BANDS : DESKTOP_PIT_BANDS),
+    [isTouchLikeDevice],
+  );
+
+  const finishLabel = useMemo(() => {
+    if (score === 0) return "DNF — did not finish";
+    const ratio = score / totalLaps;
+    if (ratio === 1) return "perfect finish — P1";
+    if (ratio >= 0.75) return "podium finish";
+    if (ratio >= 0.5) return "points finish";
+    return "back of the grid";
+  }, [score, totalLaps]);
+
+  const finishTier = useMemo(() => {
+    if (score === 0) return 0;
+    const ratio = score / totalLaps;
+    if (ratio === 1) return 1;
+    if (ratio >= 0.75) return 2;
+    if (ratio >= 0.5) return 3;
+    return 4;
+  }, [score, totalLaps]);
+
+  const finishSparkles = useMemo(() => {
+    const count = finishTier === 1 ? 6 : finishTier === 2 ? 4 : 0;
+    return Array.from({ length: count }, (_, index) => {
+      const angle = (index / Math.max(count, 1)) * Math.PI * 1.8 + 0.35;
+      const radiusX = 13;
+      const radiusY = 19;
+      return {
+        id: `sparkle-${index}`,
+        left: `${76 + Math.cos(angle) * radiusX}%`,
+        top: `${38 + Math.sin(angle) * radiusY}%`,
+        delay: 1.5 + index * 0.18,
+      };
+    });
+  }, [finishTier]);
+
+  const pitStopMarkerPos = useMemo(
+    () => grandPrixMarkerPos + raceTrackWidth * (pitStopLap / totalLaps),
+    [pitStopLap, raceTrackWidth, totalLaps],
+  );
+
+  const formationAnchor = 0;
+  const grandPrixAnchor = grandPrixMarkerPos;
+  const pitAnchor = pitStopMarkerPos;
+  const finishAnchor = finishMarkerPos;
+
+  const tutorialMarkerStates = useMemo<MarkerState[]>(
+    () =>
+      tutorialSteps.map((step, stepIndex) => {
+        const answer = tutorialAnswers[stepIndex];
+        if (answer === null) return "unanswered";
+        return answer === step.answer ? "correct" : "incorrect";
+      }),
+    [tutorialAnswers],
+  );
+
+  const raceMarkerStates = useMemo<MarkerState[]>(
+    () =>
+      weekendQuestions.map((weekendQuestion, lapIndex) => {
+        const answer = lapAnswers[lapIndex];
+        if (answer === null) return "unanswered";
+        return answer === weekendQuestion.answer ? "correct" : "incorrect";
+      }),
+    [lapAnswers, weekendQuestions],
+  );
+
+  const tutorialCheckpoints = useMemo(
+    () =>
+      tutorialSteps.map((_, stepIndex) => {
+        const markerCount = tutorialSteps.length;
+        return (
+          formationAnchor + ((grandPrixAnchor - formationAnchor) * (stepIndex + 1)) / (markerCount + 1)
+        );
+      }),
+    [formationAnchor, grandPrixAnchor],
+  );
+
+  const prePitCheckpoints = useMemo(
+    () =>
+      Array.from({ length: pitStopLap }, (_, lapIndex) => {
+        return grandPrixAnchor + ((pitAnchor - grandPrixAnchor) * (lapIndex + 1)) / (pitStopLap + 1);
+      }),
+    [grandPrixAnchor, pitAnchor, pitStopLap],
+  );
+
+  const postPitLapCount = Math.max(totalLaps - pitStopLap, 0);
+
+  const postPitCheckpoints = useMemo(
+    () =>
+      Array.from({ length: postPitLapCount }, (_, lapIndex) => {
+        return pitAnchor + ((finishAnchor - pitAnchor) * (lapIndex + 1)) / (postPitLapCount + 1);
+      }),
+    [finishAnchor, pitAnchor, postPitLapCount],
+  );
+
+  const raceCheckpoints = useMemo(
+    () => [...prePitCheckpoints, ...postPitCheckpoints],
+    [postPitCheckpoints, prePitCheckpoints],
+  );
+
+  const currentTrackPercent = useMemo(() => {
+    if (stage === "formation") {
+      if (formationMode === "intro") return formationAnchor;
+      if (formationMode === "drill") return grandPrixAnchor;
+      return tutorialCheckpoints[tutorialStep] ?? tutorialCheckpoints[tutorialCheckpoints.length - 1] ?? 0;
+    }
 
     if (stage === "race") {
-      return Math.min((answeredLaps / totalLaps) * 100, 100);
+      return raceCheckpoints[currentLap] ?? finishAnchor;
     }
 
     if (stage === "pitstop") {
-      return (pitStopLap / totalLaps) * 100;
+      return pitAnchor;
     }
 
-    return 100;
-  }, [stage, answeredLaps, totalLaps, pitStopLap]);
+    return finishAnchor;
+  }, [
+    currentLap,
+    finishAnchor,
+    formationAnchor,
+    formationMode,
+    grandPrixAnchor,
+    pitAnchor,
+    raceCheckpoints,
+    stage,
+    tutorialCheckpoints,
+    tutorialStep,
+  ]);
 
-  const quizProgress = useMemo(() => ((currentLap + 1) / totalLaps) * 100, [currentLap, totalLaps]);
-
-  const finishLabel = useMemo(() => {
-    const ratio = score / totalLaps;
-    if (ratio === 1) return "perfect weekend";
-    if (ratio >= 0.75) return "podium finish";
-    if (ratio >= 0.5) return "points finish";
-    return "comeback story";
-  }, [score, totalLaps]);
-
-  const pitStopMarkerPos = useMemo(() => {
-    const raceTrackWidth = finishMarkerPos - grandPrixMarkerPos;
-    return grandPrixMarkerPos + raceTrackWidth * (pitStopLap / totalLaps);
-  }, [pitStopLap, totalLaps]);
+  const formationFillWidth = clampPercent(currentTrackPercent, formationAnchor, grandPrixAnchor);
+  const raceFillWidth = clampPercent(
+    currentTrackPercent - grandPrixAnchor,
+    0,
+    finishAnchor - grandPrixAnchor,
+  );
 
   const scoreValueClass = getScoreValueClass(score);
   const bestScoreValueClass = getScoreValueClass(bestScore);
 
   const formationActive = true;
-  const grandPrixActive = stage !== "formation" || reactionPhase !== "idle";
-  const pitStopActive =
-    stage === "pitstop" || pitStopDone || stage === "finish_intro" || stage === "finished";
+  const grandPrixActive = reactionMs !== null;
+  const pitStopActive = pitStopDone && !pitStopSkipped;
   const chequeredActive = stage === "finish_intro" || stage === "finished";
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const pointerQuery = window.matchMedia("(pointer: coarse)");
+    const anyPointerQuery = window.matchMedia("(any-pointer: coarse)");
+
+    const updateIsTouchLikeDevice = () => {
+      const hasTouch = navigator.maxTouchPoints > 0;
+      const coarsePointer = pointerQuery.matches || anyPointerQuery.matches;
+      setIsTouchLikeDevice(hasTouch || coarsePointer);
+    };
+
+    updateIsTouchLikeDevice();
+
+    const handleChange = () => {
+      updateIsTouchLikeDevice();
+    };
+
+    if (typeof pointerQuery.addEventListener === "function") {
+      pointerQuery.addEventListener("change", handleChange);
+      anyPointerQuery.addEventListener("change", handleChange);
+      return () => {
+        pointerQuery.removeEventListener("change", handleChange);
+        anyPointerQuery.removeEventListener("change", handleChange);
+      };
+    }
+
+    pointerQuery.addListener(handleChange);
+    anyPointerQuery.addListener(handleChange);
+    return () => {
+      pointerQuery.removeListener(handleChange);
+      anyPointerQuery.removeListener(handleChange);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -196,6 +401,12 @@ export default function Home() {
       window.clearTimeout(finishTimerRef.current);
       finishTimerRef.current = null;
     }
+  };
+
+  const enterStartDrillState = () => {
+    clearReactionTimers();
+    setReactionLights(0);
+    setReactionPhase(hasCompletedStartDrill ? "success" : "idle");
   };
 
   const playBeep = (
@@ -245,6 +456,19 @@ export default function Home() {
     playBeep(430, 42, { waveform: "sine", volume: 0.12 });
   };
 
+  const playPrepActionSound = () => {
+    const frequencies = [500, 620];
+    const noteDurationMs = 48;
+    const gapMs = 14;
+
+    frequencies.forEach((frequency, index) => {
+      const timer = window.setTimeout(() => {
+        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.14 });
+      }, index * (noteDurationMs + gapMs));
+      soundTimersRef.current.push(timer);
+    });
+  };
+
   const playRestartSound = () => {
     const frequencies = [700, 560, 430];
     const noteDurationMs = 55;
@@ -271,29 +495,126 @@ export default function Home() {
     });
   };
 
+  const playAnswerCorrectSound = () => {
+    const frequencies = [540, 660, 820];
+    const noteDurationMs = 34;
+    const gapMs = 8;
+
+    frequencies.forEach((frequency, index) => {
+      const timer = window.setTimeout(() => {
+        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.14 });
+      }, index * (noteDurationMs + gapMs));
+      soundTimersRef.current.push(timer);
+    });
+  };
+
+  const playAnswerWrongSound = () => {
+    const frequencies = [430, 330];
+    const noteDurationMs = 58;
+    const gapMs = 12;
+
+    frequencies.forEach((frequency, index) => {
+      const timer = window.setTimeout(() => {
+        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.13 });
+      }, index * (noteDurationMs + gapMs));
+      soundTimersRef.current.push(timer);
+    });
+  };
+
   const handleTutorialPick = (optionIndex: number) => {
     if (stage !== "formation" || formationMode !== "briefing" || tutorialSelected !== null) return;
-    setTutorialSelected(optionIndex);
+    const isCorrect = optionIndex === tutorialSteps[tutorialStep]?.answer;
+    if (isCorrect) {
+      playAnswerCorrectSound();
+    } else {
+      playAnswerWrongSound();
+    }
+    setTutorialAnswers((previousAnswers) => {
+      const nextAnswers = [...previousAnswers];
+      nextAnswers[tutorialStep] = optionIndex;
+      return nextAnswers;
+    });
   };
 
   const goToNextBriefing = () => {
-    if (tutorialSelected === null) return;
     playArrowButtonSound();
 
     if (tutorialStep < tutorialSteps.length - 1) {
       setTutorialStep((prev) => prev + 1);
-      setTutorialSelected(null);
       return;
     }
 
     setFormationMode("drill");
-    setTutorialSelected(null);
+  };
+
+  const goToPreviousBriefing = () => {
+    playArrowButtonSound();
+    if (tutorialStep === 0) {
+      setFormationMode("intro");
+      setTutorialStep(0);
+      return;
+    }
+    setTutorialStep((prev) => prev - 1);
   };
 
   const skipFormationLab = () => {
     playArrowButtonSound();
     setFormationMode("drill");
-    setTutorialSelected(null);
+  };
+
+  const startFormationLapTutorial = () => {
+    playArrowButtonSound();
+    setTutorialStep(0);
+    setFormationMode("briefing");
+  };
+
+  const jumpToTrackCard = (target: TrackTarget) => {
+    playArrowButtonSound();
+    clearReactionTimers();
+    clearFinishTimer();
+    setReactionPhase("idle");
+    setReactionLights(0);
+    setPitStarted(false);
+    pitStartRef.current = null;
+
+    if (target.kind === "formation_intro") {
+      setStage("formation");
+      setFormationMode("intro");
+      setTutorialStep(0);
+      return;
+    }
+
+    if (target.kind === "formation_drill") {
+      setStage("formation");
+      setFormationMode("drill");
+      setTutorialStep(tutorialSteps.length - 1);
+      enterStartDrillState();
+      return;
+    }
+
+    if (target.kind === "pitstop") {
+      setStage("pitstop");
+      setCurrentLap(pitStopLap);
+      return;
+    }
+
+    if (target.kind === "finish") {
+      setStage("finished");
+      setCurrentLap(Math.max(totalLaps - 1, 0));
+      return;
+    }
+
+    if (target.kind === "tutorial") {
+      const safeStep = Math.max(0, Math.min(target.stepIndex, tutorialSteps.length - 1));
+      setStage("formation");
+      setFormationMode("briefing");
+      setTutorialStep(safeStep);
+      return;
+    }
+
+    const safeLap = Math.max(0, Math.min(target.lapIndex, totalLaps - 1));
+    setStage("race");
+    setCurrentLap(safeLap);
   };
 
   const startReactionSequence = (withActivationBeep = true) => {
@@ -301,11 +622,10 @@ export default function Home() {
 
     clearReactionTimers();
     if (withActivationBeep) {
-      playBeep(760, 100);
+      playPrepActionSound();
     }
     setReactionPhase("countdown");
     setReactionLights(0);
-    setReactionMs(null);
 
     for (let i = 1; i <= 5; i += 1) {
       const timer = window.setTimeout(() => {
@@ -339,7 +659,6 @@ export default function Home() {
       clearReactionTimers();
       setReactionPhase("early");
       setReactionLights(0);
-      setReactionMs(null);
       playBeep(220, 220);
       return;
     }
@@ -347,6 +666,7 @@ export default function Home() {
     if (reactionPhase === "go" && goTimeRef.current !== null) {
       const time = Math.round(getNowMs() - goTimeRef.current);
       setReactionMs(time);
+      setStartDrillSkipped(false);
       setReactionPhase("success");
       clearReactionTimers();
       playBeep(960, 140);
@@ -358,24 +678,67 @@ export default function Home() {
     }
   };
 
-  const startRace = () => {
-    clearReactionTimers();
+  const goPreviousFromStartDrill = () => {
     playArrowButtonSound();
-    setStage("race");
+    clearReactionTimers();
+    setReactionPhase("idle");
+    setReactionLights(0);
+    setFormationMode("briefing");
+    setTutorialStep(tutorialSteps.length - 1);
   };
 
-  const rejoinRace = () => {
+  const goNextFromStartDrill = () => {
     playArrowButtonSound();
+    clearReactionTimers();
+    setReactionPhase("idle");
+    setReactionLights(0);
     setStage("race");
+    setCurrentLap(0);
+  };
+
+  const skipStartDrill = () => {
+    setStartDrillSkipped(true);
+    goNextFromStartDrill();
+  };
+
+  const startRace = () => {
+    setStartDrillSkipped(false);
+    goNextFromStartDrill();
+  };
+
+  const goPreviousFromRace = () => {
+    if (stage !== "race") return;
+    playArrowButtonSound();
+
+    if (currentLap === pitStopLap && hasPitStopCheckpoint) {
+      setStage("pitstop");
+      return;
+    }
+
+    if (currentLap > 0) {
+      setCurrentLap((previousLap) => previousLap - 1);
+      return;
+    }
+
+    enterStartDrillState();
+    setStage("formation");
+    setFormationMode("drill");
+    setTutorialStep(tutorialSteps.length - 1);
   };
 
   const handlePick = (optionIndex: number) => {
-    if (selected !== null || stage !== "race") return;
-
-    setSelected(optionIndex);
-    if (optionIndex === question.answer) {
-      setScore((prev) => prev + 1);
+    if (stage !== "race" || selectedForCurrentLap !== null) return;
+    const isCorrect = optionIndex === weekendQuestions[currentLap]?.answer;
+    if (isCorrect) {
+      playAnswerCorrectSound();
+    } else {
+      playAnswerWrongSound();
     }
+    setLapAnswers((previousAnswers) => {
+      const nextAnswers = [...previousAnswers];
+      nextAnswers[currentLap] = optionIndex;
+      return nextAnswers;
+    });
   };
 
   const runFinishSequence = () => {
@@ -397,8 +760,6 @@ export default function Home() {
   };
 
   const handleNextLap = () => {
-    if (selected === null) return;
-
     if (currentLap === totalLaps - 1) {
       runFinishSequence();
       return;
@@ -408,16 +769,9 @@ export default function Home() {
 
     const nextLap = currentLap + 1;
     setCurrentLap(nextLap);
-    setSelected(null);
 
-    if (nextLap === pitStopLap && !pitStopDone) {
+    if (nextLap === pitStopLap) {
       setStage("pitstop");
-      setPitStarted(false);
-      setPitStep(0);
-      setPitPenalty(0);
-      setPitMessage("pit window open. hit begin when you're ready.");
-      setPitTimeMs(null);
-      pitStartRef.current = null;
     }
   };
 
@@ -428,7 +782,16 @@ export default function Home() {
     setPitTimeMs(null);
     setPitMessage("go go go. lock the tires in order.");
     pitStartRef.current = getNowMs();
-    playBeep(760, 100);
+  };
+
+  const handleBeginPitStop = () => {
+    playPrepActionSound();
+    startPitStop();
+  };
+
+  const handleRetryPitStop = () => {
+    playRunAgainSound();
+    startPitStop();
   };
 
   const handlePitClick = (tireIndex: number) => {
@@ -445,6 +808,7 @@ export default function Home() {
         setPitTimeMs(elapsed);
         setPitStarted(false);
         setPitStopDone(true);
+        setPitStopSkipped(false);
         setPitMessage("pit stop complete.");
         playBeep(1000, 140);
         return;
@@ -462,6 +826,38 @@ export default function Home() {
     playBeep(260, 180);
   };
 
+  const goPreviousFromPitStop = () => {
+    playArrowButtonSound();
+    setPitStarted(false);
+    pitStartRef.current = null;
+    setStage("race");
+    setCurrentLap(Math.max(pitStopLap - 1, 0));
+  };
+
+  const goNextFromPitStop = () => {
+    playArrowButtonSound();
+    setPitStarted(false);
+    pitStartRef.current = null;
+    setStage("race");
+    setCurrentLap(pitStopLap);
+  };
+
+  const skipPitStop = () => {
+    setPitStopDone(true);
+    setPitStopSkipped(true);
+    setPitStarted(false);
+    setPitTimeMs(null);
+    setPitMessage("pit stop skipped.");
+    pitStartRef.current = null;
+    goNextFromPitStop();
+  };
+
+  const goPreviousFromFinish = () => {
+    playArrowButtonSound();
+    setStage("race");
+    setCurrentLap(totalLaps - 1);
+  };
+
   const restartWeekend = () => {
     clearReactionTimers();
     clearSoundTimers();
@@ -469,19 +865,20 @@ export default function Home() {
     playRestartSound();
 
     setStage("formation");
-    setFormationMode("briefing");
-    setWeekendQuestions(getRandomWeekendQuestions());
+    setFormationMode("intro");
+    const nextWeekendQuestions = getRandomWeekendQuestions();
+    setWeekendQuestions(nextWeekendQuestions);
 
     setCurrentLap(0);
-    setSelected(null);
-    setScore(0);
+    setLapAnswers(nextWeekendQuestions.map(() => null));
 
     setTutorialStep(0);
-    setTutorialSelected(null);
+    setTutorialAnswers(tutorialSteps.map(() => null));
 
     setReactionPhase("idle");
     setReactionLights(0);
     setReactionMs(null);
+    setStartDrillSkipped(false);
 
     setPitStopDone(false);
     setPitStarted(false);
@@ -489,11 +886,15 @@ export default function Home() {
     setPitPenalty(0);
     setPitMessage("pit window open. hit begin when you're ready.");
     setPitTimeMs(null);
+    setPitStopSkipped(false);
+    pitStartRef.current = null;
   };
 
   const stageTitle =
     stage === "formation"
-      ? "formation lap (tutorial)"
+      ? formationMode === "drill"
+        ? "starting-lights sequence"
+        : "formation lap (practice)"
       : stage === "race"
         ? `grand prix live · lap ${currentLap + 1}/${totalLaps}`
         : stage === "pitstop"
@@ -502,12 +903,10 @@ export default function Home() {
             ? "chequered flag cutscene"
             : "race report";
 
-  const raceTrackWidth = finishMarkerPos - grandPrixMarkerPos;
-
   const nextRaceButtonLabel =
     currentLap === totalLaps - 1
       ? "take the chequered flag ->"
-      : currentLap === pitStopLap - 1 && !pitStopDone
+      : currentLap === pitStopLap - 1
         ? "box, box! ->"
         : "next lap ->";
 
@@ -530,6 +929,11 @@ export default function Home() {
             <div className="flex h-full min-h-0 flex-col gap-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-mono text-[11px] uppercase tracking-widest text-zinc-300">{stageTitle}</p>
+                {stage === "formation" && formationMode === "intro" && (
+                  <p className="font-mono text-[11px] uppercase tracking-widest text-zinc-400">
+                    formation intro · {totalLaps} laps total
+                  </p>
+                )}
                 {stage === "formation" && formationMode === "briefing" && (
                   <p className="font-mono text-[11px] uppercase tracking-widest text-zinc-400">
                     step {tutorialStep + 1}/{tutorialSteps.length} · {totalLaps} laps total
@@ -537,7 +941,7 @@ export default function Home() {
                 )}
                 {stage === "formation" && formationMode === "drill" && (
                   <p className="font-mono text-[11px] uppercase tracking-widest text-zinc-400">
-                    start drill · {totalLaps} laps total
+                    starting-lights sequence · {totalLaps} laps total
                   </p>
                 )}
                 {(stage === "race" || stage === "pitstop") && (
@@ -619,44 +1023,101 @@ export default function Home() {
                   <motion.div
                     className="absolute left-0 top-0 h-2 rounded-full"
                     style={{ backgroundColor: "#5c9cad" }}
-                    animate={{ width: `${(grandPrixMarkerPos * formationSegmentProgress) / 100}%` }}
+                    animate={{ width: `${formationFillWidth}%` }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
                   />
 
                   <motion.div
                     className="absolute top-0 h-2 rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-zinc-100"
                     style={{ left: `${grandPrixMarkerPos}%` }}
-                    animate={{ width: `${(raceTrackWidth * raceSegmentProgress) / 100}%` }}
+                    animate={{ width: `${raceFillWidth}%` }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   />
 
-                  <div className="pointer-events-none absolute inset-x-0 top-1 flex -translate-y-1/2 justify-between">
-                    <span
-                      className={`h-3.5 w-3.5 rotate-45 border-2 ${
+                  <div className="absolute inset-x-0 top-1/2 h-0">
+                    {tutorialCheckpoints.map((leftPercent, stepIndex) => {
+                      const tutorialState = tutorialMarkerStates[stepIndex] ?? "unanswered";
+                      const tutorialRingClass =
+                        tutorialState === "unanswered" ? "border-zinc-500" : "border-[#8dc1cc]";
+
+                      return (
+                        <button
+                          type="button"
+                          key={`tutorial-marker-${stepIndex}`}
+                          aria-label={`Go to tutorial step ${stepIndex + 1}`}
+                          onClick={() => jumpToTrackCard({ kind: "tutorial", stepIndex })}
+                          style={{ left: `${leftPercent}%` }}
+                          className={`absolute top-0 z-[1] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 ${tutorialRingClass}`}
+                        >
+                          <span
+                            className={`pointer-events-none absolute inset-[1px] rounded-full ${getMarkerInnerClass(tutorialState)}`}
+                          />
+                        </button>
+                      );
+                    })}
+                    {raceCheckpoints.map((leftPercent, lapIndex) => {
+                      const raceState = raceMarkerStates[lapIndex] ?? "unanswered";
+                      const raceRingClass =
+                        raceState === "unanswered"
+                          ? "border-zinc-500"
+                          : raceMiniBorderColors[Math.min(lapIndex, raceMiniBorderColors.length - 1)];
+
+                      return (
+                        <button
+                          type="button"
+                          key={`race-marker-${lapIndex}`}
+                          aria-label={`Go to lap ${lapIndex + 1}`}
+                          onClick={() => jumpToTrackCard({ kind: "lap", lapIndex })}
+                          style={{ left: `${leftPercent}%` }}
+                          className={`absolute top-0 z-[1] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-zinc-900 p-0 transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80 ${raceRingClass}`}
+                        >
+                          <span
+                            className={`pointer-events-none absolute inset-[1px] rounded-full ${getMarkerInnerClass(raceState)}`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between">
+                    <button
+                      type="button"
+                      aria-label="Go to formation intro"
+                      onClick={() => jumpToTrackCard({ kind: "formation_intro" })}
+                      className={`h-5 w-5 rotate-45 border-2 ${
                         formationActive
                           ? "border-[#8dc1cc] bg-[#5c9cad]"
                           : "border-zinc-500 bg-zinc-900"
-                      }`}
+                      } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
-                    <span
+                    <button
+                      type="button"
+                      aria-label="Go to starting-lights sequence"
+                      onClick={() => jumpToTrackCard({ kind: "formation_drill" })}
                       style={{ left: `${grandPrixMarkerPos}%` }}
-                      className={`absolute h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 ${
+                      className={`absolute h-5 w-5 -translate-x-1/2 rounded-full border-2 ${
                         grandPrixActive ? "border-red-200 bg-red-500" : "border-zinc-500 bg-zinc-900"
-                      }`}
+                      } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
-                    <span
+                    <button
+                      type="button"
+                      aria-label="Go to pit stop"
+                      onClick={() => jumpToTrackCard({ kind: "pitstop" })}
                       style={{ left: `${pitStopMarkerPos}%` }}
-                      className={`absolute h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 ${
-                        pitStopActive ? "border-[#f9d781] bg-[#f5ba29]" : "border-zinc-500 bg-zinc-900"
-                      }`}
+                      className={`absolute h-5 w-5 -translate-x-1/2 rounded-full border-2 ${
+                        pitStopActive ? "border-amber-200 bg-amber-400" : "border-zinc-500 bg-zinc-900"
+                      } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
-                    <span
-                      className={`h-3.5 w-3.5 rounded-full border-2 ${
+                    <button
+                      type="button"
+                      aria-label="Go to final race report"
+                      onClick={() => jumpToTrackCard({ kind: "finish" })}
+                      className={`h-5 w-5 rotate-45 border-2 ${
                         chequeredActive ? "border-zinc-200 bg-zinc-100" : "border-zinc-500 bg-zinc-900"
-                      }`}
+                      } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
                   </div>
                 </div>
@@ -681,9 +1142,51 @@ export default function Home() {
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-zinc-700/60 bg-zinc-900/45 p-3 sm:p-4">
+                {stage === "formation" && formationMode === "intro" && (
+                  <div className="flex flex-col gap-3.5">
+                    <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">
+                      formation lap (practice)
+                    </p>
+                    <p className="font-[family-name:var(--font-space-grotesk)] text-[1.325rem] font-semibold text-white">
+                      quick warmup before lights out.
+                    </p>
+                    <p className="font-[family-name:var(--font-manrope)] text-sm text-zinc-300">
+                      let&apos;s weave and get some heat in your tyres.
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="flat"
+                        isDisabled
+                        className="w-fit bg-zinc-800 text-zinc-100"
+                      >
+                        &lt;- previous
+                      </Button>
+                      <Button
+                        color="danger"
+                        onPress={startFormationLapTutorial}
+                        className="w-fit font-semibold"
+                      >
+                        start formation lap (practice) -&gt;
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="flat"
+                        onPress={skipFormationLab}
+                        className="w-fit border border-transparent bg-stone-900 lowercase font-semibold tracking-wide text-stone-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                      >
+                        <span>skip</span>
+                        <span className="ml-1.5 inline-block -translate-y-[2px] text-base leading-none">⋙</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {stage === "formation" && formationMode === "briefing" && (
-                  <div className="flex flex-col gap-3">
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">how this race works (practice)</p>
+                  <div className="flex flex-col gap-3.5">
+                    <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">formation lap (practice)</p>
                     <p className="font-[family-name:var(--font-space-grotesk)] text-xl font-semibold text-white">
                       {tutorialCurrent.prompt}
                     </p>
@@ -733,26 +1236,46 @@ export default function Home() {
 
                     <div className="rounded-xl border border-red-300/25 bg-zinc-900/70 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100">
                       {tutorialSelected !== null ? (
-                        <p>{tutorialCurrent.note}</p>
+                        <p>
+                          <span
+                            className={`font-semibold ${isCurrentTutorialCorrect ? "text-emerald-300" : "text-red-300"}`}
+                          >
+                            {isCurrentTutorialCorrect ? "Correct:" : "Incorrect:"}
+                          </span>{" "}
+                          {tutorialCurrent.note}
+                        </p>
                       ) : (
                         <p>race note: lock an answer and this panel shows the note for that step.</p>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      {tutorialSelected !== null && (
-                        <Button color="danger" onPress={goToNextBriefing} className="w-fit font-semibold">
-                          {tutorialStep === tutorialSteps.length - 1
-                            ? "line up on the grid ->"
-                            : "next briefing ->"}
-                        </Button>
-                      )}
+                      <Button
+                        variant="flat"
+                        onPress={goToPreviousBriefing}
+                        className="w-fit bg-zinc-800 text-zinc-100"
+                      >
+                        &lt;- previous
+                      </Button>
+                      <Button
+                        color="danger"
+                        onPress={goToNextBriefing}
+                        className="w-fit font-semibold"
+                      >
+                        {tutorialStep === tutorialSteps.length - 1
+                          ? "line up on the grid ->"
+                          : "next weave ->"}
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button
                         variant="flat"
                         onPress={skipFormationLab}
-                        className="w-fit bg-zinc-800 text-zinc-100"
+                        className="w-fit border border-transparent bg-stone-900 lowercase font-semibold tracking-wide text-stone-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                       >
-                        skip formation lap -&gt;
+                        <span>skip</span>
+                        <span className="ml-1.5 inline-block -translate-y-[2px] text-base leading-none">⋙</span>
                       </Button>
                     </div>
                   </div>
@@ -760,21 +1283,37 @@ export default function Home() {
 
                 {stage === "formation" && formationMode === "drill" && (
                   <div className="flex flex-col gap-3">
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">start drill</p>
-                    <p className="font-[family-name:var(--font-manrope)] text-sm text-zinc-100">
-                      initiate the starting lights sequence, watch the lights above, then hit LAUNCH only
+                    <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">starting-lights sequence</p>
+                    <p className="font-[family-name:var(--font-manrope)] text-base text-zinc-100">
+                      initiate the starting-lights sequence, watch the lights above, then hit LAUNCH only
                       when the lights go out.
                     </p>
 
                     {reactionPhase === "idle" && (
-                      <Button color="danger" onPress={handleStartDrillSequence} className="w-fit font-semibold">
-                        initiate starting lights sequence -&gt;
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="flat"
+                          onPress={goPreviousFromStartDrill}
+                          className="w-fit bg-zinc-800 text-zinc-100"
+                        >
+                          &lt;- previous
+                        </Button>
+                        <Button color="warning" onPress={handleStartDrillSequence} className="w-fit font-semibold">
+                          initiate starting-lights sequence -&gt;
+                        </Button>
+                      </div>
                     )}
 
                     {reactionPhase === "countdown" && (
                       <div className="flex flex-wrap items-center gap-2">
-                        <Button color="danger" onPress={handleReactionTap} className="font-semibold">
+                        <Button
+                          variant="flat"
+                          onPress={goPreviousFromStartDrill}
+                          className="w-fit bg-zinc-800 text-zinc-100"
+                        >
+                          &lt;- previous
+                        </Button>
+                        <Button color="warning" onPress={handleReactionTap} className="font-semibold">
                           LAUNCH
                         </Button>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-red-100">
@@ -785,7 +1324,14 @@ export default function Home() {
 
                     {reactionPhase === "go" && (
                       <div className="flex flex-wrap items-center gap-2">
-                        <Button color="success" onPress={handleReactionTap} className="font-semibold">
+                        <Button
+                          variant="flat"
+                          onPress={goPreviousFromStartDrill}
+                          className="w-fit bg-zinc-800 text-zinc-100"
+                        >
+                          &lt;- previous
+                        </Button>
+                        <Button color="warning" onPress={handleReactionTap} className="font-semibold">
                           LAUNCH
                         </Button>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-emerald-100">
@@ -795,24 +1341,40 @@ export default function Home() {
                     )}
 
                     {reactionPhase === "early" && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            variant="flat"
+                            onPress={goPreviousFromStartDrill}
+                            className="w-fit bg-zinc-800 text-zinc-100"
+                          >
+                            &lt;- previous
+                          </Button>
+                          <Button color="warning" onPress={handleRunAgainStartDrill} className="font-semibold">
+                            retry starting-lights sequence
+                          </Button>
+                        </div>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-red-100">
                           jump start. too early.
                         </p>
-                        <Button color="warning" onPress={handleRunAgainStartDrill} className="font-semibold">
-                          retry start drill
-                        </Button>
                       </div>
                     )}
 
                     {reactionPhase === "success" && reactionMs !== null && (
                       <div className="flex flex-col gap-2">
                         <div className="flex w-full flex-wrap items-center gap-2">
+                          <Button
+                            variant="flat"
+                            onPress={goPreviousFromStartDrill}
+                            className="w-fit bg-zinc-800 text-zinc-100"
+                          >
+                            &lt;- previous
+                          </Button>
                           <Button color="danger" onPress={startRace} className="font-semibold">
                             lights out and away we go! -&gt;
                           </Button>
                           <Button color="warning" onPress={handleRunAgainStartDrill} className="font-semibold">
-                            run again
+                            retry starting-lights sequence
                           </Button>
                         </div>
                         <p className={`font-semibold ${getReactionValueClass(reactionMs)}`}>
@@ -823,6 +1385,25 @@ export default function Home() {
                         </p>
                       </div>
                     )}
+
+                    {reactionMs === null && startDrillSkipped && (
+                      <p className="font-[family-name:var(--font-manrope)] text-sm font-semibold text-red-300">
+                        start-drill incomplete.
+                      </p>
+                    )}
+
+                    {!hasCompletedStartDrill && (
+                      <div className="mt-auto flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="flat"
+                          onPress={skipStartDrill}
+                          className="w-fit border border-transparent bg-stone-900 lowercase font-semibold tracking-wide text-stone-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                        >
+                          <span>skip</span>
+                          <span className="ml-1.5 inline-block -translate-y-[2px] text-base leading-none">⋙</span>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -831,7 +1412,7 @@ export default function Home() {
                     key={currentLap}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex h-full flex-col gap-4"
+                    className="flex h-full flex-col gap-3.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Chip variant="flat" color="danger" className="capitalize bg-red-400/25 text-red-100">
@@ -842,18 +1423,19 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-2xl font-semibold leading-tight text-white">
+                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-[1.325rem] font-semibold leading-tight text-white">
                       {question.prompt}
                     </h2>
 
-                    <div className="grid gap-2.5">
+                    <div className="grid gap-2">
                       {question.options.map((option, index) => {
                         const isCorrect = index === question.answer;
-                        const isSelected = selected === index;
+                        const isSelected = selectedForCurrentLap === index;
 
-                        const variant = selected === null ? "flat" : isCorrect || isSelected ? "solid" : "flat";
+                        const variant =
+                          selectedForCurrentLap === null ? "flat" : isCorrect || isSelected ? "solid" : "flat";
                         const color =
-                          selected === null
+                          selectedForCurrentLap === null
                             ? "default"
                             : isCorrect
                               ? "success"
@@ -861,16 +1443,16 @@ export default function Home() {
                                 ? "danger"
                                 : "default";
                         const className =
-                          selected === null
-                            ? "justify-start bg-zinc-700 px-5 text-left text-base !text-zinc-100"
+                          selectedForCurrentLap === null
+                            ? "justify-start bg-zinc-700 px-4 text-left !text-zinc-100"
                             : isCorrect || isSelected
-                              ? "justify-start px-5 text-left text-base"
-                              : "justify-start bg-zinc-800 px-5 text-left text-base !text-zinc-300";
+                              ? "justify-start px-4 text-left"
+                              : "justify-start bg-zinc-800 px-4 text-left !text-zinc-300";
 
                         return (
                           <Button
                             key={option}
-                            size="lg"
+                            size="md"
                             variant={variant}
                             color={color}
                             className={className}
@@ -882,24 +1464,37 @@ export default function Home() {
                       })}
                     </div>
 
-                    {selected !== null ? (
+                    {selectedForCurrentLap !== null ? (
                       <motion.div
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-xl border border-zinc-600 bg-zinc-900/75 p-3.5 font-[family-name:var(--font-manrope)] text-sm text-zinc-100"
+                        className="rounded-xl border border-zinc-600 bg-zinc-900/75 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100"
                       >
-                        {question.fact}
+                        <p>
+                          <span
+                            className={`font-semibold ${isCurrentLapCorrect ? "text-emerald-300" : "text-red-300"}`}
+                          >
+                            {isCurrentLapCorrect ? "Correct:" : "Incorrect:"}
+                          </span>{" "}
+                          {question.fact}
+                        </p>
                       </motion.div>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-zinc-600 bg-zinc-900/55 p-3.5 font-[family-name:var(--font-manrope)] text-sm text-zinc-400">
+                      <div className="rounded-xl border border-dashed border-zinc-600 bg-zinc-900/55 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-400">
                         race note: lock an answer and this note panel will update for the lap.
                       </div>
                     )}
 
                     <div className="mt-auto flex flex-wrap items-center gap-3">
                       <Button
+                        variant="flat"
+                        onPress={goPreviousFromRace}
+                        className="w-fit bg-zinc-800 text-zinc-100"
+                      >
+                        &lt;- previous
+                      </Button>
+                      <Button
                         color="danger"
-                        isDisabled={selected === null}
                         onPress={handleNextLap}
                         className="font-semibold"
                       >
@@ -914,7 +1509,7 @@ export default function Home() {
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex h-full flex-col gap-4"
+                    className="flex h-full flex-col gap-3.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Chip color="warning" variant="flat" className="bg-amber-400/25 text-amber-100">
@@ -923,7 +1518,7 @@ export default function Home() {
                       <p className="font-mono text-[11px] uppercase tracking-widest text-zinc-400">mid-race</p>
                     </div>
 
-                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-2xl font-semibold text-white">
+                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-[1.325rem] font-semibold text-white">
                       tire change sprint
                     </h2>
 
@@ -932,17 +1527,17 @@ export default function Home() {
                       300ms.
                     </p>
 
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-2 gap-2">
                       {tireLabels.map((label, index) => {
                         const expected = pitOrder[pitStep] === index;
 
                         return (
                           <Button
                             key={label}
-                            size="lg"
+                            size="md"
                             variant={pitStarted ? "solid" : "flat"}
                             color={pitStarted && expected ? "warning" : "default"}
-                            className="h-14 capitalize"
+                            className="h-12 capitalize"
                             onPress={() => handlePitClick(index)}
                           >
                             {label}
@@ -951,8 +1546,13 @@ export default function Home() {
                       })}
                     </div>
 
-                    <div className="rounded-xl border border-zinc-600 bg-zinc-900/70 p-3.5 font-[family-name:var(--font-manrope)] text-sm text-zinc-100">
-                      {pitTimeMs === null ? (
+                    <div className="rounded-xl border border-zinc-600 bg-zinc-900/70 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100">
+                      {pitTimeMs === null && pitStopSkipped ? (
+                        <>
+                          <p className="font-semibold text-red-300">pit stop incomplete.</p>
+                          <p className="mt-1.5 text-zinc-400">penalty total: {pitPenalty}ms</p>
+                        </>
+                      ) : pitTimeMs === null ? (
                         <>
                           <p>{pitMessage}</p>
                           {pitStarted && (
@@ -964,29 +1564,54 @@ export default function Home() {
                         </>
                       ) : (
                         <>
-                          <p className={`font-semibold ${getPitValueClass(pitTimeMs)}`}>pit time {pitTimeMs}ms</p>
+                          <p className={`font-semibold ${getPitValueClass(pitTimeMs, activePitBands)}`}>
+                            pit time {pitTimeMs}ms
+                          </p>
                           <p className="mt-1 text-zinc-400">penalty total: {pitPenalty}ms</p>
-                          <p className={`mt-1.5 ${getPitValueClass(pitTimeMs)}`}>{getPitFeedback(pitTimeMs)}</p>
+                          <p className={`mt-1.5 ${getPitValueClass(pitTimeMs, activePitBands)}`}>
+                            {getPitFeedback(pitTimeMs, activePitBands)}
+                          </p>
                         </>
                       )}
                     </div>
 
                     <div className="mt-auto flex w-full flex-wrap items-center gap-2">
-                      {pitTimeMs !== null ? (
-                        <>
-                          <Button color="danger" onPress={rejoinRace} className="font-semibold">
-                            rejoin the race -&gt;
-                          </Button>
-                          <Button color="warning" onPress={startPitStop} className="font-semibold">
-                            retry pit stop
-                          </Button>
-                        </>
-                      ) : !pitStarted ? (
-                        <Button color="warning" onPress={startPitStop} className="font-semibold">
+                      <Button
+                        variant="flat"
+                        onPress={goPreviousFromPitStop}
+                        className="w-fit bg-zinc-800 text-zinc-100"
+                      >
+                        &lt;- previous
+                      </Button>
+                      {!pitStarted && hasCompletedPitStop && (
+                        <Button color="danger" onPress={goNextFromPitStop} className="font-semibold">
+                          rejoin the track -&gt;
+                        </Button>
+                      )}
+                      {!pitStarted && !hasCompletedPitStop && (
+                        <Button color="warning" onPress={handleBeginPitStop} className="font-semibold">
                           begin pit stop -&gt;
                         </Button>
-                      ) : null}
+                      )}
+                      {!pitStarted && hasCompletedPitStop && (
+                        <Button color="warning" onPress={handleRetryPitStop} className="font-semibold">
+                          retry pit stop
+                        </Button>
+                      )}
                     </div>
+
+                    {!hasCompletedPitStop && (
+                      <div className="flex w-full flex-wrap items-center gap-2">
+                        <Button
+                          variant="flat"
+                          onPress={skipPitStop}
+                          className="w-fit border border-transparent bg-stone-900 lowercase font-semibold tracking-wide text-stone-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                        >
+                          <span>skip</span>
+                          <span className="ml-1.5 inline-block -translate-y-[2px] text-base leading-none">⋙</span>
+                        </Button>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -1001,11 +1626,81 @@ export default function Home() {
                     <motion.div
                       className="pointer-events-none absolute top-[43%] text-5xl sm:text-6xl"
                       initial={{ left: "6%", y: "-50%" }}
-                      animate={{ left: "76%", y: "-50%" }}
-                      transition={{ duration: 2.1, ease: "easeInOut" }}
+                      animate={{ left: finishTier === 0 ? "46%" : "76%", y: "-50%" }}
+                      transition={{
+                        duration: finishTier === 4 ? 6 : finishTier === 0 ? 2.4 : 2.1,
+                        ease: finishTier === 4 ? "linear" : finishTier === 0 ? "easeOut" : "easeInOut",
+                      }}
                     >
                       🏎️
                     </motion.div>
+
+                    {finishTier === 0 && (
+                      <>
+                        {[0, 1, 2].map((smokeIndex) => (
+                          <motion.div
+                            key={`dnf-smoke-${smokeIndex}`}
+                            className="pointer-events-none absolute top-[38%] text-2xl sm:text-3xl"
+                            initial={{ left: `${44 + smokeIndex * 2.4}%`, opacity: 0, scale: 0.65 }}
+                            animate={{
+                              left: `${42 + smokeIndex * 3.6}%`,
+                              top: `${30 + smokeIndex * 2}%`,
+                              opacity: [0, 0.85, 0],
+                              scale: [0.65, 1.2, 1.35],
+                            }}
+                            transition={{
+                              delay: 1.2 + smokeIndex * 0.28,
+                              duration: 1.3,
+                              ease: "easeOut",
+                              repeat: Infinity,
+                              repeatDelay: 0.45,
+                            }}
+                          >
+                            💨
+                          </motion.div>
+                        ))}
+
+                        <motion.div
+                          className="pointer-events-none absolute left-[52%] top-[38%] text-3xl sm:text-4xl"
+                          initial={{ opacity: 0, y: -8, rotate: -14 }}
+                          animate={{ opacity: [0, 1, 1], y: [-8, -12, -8], rotate: [-14, -6, -14] }}
+                          transition={{ delay: 1.5, duration: 1.4, ease: "easeInOut", repeat: Infinity }}
+                        >
+                          🔧
+                        </motion.div>
+                      </>
+                    )}
+
+                    {finishTier === 4 && (
+                      <>
+                        {[0, 1, 2].map((dustIndex) => (
+                          <motion.div
+                            key={`dust-${dustIndex}`}
+                            className="pointer-events-none absolute top-[48%] text-3xl sm:text-4xl"
+                            initial={{ left: `${7 + dustIndex * 1.8}%`, opacity: 0, y: "-50%" }}
+                            animate={{ left: `${34 + dustIndex * 8}%`, opacity: [0, 0.65, 0], y: ["-50%", "-64%", "-56%"] }}
+                            transition={{
+                              duration: 1.25,
+                              delay: 0.6 + dustIndex * 0.6,
+                              ease: "easeOut",
+                              repeat: 1,
+                              repeatDelay: 0.2,
+                            }}
+                          >
+                            💨
+                          </motion.div>
+                        ))}
+
+                        <motion.div
+                          className="pointer-events-none absolute top-[49%] text-4xl sm:text-5xl"
+                          initial={{ left: "2.5%", y: "-50%" }}
+                          animate={{ left: "62%", y: "-50%" }}
+                          transition={{ duration: 7, delay: 0.3, ease: "linear" }}
+                        >
+                          🐢
+                        </motion.div>
+                      </>
+                    )}
 
                     <motion.div
                       className="pointer-events-none absolute right-4 top-4 text-6xl"
@@ -1014,6 +1709,145 @@ export default function Home() {
                     >
                       🏁
                     </motion.div>
+
+                    {(finishTier === 1 || finishTier === 2) && (
+                      <>
+                        <motion.div
+                          className="pointer-events-none absolute bottom-4 right-4 w-44 sm:right-8 sm:w-52"
+                          initial={{ y: 64, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.8, duration: 0.5, ease: "easeOut" }}
+                        >
+                          <div className="flex items-end justify-center gap-2">
+                            <div className="relative flex h-16 w-12 items-end justify-center rounded-t-md bg-zinc-600 pb-5 sm:h-20 sm:w-14">
+                              <span className="font-mono text-[11px] font-bold uppercase tracking-wide text-zinc-200">
+                                P2
+                              </span>
+                              {finishTier === 2 && (
+                                <motion.div
+                                  className="absolute -top-8 text-2xl"
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  transition={{ delay: 1.6, type: "spring", stiffness: 360, damping: 16 }}
+                                >
+                                  🥈
+                                </motion.div>
+                              )}
+                            </div>
+                            <div className="relative flex h-24 w-12 items-end justify-center rounded-t-md bg-zinc-700 pb-5 sm:h-28 sm:w-14">
+                              <span className="font-mono text-[11px] font-bold uppercase tracking-wide text-zinc-200">
+                                P1
+                              </span>
+                              <motion.div
+                                className="absolute -top-10 text-3xl"
+                                initial={{ y: -60, opacity: 0, scale: 0.55 }}
+                                animate={{ y: 0, opacity: 1, scale: 1 }}
+                                transition={{ delay: 1.2, type: "spring", stiffness: 350, damping: 13 }}
+                              >
+                                {finishTier === 1 ? "🏆" : "❓"}
+                              </motion.div>
+                            </div>
+                            <div className="relative flex h-12 w-12 items-end justify-center rounded-t-md bg-zinc-600 pb-4 sm:h-16 sm:w-14">
+                              <span className="font-mono text-[11px] font-bold uppercase tracking-wide text-zinc-200">
+                                P3
+                              </span>
+                              {finishTier === 2 && (
+                                <motion.div
+                                  className="absolute -top-7 text-2xl"
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  transition={{ delay: 1.8, type: "spring", stiffness: 360, damping: 16 }}
+                                >
+                                  🥉
+                                </motion.div>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+
+                        <motion.div
+                          className="pointer-events-none absolute bottom-24 right-40 text-3xl sm:bottom-28 sm:right-52"
+                          initial={{ opacity: 0, scale: 0.6, rotate: -18 }}
+                          animate={{ opacity: 1, scale: 1, rotate: -7 }}
+                          transition={{ delay: 2, duration: 0.35, ease: "easeOut" }}
+                        >
+                          🍾
+                        </motion.div>
+                        <motion.div
+                          className="pointer-events-none absolute bottom-24 right-2 text-3xl sm:bottom-28 sm:right-10"
+                          initial={{ opacity: 0, scale: 0.6, rotate: 18 }}
+                          animate={{ opacity: 1, scale: 1, rotate: 8 }}
+                          transition={{ delay: 2, duration: 0.35, ease: "easeOut" }}
+                        >
+                          🍾
+                        </motion.div>
+
+                        {finishSparkles.map((sparkle) => (
+                          <motion.div
+                            key={sparkle.id}
+                            className="pointer-events-none absolute text-xl sm:text-2xl"
+                            style={{ left: sparkle.left, top: sparkle.top }}
+                            initial={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: [0.25, 1, 0.35], scale: [0.65, 1.2, 0.8] }}
+                            transition={{
+                              delay: sparkle.delay,
+                              duration: 1.2,
+                              repeat: Infinity,
+                              repeatType: "mirror",
+                            }}
+                          >
+                            ✨
+                          </motion.div>
+                        ))}
+
+                        {finishTier === 2 &&
+                          [0, 1, 2].map((confettiIndex) => (
+                            <motion.div
+                              key={`confetti-${confettiIndex}`}
+                              className="pointer-events-none absolute text-2xl sm:text-3xl"
+                              initial={{ top: `${6 + confettiIndex * 4}%`, left: `${62 + confettiIndex * 11}%`, opacity: 0 }}
+                              animate={{
+                                top: `${32 + confettiIndex * 7}%`,
+                                left: `${58 + confettiIndex * 10}%`,
+                                opacity: [0, 1, 0],
+                                rotate: confettiIndex % 2 === 0 ? [0, 95, 190] : [0, -95, -190],
+                              }}
+                              transition={{
+                                delay: 2.2 + confettiIndex * 0.3,
+                                duration: 0.8,
+                                ease: "easeInOut",
+                              }}
+                            >
+                              🎊
+                            </motion.div>
+                          ))}
+                      </>
+                    )}
+
+                    {finishTier === 3 &&
+                      [
+                        { left: "20%", top: "26%" },
+                        { left: "34%", top: "44%" },
+                        { left: "52%", top: "26%" },
+                        { left: "68%", top: "42%" },
+                      ].map((clap, clapIndex) => (
+                        <motion.div
+                          key={`clap-${clapIndex}`}
+                          className="pointer-events-none absolute text-2xl sm:text-3xl"
+                          style={{ left: clap.left, top: clap.top }}
+                          initial={{ opacity: 0, scale: 0.65 }}
+                          animate={{ opacity: [0, 1, 0], scale: [0.65, 1.15, 0.8] }}
+                          transition={{
+                            delay: 1 + clapIndex * 0.25,
+                            duration: 1,
+                            ease: "easeOut",
+                            repeat: 1,
+                            repeatDelay: 0.15,
+                          }}
+                        >
+                          👏
+                        </motion.div>
+                      ))}
 
                     <div className="relative flex h-full flex-col gap-3">
                       <Chip color="default" variant="flat" className="w-fit bg-zinc-800 text-zinc-100">
@@ -1043,20 +1877,34 @@ export default function Home() {
                           className="mt-auto flex flex-col gap-3"
                         >
                           <div className="flex flex-wrap gap-2">
-                            {reactionMs !== null && (
+                            {reactionMs !== null ? (
                               <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
-                                start reaction
+                                start-drill
                                 <span className={`ml-1 font-bold ${getReactionValueClass(reactionMs)}`}>
                                   {reactionMs}ms
                                 </span>
                               </Chip>
+                            ) : (
+                              <Chip
+                                variant="flat"
+                                className="border border-red-300/40 bg-red-500/20 text-red-200"
+                              >
+                                start-drill skipped
+                              </Chip>
                             )}
-                            {pitTimeMs !== null && (
+                            {pitTimeMs !== null ? (
                               <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
                                 pit stop
-                                <span className={`ml-1 font-bold ${getPitValueClass(pitTimeMs)}`}>
+                                <span className={`ml-1 font-bold ${getPitValueClass(pitTimeMs, activePitBands)}`}>
                                   {pitTimeMs}ms
                                 </span>
+                              </Chip>
+                            ) : (
+                              <Chip
+                                variant="flat"
+                                className="border border-red-300/40 bg-red-500/20 text-red-200"
+                              >
+                                pit stop skipped
                               </Chip>
                             )}
                             <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
@@ -1067,9 +1915,18 @@ export default function Home() {
                             </Chip>
                           </div>
 
-                          <Button color="danger" onPress={restartWeekend} className="w-fit font-semibold">
-                            run another grand prix
-                          </Button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              variant="flat"
+                              onPress={goPreviousFromFinish}
+                              className="w-fit bg-zinc-800 text-zinc-100"
+                            >
+                              &lt;- previous
+                            </Button>
+                            <Button color="danger" onPress={restartWeekend} className="w-fit font-semibold">
+                              run another grand prix
+                            </Button>
+                          </div>
                         </motion.div>
                       )}
                     </div>
