@@ -64,6 +64,8 @@ const DESKTOP_PIT_BANDS: PitBands = { greenUpper: 1800, yellowUpper: 2400 };
 const MOBILE_PIT_BANDS: PitBands = { greenUpper: 750, yellowUpper: 1000 };
 const MOBILE_TUTORIAL_EDGE_INSET = 2;
 const MOBILE_RACE_EDGE_INSET = 1.5;
+const TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET = 1.2;
+const POST_PIT_NUDGE_LEFT_MOBILE_TABLET = 1.8;
 
 const getReactionValueClass = (ms: number) =>
   ms < 250 ? "text-emerald-300" : ms < 300 ? "text-amber-300" : "text-red-300";
@@ -106,6 +108,12 @@ const getMarkerInnerClass = (state: MarkerState) =>
   state === "correct" ? "bg-emerald-400" : state === "incorrect" ? "bg-red-500" : "bg-zinc-900";
 
 const clampPercent = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+const clampToSegment = (value: number, start: number, end: number, padding = 0.2) => {
+  const min = Math.min(start, end) + padding;
+  const max = Math.max(start, end) - padding;
+  return clampPercent(value, min, max);
+};
 
 const getSegmentCheckpoints = (
   start: number,
@@ -178,6 +186,7 @@ export default function Home() {
   const [pitTimeMs, setPitTimeMs] = useState<number | null>(null);
   const [pitStopSkipped, setPitStopSkipped] = useState(false);
   const [isMobileTrack, setIsMobileTrack] = useState(false);
+  const [isMobileTabletTrackNudge, setIsMobileTabletTrackNudge] = useState(false);
   const [isTouchLikeDevice, setIsTouchLikeDevice] = useState(false);
 
   const [bestReactionMs, setBestReactionMs] = useState<number | null>(getStoredBestReaction);
@@ -226,6 +235,8 @@ export default function Home() {
   );
   const tutorialEdgeInset = isMobileTrack ? MOBILE_TUTORIAL_EDGE_INSET : 0;
   const raceEdgeInset = isMobileTrack ? MOBILE_RACE_EDGE_INSET : 0;
+  const tutorialMarkerNudge = isMobileTabletTrackNudge ? TUTORIAL_NUDGE_RIGHT_MOBILE_TABLET : 0;
+  const postPitMarkerNudge = isMobileTabletTrackNudge ? -POST_PIT_NUDGE_LEFT_MOBILE_TABLET : 0;
 
   const finishLabel = useMemo(() => {
     if (score === 0) return "DNF — did not finish";
@@ -290,21 +301,39 @@ export default function Home() {
     [lapAnswers, weekendQuestions],
   );
 
-  const tutorialCheckpoints = useMemo(
+  const baseTutorialCheckpoints = useMemo(
     () => getSegmentCheckpoints(formationAnchor, grandPrixAnchor, tutorialSteps.length, tutorialEdgeInset),
     [formationAnchor, grandPrixAnchor, tutorialEdgeInset],
   );
 
-  const prePitCheckpoints = useMemo(
+  const tutorialCheckpoints = useMemo(
+    () =>
+      baseTutorialCheckpoints.map((checkpoint) =>
+        clampToSegment(checkpoint + tutorialMarkerNudge, formationAnchor, grandPrixAnchor),
+      ),
+    [baseTutorialCheckpoints, formationAnchor, grandPrixAnchor, tutorialMarkerNudge],
+  );
+
+  const basePrePitCheckpoints = useMemo(
     () => getSegmentCheckpoints(grandPrixAnchor, pitAnchor, pitStopLap, raceEdgeInset),
     [grandPrixAnchor, pitAnchor, pitStopLap, raceEdgeInset],
   );
 
+  const prePitCheckpoints = useMemo(() => basePrePitCheckpoints, [basePrePitCheckpoints]);
+
   const postPitLapCount = Math.max(totalLaps - pitStopLap, 0);
 
-  const postPitCheckpoints = useMemo(
+  const basePostPitCheckpoints = useMemo(
     () => getSegmentCheckpoints(pitAnchor, finishAnchor, postPitLapCount, raceEdgeInset),
     [finishAnchor, pitAnchor, postPitLapCount, raceEdgeInset],
+  );
+
+  const postPitCheckpoints = useMemo(
+    () =>
+      basePostPitCheckpoints.map((checkpoint) =>
+        clampToSegment(checkpoint + postPitMarkerNudge, pitAnchor, finishAnchor),
+      ),
+    [basePostPitCheckpoints, finishAnchor, pitAnchor, postPitMarkerNudge],
   );
 
   const raceCheckpoints = useMemo(
@@ -377,6 +406,30 @@ export default function Home() {
     mobileTrackQuery.addListener(updateIsMobileTrack);
     return () => {
       mobileTrackQuery.removeListener(updateIsMobileTrack);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const mobileTabletNudgeQuery = window.matchMedia("(max-width: 1024px)");
+
+    const updateIsMobileTabletTrackNudge = () => {
+      setIsMobileTabletTrackNudge(mobileTabletNudgeQuery.matches);
+    };
+
+    updateIsMobileTabletTrackNudge();
+
+    if (typeof mobileTabletNudgeQuery.addEventListener === "function") {
+      mobileTabletNudgeQuery.addEventListener("change", updateIsMobileTabletTrackNudge);
+      return () => {
+        mobileTabletNudgeQuery.removeEventListener("change", updateIsMobileTabletTrackNudge);
+      };
+    }
+
+    mobileTabletNudgeQuery.addListener(updateIsMobileTabletTrackNudge);
+    return () => {
+      mobileTabletNudgeQuery.removeListener(updateIsMobileTabletTrackNudge);
     };
   }, []);
 
