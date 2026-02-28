@@ -1526,7 +1526,7 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-[1.25rem] font-semibold leading-tight text-white sm:text-[1.325rem]">
+                    <h2 className="font-[family-name:var(--font-space-grotesk)] text-[19.5px] font-semibold leading-tight text-white sm:text-[1.325rem]">
                       {question.prompt}
                     </h2>
 
