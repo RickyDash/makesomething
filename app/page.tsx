@@ -1,25 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Button, Card, CardBody, Chip } from "@heroui/react";
 import { motion } from "framer-motion";
 import {
   getRandomWeekendQuestions,
   initialWeekendQuestions,
-  type Question,
 } from "./f1-question-bank";
+import {
+  selectFinishChips,
+  selectPitComplete,
+  selectPitSkipVisible,
+  selectPitWarning,
+  selectStartComplete,
+  selectStartSkipVisible,
+  selectStartWarning,
+} from "./flow/selectors";
+import { createInitialFlowState, flowReducer } from "./flow/reducer";
+import type { TrackTarget } from "./flow/types";
 
-type Stage = "formation" | "race" | "pitstop" | "finish_intro" | "finished";
-type FormationMode = "intro" | "briefing" | "drill";
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
 type MarkerState = "unanswered" | "correct" | "incorrect";
-type TrackTarget =
-  | { kind: "formation_intro" }
-  | { kind: "formation_drill" }
-  | { kind: "pitstop" }
-  | { kind: "finish" }
-  | { kind: "tutorial"; stepIndex: number }
-  | { kind: "lap"; lapIndex: number };
 
 type TutorialStep = {
   prompt: string;
@@ -172,37 +173,20 @@ const getStoredBestScore = () => {
 };
 
 export default function Home() {
-  const [stage, setStage] = useState<Stage>("formation");
-  const [formationMode, setFormationMode] = useState<FormationMode>("intro");
-  const [weekendQuestions, setWeekendQuestions] = useState<Question[]>(initialWeekendQuestions);
-
-  const [currentLap, setCurrentLap] = useState(0);
-  const [lapAnswers, setLapAnswers] = useState<(number | null)[]>(() =>
-    initialWeekendQuestions.map(() => null),
+  const [flowState, dispatch] = useReducer(
+    flowReducer,
+    undefined,
+    () =>
+      createInitialFlowState({
+        weekendQuestions: initialWeekendQuestions,
+        tutorialStepCount: tutorialSteps.length,
+        bestReactionMs: getStoredBestReaction(),
+        bestScore: getStoredBestScore(),
+      }),
   );
 
-  const [tutorialStep, setTutorialStep] = useState(0);
-  const [tutorialAnswers, setTutorialAnswers] = useState<(number | null)[]>(() =>
-    tutorialSteps.map(() => null),
-  );
-
-  const [reactionPhase, setReactionPhase] = useState<ReactionPhase>("idle");
-  const [reactionLights, setReactionLights] = useState(0);
-  const [reactionMs, setReactionMs] = useState<number | null>(null);
-  const [startDrillSkipped, setStartDrillSkipped] = useState(false);
-
-  const [pitStopDone, setPitStopDone] = useState(false);
-  const [pitStarted, setPitStarted] = useState(false);
-  const [pitStep, setPitStep] = useState(0);
-  const [pitPenalty, setPitPenalty] = useState(0);
-  const [pitMessage, setPitMessage] = useState("pit window open. hit begin when you're ready.");
-  const [pitTimeMs, setPitTimeMs] = useState<number | null>(null);
-  const [pitStopSkipped, setPitStopSkipped] = useState(false);
   const [isMobileTrack, setIsMobileTrack] = useState(false);
   const [isTouchLikeDevice, setIsTouchLikeDevice] = useState(false);
-
-  const [bestReactionMs, setBestReactionMs] = useState<number | null>(getStoredBestReaction);
-  const [bestScore, setBestScore] = useState(getStoredBestScore);
 
   const timersRef = useRef<number[]>([]);
   const soundTimersRef = useRef<number[]>([]);
@@ -210,6 +194,27 @@ export default function Home() {
   const pitStartRef = useRef<number | null>(null);
   const finishTimerRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const stage = flowState.stage;
+  const formationMode = flowState.formationMode;
+  const weekendQuestions = flowState.weekendQuestions;
+  const currentLap = flowState.currentLap;
+  const lapAnswers = flowState.lapAnswers;
+  const tutorialStep = flowState.tutorialStep;
+  const tutorialAnswers = flowState.tutorialAnswers;
+  const reactionPhase: ReactionPhase =
+    flowState.startDrill.phase === "idle" && flowState.startDrill.resultMs !== null
+      ? "success"
+      : flowState.startDrill.phase;
+  const reactionLights = flowState.startDrill.lightsOnCount;
+  const reactionMs = flowState.startDrill.resultMs;
+  const pitStarted = flowState.pitStop.phase === "running";
+  const pitStep = flowState.pitStop.step;
+  const pitPenalty = flowState.pitStop.penaltyMs;
+  const pitMessage = flowState.pitStop.message;
+  const pitTimeMs = flowState.pitStop.resultMs;
+  const bestReactionMs = flowState.bestReactionMs;
+  const bestScore = flowState.bestScore;
 
   const totalLaps = weekendQuestions.length;
   const pitStopLap = Math.floor(totalLaps / 2);
@@ -236,9 +241,13 @@ export default function Home() {
   const isCurrentTutorialCorrect =
     tutorialSelected !== null && tutorialSelected === tutorialCurrent.answer;
 
-  const hasCompletedStartDrill = reactionMs !== null;
-  const hasPitStopCheckpoint = pitStopDone || pitStopSkipped || pitTimeMs !== null;
-  const hasCompletedPitStop = pitTimeMs !== null;
+  const hasCompletedStartDrill = selectStartComplete(flowState);
+  const hasCompletedPitStop = selectPitComplete(flowState);
+  const showStartDrillWarning = selectStartWarning(flowState);
+  const showPitWarning = selectPitWarning(flowState);
+  const showStartSkip = selectStartSkipVisible(flowState);
+  const showPitSkip = selectPitSkipVisible(flowState);
+  const finishChips = selectFinishChips(flowState);
 
   const quizProgress = useMemo(() => ((currentLap + 1) / totalLaps) * 100, [currentLap, totalLaps]);
   const activePitBands = useMemo(
@@ -398,8 +407,8 @@ export default function Home() {
   const bestScoreValueClass = getScoreValueClass(bestScore);
 
   const formationActive = true;
-  const grandPrixActive = reactionMs !== null;
-  const pitStopActive = pitStopDone && !pitStopSkipped;
+  const grandPrixActive = hasCompletedStartDrill;
+  const pitStopActive = hasCompletedPitStop;
   const chequeredActive = stage === "finish_intro" || stage === "finished";
   const grandPrixBand = reactionMs === null ? null : getReactionBand(reactionMs);
   const pitStopBand = pitTimeMs === null ? null : getPitBand(pitTimeMs, activePitBands);
@@ -464,6 +473,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (bestReactionMs === null) return;
+    window.localStorage.setItem("f1-best-reaction-ms", String(bestReactionMs));
+  }, [bestReactionMs]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("f1-best-score", String(bestScore));
+  }, [bestScore]);
+
+  useEffect(() => {
     return () => {
       timersRef.current.forEach((timer) => window.clearTimeout(timer));
       soundTimersRef.current.forEach((timer) => window.clearTimeout(timer));
@@ -489,12 +509,6 @@ export default function Home() {
       window.clearTimeout(finishTimerRef.current);
       finishTimerRef.current = null;
     }
-  };
-
-  const enterStartDrillState = () => {
-    clearReactionTimers();
-    setReactionLights(0);
-    setReactionPhase(hasCompletedStartDrill ? "success" : "idle");
   };
 
   const playBeep = (
@@ -617,92 +631,35 @@ export default function Home() {
     } else {
       playAnswerWrongSound();
     }
-    setTutorialAnswers((previousAnswers) => {
-      const nextAnswers = [...previousAnswers];
-      nextAnswers[tutorialStep] = optionIndex;
-      return nextAnswers;
-    });
+    dispatch({ type: "TUTORIAL_PICK", optionIndex });
   };
 
   const goToNextBriefing = () => {
     playArrowButtonSound();
-
-    if (tutorialStep < tutorialSteps.length - 1) {
-      setTutorialStep((prev) => prev + 1);
-      return;
-    }
-
-    setFormationMode("drill");
+    dispatch({ type: "TUTORIAL_NEXT" });
   };
 
   const goToPreviousBriefing = () => {
     playArrowButtonSound();
-    if (tutorialStep === 0) {
-      setFormationMode("intro");
-      setTutorialStep(0);
-      return;
-    }
-    setTutorialStep((prev) => prev - 1);
+    dispatch({ type: "TUTORIAL_PREVIOUS" });
   };
 
   const skipFormationLab = () => {
     playArrowButtonSound();
-    setFormationMode("drill");
+    dispatch({ type: "FORMATION_SKIP_TO_DRILL" });
   };
 
   const startFormationLapTutorial = () => {
     playArrowButtonSound();
-    setTutorialStep(0);
-    setFormationMode("briefing");
+    dispatch({ type: "START_FORMATION_TUTORIAL" });
   };
 
   const jumpToTrackCard = (target: TrackTarget) => {
     playArrowButtonSound();
     clearReactionTimers();
     clearFinishTimer();
-    setReactionPhase("idle");
-    setReactionLights(0);
-    setPitStarted(false);
     pitStartRef.current = null;
-
-    if (target.kind === "formation_intro") {
-      setStage("formation");
-      setFormationMode("intro");
-      setTutorialStep(0);
-      return;
-    }
-
-    if (target.kind === "formation_drill") {
-      setStage("formation");
-      setFormationMode("drill");
-      setTutorialStep(tutorialSteps.length - 1);
-      enterStartDrillState();
-      return;
-    }
-
-    if (target.kind === "pitstop") {
-      setStage("pitstop");
-      setCurrentLap(pitStopLap);
-      return;
-    }
-
-    if (target.kind === "finish") {
-      setStage("finished");
-      setCurrentLap(Math.max(totalLaps - 1, 0));
-      return;
-    }
-
-    if (target.kind === "tutorial") {
-      const safeStep = Math.max(0, Math.min(target.stepIndex, tutorialSteps.length - 1));
-      setStage("formation");
-      setFormationMode("briefing");
-      setTutorialStep(safeStep);
-      return;
-    }
-
-    const safeLap = Math.max(0, Math.min(target.lapIndex, totalLaps - 1));
-    setStage("race");
-    setCurrentLap(safeLap);
+    dispatch({ type: "NAVIGATE", target });
   };
 
   const startReactionSequence = (withActivationBeep = true) => {
@@ -712,12 +669,11 @@ export default function Home() {
     if (withActivationBeep) {
       playPrepActionSound();
     }
-    setReactionPhase("countdown");
-    setReactionLights(0);
+    dispatch({ type: "START_DRILL_INITIATE" });
 
     for (let i = 1; i <= 5; i += 1) {
       const timer = window.setTimeout(() => {
-        setReactionLights(i);
+        dispatch({ type: "START_DRILL_SET_LIGHTS", lightsOnCount: i });
         playBeep(760 + i * 30, 100);
       }, i * 700);
       timersRef.current.push(timer);
@@ -725,8 +681,7 @@ export default function Home() {
 
     const lightsOutDelay = getReactionLightsOutDelayMs();
     const goTimer = window.setTimeout(() => {
-      setReactionLights(0);
-      setReactionPhase("go");
+      dispatch({ type: "START_DRILL_GO" });
       goTimeRef.current = getNowMs();
       playBeep(520, 180);
     }, lightsOutDelay);
@@ -735,6 +690,7 @@ export default function Home() {
 
   const handleRunAgainStartDrill = () => {
     playRunAgainSound();
+    dispatch({ type: "START_DRILL_RETRY" });
     startReactionSequence(false);
   };
 
@@ -743,75 +699,48 @@ export default function Home() {
   };
 
   const handleReactionTap = () => {
+    dispatch({ type: "START_DRILL_LAUNCH" });
+
     if (reactionPhase === "countdown") {
       clearReactionTimers();
-      setReactionPhase("early");
-      setReactionLights(0);
+      dispatch({ type: "START_DRILL_EARLY" });
       playBeep(220, 220);
       return;
     }
 
     if (reactionPhase === "go" && goTimeRef.current !== null) {
       const time = Math.round(getNowMs() - goTimeRef.current);
-      setReactionMs(time);
-      setStartDrillSkipped(false);
-      setReactionPhase("success");
+      dispatch({ type: "START_DRILL_COMPLETE", timeMs: time });
       clearReactionTimers();
       playBeep(960, 140);
-
-      if (bestReactionMs === null || time < bestReactionMs) {
-        setBestReactionMs(time);
-        window.localStorage.setItem("f1-best-reaction-ms", String(time));
-      }
     }
   };
 
   const goPreviousFromStartDrill = () => {
     playArrowButtonSound();
     clearReactionTimers();
-    setReactionPhase("idle");
-    setReactionLights(0);
-    setFormationMode("briefing");
-    setTutorialStep(tutorialSteps.length - 1);
+    dispatch({ type: "NAVIGATE", target: { kind: "tutorial", stepIndex: tutorialSteps.length - 1 } });
   };
 
   const goNextFromStartDrill = () => {
     playArrowButtonSound();
     clearReactionTimers();
-    setReactionPhase("idle");
-    setReactionLights(0);
-    setStage("race");
-    setCurrentLap(0);
+    dispatch({ type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } });
   };
 
   const skipStartDrill = () => {
-    setStartDrillSkipped(true);
+    dispatch({ type: "START_DRILL_SKIP" });
     goNextFromStartDrill();
   };
 
   const startRace = () => {
-    setStartDrillSkipped(false);
     goNextFromStartDrill();
   };
 
   const goPreviousFromRace = () => {
     if (stage !== "race") return;
     playArrowButtonSound();
-
-    if (currentLap === pitStopLap && hasPitStopCheckpoint) {
-      setStage("pitstop");
-      return;
-    }
-
-    if (currentLap > 0) {
-      setCurrentLap((previousLap) => previousLap - 1);
-      return;
-    }
-
-    enterStartDrillState();
-    setStage("formation");
-    setFormationMode("drill");
-    setTutorialStep(tutorialSteps.length - 1);
+    dispatch({ type: "RACE_PREVIOUS" });
   };
 
   const handlePick = (optionIndex: number) => {
@@ -822,27 +751,16 @@ export default function Home() {
     } else {
       playAnswerWrongSound();
     }
-    setLapAnswers((previousAnswers) => {
-      const nextAnswers = [...previousAnswers];
-      nextAnswers[currentLap] = optionIndex;
-      return nextAnswers;
-    });
+    dispatch({ type: "RACE_PICK", optionIndex });
   };
 
   const runFinishSequence = () => {
     clearFinishTimer();
-    setBestScore((previousBest) => {
-      if (score > previousBest) {
-        window.localStorage.setItem("f1-best-score", String(score));
-        return score;
-      }
-      return previousBest;
-    });
-    setStage("finish_intro");
+    dispatch({ type: "START_FINISH_INTRO" });
     playFinishFanfare();
 
     finishTimerRef.current = window.setTimeout(() => {
-      setStage("finished");
+      dispatch({ type: "FINISH_INTRO_DONE" });
       finishTimerRef.current = null;
     }, 2600);
   };
@@ -854,21 +772,11 @@ export default function Home() {
     }
 
     playArrowButtonSound();
-
-    const nextLap = currentLap + 1;
-    setCurrentLap(nextLap);
-
-    if (nextLap === pitStopLap) {
-      setStage("pitstop");
-    }
+    dispatch({ type: "RACE_NEXT" });
   };
 
   const startPitStop = () => {
-    setPitStarted(true);
-    setPitStep(0);
-    setPitPenalty(0);
-    setPitTimeMs(null);
-    setPitMessage("go go go. lock the tires in order.");
+    dispatch({ type: "PIT_BEGIN" });
     pitStartRef.current = getNowMs();
   };
 
@@ -879,11 +787,13 @@ export default function Home() {
 
   const handleRetryPitStop = () => {
     playRunAgainSound();
-    startPitStop();
+    dispatch({ type: "PIT_RETRY" });
+    pitStartRef.current = getNowMs();
   };
 
   const handlePitClick = (tireIndex: number) => {
     if (!pitStarted || pitTimeMs !== null) return;
+    dispatch({ type: "PIT_CLICK", tireIndex });
 
     const expectedTire = pitOrder[pitStep];
 
@@ -893,57 +803,41 @@ export default function Home() {
           getNowMs() - (pitStartRef.current ?? getNowMs()) + pitPenalty,
         );
 
-        setPitTimeMs(elapsed);
-        setPitStarted(false);
-        setPitStopDone(true);
-        setPitStopSkipped(false);
-        setPitMessage("pit stop complete.");
+        dispatch({ type: "PIT_COMPLETE", timeMs: elapsed });
         playBeep(1000, 140);
         return;
       }
 
-      const nextStep = pitStep + 1;
-      setPitStep(nextStep);
-      setPitMessage(`nice. now lock ${tireLabels[pitOrder[nextStep]]}.`);
+      dispatch({ type: "PIT_ADVANCE" });
       playBeep(860, 90);
       return;
     }
 
-    setPitPenalty((prev) => prev + 300);
-    setPitMessage("wrong corner. +300ms penalty.");
+    dispatch({ type: "PIT_ADD_PENALTY", amountMs: 300 });
     playBeep(260, 180);
   };
 
   const goPreviousFromPitStop = () => {
     playArrowButtonSound();
-    setPitStarted(false);
     pitStartRef.current = null;
-    setStage("race");
-    setCurrentLap(Math.max(pitStopLap - 1, 0));
+    dispatch({ type: "NAVIGATE", target: { kind: "lap", lapIndex: Math.max(pitStopLap - 1, 0) } });
   };
 
   const goNextFromPitStop = () => {
     playArrowButtonSound();
-    setPitStarted(false);
     pitStartRef.current = null;
-    setStage("race");
-    setCurrentLap(pitStopLap);
+    dispatch({ type: "NAVIGATE", target: { kind: "lap", lapIndex: pitStopLap } });
   };
 
   const skipPitStop = () => {
-    setPitStopDone(true);
-    setPitStopSkipped(true);
-    setPitStarted(false);
-    setPitTimeMs(null);
-    setPitMessage("pit stop skipped.");
+    dispatch({ type: "PIT_SKIP" });
     pitStartRef.current = null;
     goNextFromPitStop();
   };
 
   const goPreviousFromFinish = () => {
     playArrowButtonSound();
-    setStage("race");
-    setCurrentLap(totalLaps - 1);
+    dispatch({ type: "GO_PREVIOUS_FROM_FINISH" });
   };
 
   const restartWeekend = () => {
@@ -952,29 +846,8 @@ export default function Home() {
     clearFinishTimer();
     playRestartSound();
 
-    setStage("formation");
-    setFormationMode("intro");
     const nextWeekendQuestions = getRandomWeekendQuestions();
-    setWeekendQuestions(nextWeekendQuestions);
-
-    setCurrentLap(0);
-    setLapAnswers(nextWeekendQuestions.map(() => null));
-
-    setTutorialStep(0);
-    setTutorialAnswers(tutorialSteps.map(() => null));
-
-    setReactionPhase("idle");
-    setReactionLights(0);
-    setReactionMs(null);
-    setStartDrillSkipped(false);
-
-    setPitStopDone(false);
-    setPitStarted(false);
-    setPitStep(0);
-    setPitPenalty(0);
-    setPitMessage("pit window open. hit begin when you're ready.");
-    setPitTimeMs(null);
-    setPitStopSkipped(false);
+    dispatch({ type: "RESTART_WEEKEND", weekendQuestions: nextWeekendQuestions });
     pitStartRef.current = null;
   };
 
@@ -1489,13 +1362,13 @@ export default function Home() {
                       </div>
                     )}
 
-                    {reactionMs === null && startDrillSkipped && (
+                    {showStartDrillWarning && (
                       <p className="font-[family-name:var(--font-manrope)] text-sm font-semibold text-red-300">
                         start-drill incomplete.
                       </p>
                     )}
 
-                    {!hasCompletedStartDrill && (
+                    {showStartSkip && (
                       <div className="mt-auto flex flex-wrap items-center gap-2">
                         <Button
                           variant="flat"
@@ -1650,7 +1523,7 @@ export default function Home() {
                     </div>
 
                     <div className="rounded-xl border border-zinc-600 bg-zinc-900/70 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100">
-                      {pitTimeMs === null && pitStopSkipped ? (
+                      {showPitWarning ? (
                         <>
                           <p className="font-semibold text-red-300">pit stop incomplete.</p>
                           <p className="mt-1.5 text-zinc-400">penalty total: {pitPenalty}ms</p>
@@ -1703,7 +1576,7 @@ export default function Home() {
                       )}
                     </div>
 
-                    {!hasCompletedPitStop && (
+                    {showPitSkip && (
                       <div className="flex w-full flex-wrap items-center gap-2">
                         <Button
                           variant="flat"
@@ -1980,11 +1853,11 @@ export default function Home() {
                           className="mt-auto flex flex-col gap-3"
                         >
                           <div className="flex flex-wrap gap-2">
-                            {reactionMs !== null ? (
+                            {finishChips.startDrill.kind === "time" && finishChips.startDrill.timeMs !== null ? (
                               <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
                                 start-drill
-                                <span className={`ml-1 font-bold ${getReactionValueClass(reactionMs)}`}>
-                                  {reactionMs}ms
+                                <span className={`ml-1 font-bold ${getReactionValueClass(finishChips.startDrill.timeMs)}`}>
+                                  {finishChips.startDrill.timeMs}ms
                                 </span>
                               </Chip>
                             ) : (
@@ -1992,14 +1865,16 @@ export default function Home() {
                                 variant="flat"
                                 className="border border-red-300/40 bg-red-500/20 text-red-200"
                               >
-                                start-drill skipped
+                                {finishChips.startDrill.label}
                               </Chip>
                             )}
-                            {pitTimeMs !== null ? (
+                            {finishChips.pitStop.kind === "time" && finishChips.pitStop.timeMs !== null ? (
                               <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
                                 pit stop
-                                <span className={`ml-1 font-bold ${getPitValueClass(pitTimeMs, activePitBands)}`}>
-                                  {pitTimeMs}ms
+                                <span
+                                  className={`ml-1 font-bold ${getPitValueClass(finishChips.pitStop.timeMs, activePitBands)}`}
+                                >
+                                  {finishChips.pitStop.timeMs}ms
                                 </span>
                               </Chip>
                             ) : (
@@ -2007,7 +1882,7 @@ export default function Home() {
                                 variant="flat"
                                 className="border border-red-300/40 bg-red-500/20 text-red-200"
                               >
-                                pit stop skipped
+                                {finishChips.pitStop.label}
                               </Chip>
                             )}
                             <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
