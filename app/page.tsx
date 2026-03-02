@@ -1254,7 +1254,7 @@ export default function Home() {
                       quick warmup before lights out.
                     </p>
                     <p className="font-[family-name:var(--font-manrope)] text-sm text-zinc-300">
-                      let&apos;s weave and get some heat in your tyres.
+                      let&apos;s get some heat in your tyres.
                     </p>
 
                     <div className="flex flex-wrap items-center gap-2">
