@@ -286,7 +286,7 @@ export default function Home() {
       return {
         id: `sparkle-${index}`,
         left: `${76 + Math.cos(angle) * radiusX}%`,
-        top: `${38 + Math.sin(angle) * radiusY}%`,
+        top: `${44 + Math.sin(angle) * radiusY}%`,
         delay: 1.5 + index * 0.18,
       };
     });
