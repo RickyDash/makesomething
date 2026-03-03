@@ -61,7 +61,7 @@ const questionBank: Question[] = [
       "radio messages",
       "major car setup changes",
       "pit stop practice",
-      "tire blankets"
+      "tyre blankets"
     ],
     "answer": 1,
     "fact": "parc ferme rules lock most setup changes between qualifying and race start.",
@@ -84,7 +84,7 @@ const questionBank: Question[] = [
     "options": [
       "pit immediately",
       "follow a reduced delta pace",
-      "switch to wet tires",
+      "switch to wet tyres",
       "line up on the grid"
     ],
     "answer": 1,
@@ -128,7 +128,7 @@ const questionBank: Question[] = [
     "event": "flag signal"
   },
   {
-    "prompt": "which tire is designed for damp conditions without standing water?",
+    "prompt": "which tyre is designed for damp conditions without standing water?",
     "options": [
       "soft",
       "intermediate",
@@ -137,10 +137,10 @@ const questionBank: Question[] = [
     ],
     "answer": 1,
     "fact": "intermediates are made for a damp track and light spray conditions.",
-    "event": "tire strategy"
+    "event": "tyre strategy"
   },
   {
-    "prompt": "which tire is designed for heavy rain and standing water?",
+    "prompt": "which tyre is designed for heavy rain and standing water?",
     "options": [
       "hard",
       "intermediate",
@@ -148,8 +148,8 @@ const questionBank: Question[] = [
       "medium"
     ],
     "answer": 2,
-    "fact": "full wet tires clear much more water than intermediates.",
-    "event": "tire strategy"
+    "fact": "full wet tyres clear much more water than intermediates.",
+    "event": "tyre strategy"
   },
   {
     "prompt": "what is a chicane?",
@@ -157,7 +157,7 @@ const questionBank: Question[] = [
       "a long straight",
       "a quick left-right or right-left sequence",
       "a pit lane tool",
-      "a wet tire type"
+      "a wet tyre type"
     ],
     "answer": 1,
     "fact": "a chicane is a rapid change of direction added to slow cars down.",
@@ -260,7 +260,7 @@ const questionBank: Question[] = [
     "event": "race format"
   },
   {
-    "prompt": "which company supplies f1 tires in the current era?",
+    "prompt": "which company supplies f1 tyres in the current era?",
     "options": [
       "bridgestone",
       "michelin",
@@ -268,7 +268,7 @@ const questionBank: Question[] = [
       "goodyear"
     ],
     "answer": 2,
-    "fact": "pirelli is the current official tire supplier in formula 1.",
+    "fact": "pirelli is the current official tyre supplier in formula 1.",
     "event": "paddock tech"
   },
   {
@@ -754,7 +754,7 @@ const questionBank: Question[] = [
   {
     "prompt": "what is 'porpoising' that plagued teams in 2022?",
     "options": [
-      "excessive tire wear",
+      "excessive tyre wear",
       "car bouncing violently at high speed",
       "engine overheating",
       "gearbox vibrations"
@@ -805,7 +805,7 @@ const questionBank: Question[] = [
       "rain spray",
       "head impacts from debris",
       "engine fires",
-      "tire blowouts"
+      "tyre blowouts"
     ],
     "answer": 1,
     "fact": "the halo has been credited with saving multiple lives since its introduction in 2018, including romain grosjean's fiery 2020 crash.",
@@ -824,15 +824,15 @@ const questionBank: Question[] = [
     "event": "iconic moment"
   },
   {
-    "prompt": "if it starts raining mid-race, who makes the call to switch to wet tires?",
+    "prompt": "if it starts raining mid-race, who makes the call to switch to wet tyres?",
     "options": [
       "the fia race director",
       "the driver and their team",
       "the safety car driver",
-      "the tire supplier pirelli"
+      "the tyre supplier pirelli"
     ],
     "answer": 1,
-    "fact": "tire strategy including weather calls is entirely the team's decision — getting the timing right can make or break a race.",
+    "fact": "tyre strategy including weather calls is entirely the team's decision — getting the timing right can make or break a race.",
     "event": "strategy call"
   },
   {
@@ -886,13 +886,13 @@ const questionBank: Question[] = [
   {
     "prompt": "what is 'the undercut' referring to when commentators say 'they've pulled off the undercut'?",
     "options": [
-      "overtaking by pitting earlier and using fresh tire pace",
+      "overtaking by pitting earlier and using fresh tyre pace",
       "diving up the inside at a chicane",
       "blocking a car on a straight",
       "running wide to gain an advantage"
     ],
     "answer": 0,
-    "fact": "a successful undercut means your out-lap on fresh tires was fast enough to jump ahead of someone who stayed out.",
+    "fact": "a successful undercut means your out-lap on fresh tyres was fast enough to jump ahead of someone who stayed out.",
     "event": "strategy call"
   },
   {
@@ -976,7 +976,7 @@ const questionBank: Question[] = [
       "the brakes are locking up"
     ],
     "answer": 1,
-    "fact": "understeer means the car pushes wide — the front tires lose grip before the rears.",
+    "fact": "understeer means the car pushes wide — the front tyres lose grip before the rears.",
     "event": "driving feel"
   },
   {
@@ -1004,16 +1004,16 @@ const questionBank: Question[] = [
     "event": "f1 culture"
   },
   {
-    "prompt": "what does 'graining' look like on an f1 tire?",
+    "prompt": "what does 'graining' look like on an f1 tyre?",
     "options": [
       "small rubber pellets rolling across the surface",
       "visible cracks in the sidewall",
-      "the tire turning white",
+      "the tyre turning white",
       "smoke pouring from the contact patch"
     ],
     "answer": 0,
-    "fact": "graining occurs when the tire surface tears into tiny rolls of rubber, usually when the tire is too cold or sliding too much.",
-    "event": "tire management"
+    "fact": "graining occurs when the tyre surface tears into tiny rolls of rubber, usually when the tyre is too cold or sliding too much.",
+    "event": "tyre management"
   },
   {
     "prompt": "what is the 'parc ferme' period in an f1 weekend?",
@@ -1072,7 +1072,7 @@ const questionBank: Question[] = [
       "the steering goes heavy"
     ],
     "answer": 1,
-    "fact": "oversteer happens when the rear tires lose grip before the fronts, rotating the car more than the driver intended.",
+    "fact": "oversteer happens when the rear tyres lose grip before the fronts, rotating the car more than the driver intended.",
     "event": "driving feel"
   },
   {
@@ -1114,13 +1114,13 @@ const questionBank: Question[] = [
   {
     "prompt": "why do f1 drivers weave side to side on the formation lap?",
     "options": [
-      "to warm up their tires",
+      "to warm up their tyres",
       "to test their steering",
       "to wave to fans",
       "to check mirrors"
     ],
     "answer": 0,
-    "fact": "weaving generates lateral friction that heats the tire surface, crucial for grip at the standing start.",
+    "fact": "weaving generates lateral friction that heats the tyre surface, crucial for grip at the standing start.",
     "event": "race craft"
   },
   {
@@ -1163,7 +1163,7 @@ const questionBank: Question[] = [
     "prompt": "what is 'sandbagging' in the context of f1 practice sessions?",
     "options": [
       "deliberately hiding true pace to mislead rivals",
-      "running with extra weight for tire testing",
+      "running with extra weight for tyre testing",
       "a penalty for blocking in the pit lane",
       "using sandbags for ballast"
     ],
@@ -1198,7 +1198,7 @@ const questionBank: Question[] = [
   {
     "prompt": "what does 'flat out' mean in f1 driver language?",
     "options": [
-      "the tires are completely worn",
+      "the tyres are completely worn",
       "driving at maximum speed without lifting",
       "the car is bottoming out on the track",
       "running on fumes"
@@ -1220,28 +1220,28 @@ const questionBank: Question[] = [
     "event": "radio call"
   },
   {
-    "prompt": "why do teams put tire blankets on the wheels before a pit stop?",
+    "prompt": "why do teams put tyre blankets on the wheels before a pit stop?",
     "options": [
-      "to keep the tires at optimal temperature",
-      "to hide the tire compound from rivals",
+      "to keep the tyres at optimal temperature",
+      "to hide the tyre compound from rivals",
       "to protect them from debris",
       "to prevent sun damage to the rubber"
     ],
     "answer": 0,
-    "fact": "heated tire blankets keep rubber at around 70-80°c so drivers have immediate grip when they rejoin the track.",
+    "fact": "heated tyre blankets keep rubber at around 70-80°c so drivers have immediate grip when they rejoin the track.",
     "event": "pit strategy"
   },
   {
     "prompt": "what are the 'marbles' that drivers try to avoid on track?",
     "options": [
-      "small balls of rubber shed from tires that litter the track surface",
+      "small balls of rubber shed from tyres that litter the track surface",
       "loose gravel from the run-off",
       "rain droplets on the racing line",
       "debris from broken front wings"
     ],
     "answer": 0,
     "fact": "marbles collect off the racing line and are extremely slippery — running over them can cause a car to snap sideways.",
-    "event": "tire management"
+    "event": "tyre management"
   },
   {
     "prompt": "what does 'lights out and away we go' signal?",
