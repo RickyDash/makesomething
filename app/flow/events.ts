@@ -20,7 +20,7 @@ export type FlowEvent =
   | { type: "RACE_NEXT" }
   | { type: "RACE_PREVIOUS" }
   | { type: "PIT_BEGIN" }
-  | { type: "PIT_CLICK"; tireIndex: number }
+  | { type: "PIT_CLICK"; tyreIndex: number }
   | { type: "PIT_ADVANCE" }
   | { type: "PIT_ADD_PENALTY"; amountMs: number }
   | { type: "PIT_COMPLETE"; timeMs: number }

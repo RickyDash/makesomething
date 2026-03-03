@@ -7,7 +7,7 @@ import {
   type TrackTarget,
 } from "./types";
 
-const tireLabels = ["front left", "front right", "rear left", "rear right"] as const;
+const tyreLabels = ["front left", "front right", "rear left", "rear right"] as const;
 const pitOrder = [0, 1, 2, 3] as const;
 
 const getPitStopLap = (totalLaps: number) => Math.floor(totalLaps / 2);
@@ -427,7 +427,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         pitStop: {
           ...state.pitStop,
           step: nextStep,
-          message: `nice. now lock ${tireLabels[pitOrder[nextStep]]}.`,
+          message: `nice. now lock ${tyreLabels[pitOrder[nextStep]]}.`,
         },
       };
     }

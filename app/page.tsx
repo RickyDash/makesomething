@@ -55,7 +55,7 @@ const tutorialSteps: TutorialStep[] = [
   },
 ];
 
-const tireLabels = ["front left", "front right", "rear left", "rear right"] as const;
+const tyreLabels = ["front left", "front right", "rear left", "rear right"] as const;
 const pitOrder = [0, 1, 2, 3] as const;
 
 const DESKTOP_GRAND_PRIX_MARKER_POS = 24;
@@ -791,13 +791,13 @@ export default function Home() {
     pitStartRef.current = getNowMs();
   };
 
-  const handlePitClick = (tireIndex: number) => {
+  const handlePitClick = (tyreIndex: number) => {
     if (!pitStarted || pitTimeMs !== null) return;
-    dispatch({ type: "PIT_CLICK", tireIndex });
+    dispatch({ type: "PIT_CLICK", tyreIndex });
 
-    const expectedTire = pitOrder[pitStep];
+    const expectedTyre = pitOrder[pitStep];
 
-    if (tireIndex === expectedTire) {
+    if (tyreIndex === expectedTyre) {
       if (pitStep === pitOrder.length - 1) {
         const elapsed = Math.round(
           getNowMs() - (pitStartRef.current ?? getNowMs()) + pitPenalty,
@@ -1495,16 +1495,16 @@ export default function Home() {
                     </div>
 
                     <h2 className="font-[family-name:var(--font-space-grotesk)] text-[1.325rem] font-semibold text-white">
-                      tire change sprint
+                      tyre change sprint
                     </h2>
 
                     <p className="font-[family-name:var(--font-manrope)] text-sm text-zinc-300">
-                      lock tires in order: front left, front right, rear left, rear right. wrong corner adds
+                      lock tyres in order: front left, front right, rear left, rear right. wrong corner adds
                       300ms.
                     </p>
 
                     <div className="grid grid-cols-2 gap-2">
-                      {tireLabels.map((label, index) => {
+                      {tyreLabels.map((label, index) => {
                         const expected = pitOrder[pitStep] === index;
 
                         return (
@@ -1533,7 +1533,7 @@ export default function Home() {
                           <p>{pitMessage}</p>
                           {pitStarted && (
                             <p className="mt-1.5 text-zinc-400">
-                              target now: <span className="font-semibold capitalize">{tireLabels[pitOrder[pitStep]]}</span>
+                              target now: <span className="font-semibold capitalize">{tyreLabels[pitOrder[pitStep]]}</span>
                             </p>
                           )}
                           <p className="mt-1.5 text-zinc-400">penalty total: {pitPenalty}ms</p>

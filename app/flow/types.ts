@@ -46,4 +46,4 @@ export type FlowState = {
 };
 
 export const PIT_DEFAULT_MESSAGE = "pit window open. hit begin when you're ready.";
-export const PIT_RUNNING_MESSAGE = "go go go. lock the tires in order.";
+export const PIT_RUNNING_MESSAGE = "go go go. lock the tyres in order.";
