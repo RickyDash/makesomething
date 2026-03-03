@@ -792,7 +792,7 @@ export default function Home() {
   };
 
   const handlePitClick = (tyreIndex: number) => {
-    if (!pitStarted || pitTimeMs !== null) return;
+    if (!pitStarted) return;
     dispatch({ type: "PIT_CLICK", tyreIndex });
 
     const expectedTyre = pitOrder[pitStep];
@@ -1523,7 +1523,15 @@ export default function Home() {
                     </div>
 
                     <div className="rounded-xl border border-zinc-600 bg-zinc-900/70 p-3 font-[family-name:var(--font-manrope)] text-sm text-zinc-100">
-                      {showPitWarning ? (
+                      {pitStarted ? (
+                        <>
+                          <p>{pitMessage}</p>
+                          <p className="mt-1.5 text-zinc-400">
+                            target now: <span className="font-semibold capitalize">{tyreLabels[pitOrder[pitStep]]}</span>
+                          </p>
+                          <p className="mt-1.5 text-zinc-400">penalty total: {pitPenalty}ms</p>
+                        </>
+                      ) : showPitWarning ? (
                         <>
                           <p className="font-semibold text-red-300">pit stop incomplete.</p>
                           <p className="mt-1.5 text-zinc-400">penalty total: {pitPenalty}ms</p>
@@ -1531,11 +1539,6 @@ export default function Home() {
                       ) : pitTimeMs === null ? (
                         <>
                           <p>{pitMessage}</p>
-                          {pitStarted && (
-                            <p className="mt-1.5 text-zinc-400">
-                              target now: <span className="font-semibold capitalize">{tyreLabels[pitOrder[pitStep]]}</span>
-                            </p>
-                          )}
                           <p className="mt-1.5 text-zinc-400">penalty total: {pitPenalty}ms</p>
                         </>
                       ) : (

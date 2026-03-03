@@ -112,6 +112,73 @@ describe("flow reducer", () => {
     expect(selectPitComplete(startedThenLeft)).toBe(false);
   });
 
+  it("keeps prior pit score on retry and allows progression during running retry", () => {
+    const retried = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "pitstop" } },
+      { type: "PIT_COMPLETE", timeMs: 1720 },
+      { type: "PIT_RETRY" },
+      { type: "PIT_ADVANCE" },
+    ]);
+
+    expect(retried.pitStop.resultMs).toBe(1720);
+    expect(retried.pitStop.phase).toBe("running");
+    expect(retried.pitStop.step).toBe(1);
+    expect(retried.pitStop.penaltyMs).toBe(0);
+    expect(retried.pitStop.needsAttention).toBe(false);
+    expect(selectPitComplete(retried)).toBe(true);
+    expect(selectPitWarning(retried)).toBe(false);
+  });
+
+  it("clears pit warnings when beginning or retrying a new attempt", () => {
+    const warned = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "pitstop" } },
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 3 } },
+      { type: "NAVIGATE", target: { kind: "pitstop" } },
+    ]);
+
+    expect(selectPitWarning(warned)).toBe(true);
+
+    const begun = run(warned, [{ type: "PIT_BEGIN" }]);
+    expect(begun.pitStop.needsAttention).toBe(false);
+    expect(selectPitWarning(begun)).toBe(false);
+
+    const retried = run(
+      run(begun, [{ type: "PIT_COMPLETE", timeMs: 1720 }]),
+      [{ type: "PIT_RETRY" }],
+    );
+    expect(retried.pitStop.needsAttention).toBe(false);
+    expect(selectPitWarning(retried)).toBe(false);
+  });
+
+  it("overwrites pit score on a newly completed retry", () => {
+    const completedRetry = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "pitstop" } },
+      { type: "PIT_COMPLETE", timeMs: 1720 },
+      { type: "PIT_RETRY" },
+      { type: "PIT_COMPLETE", timeMs: 1810 },
+    ]);
+
+    expect(completedRetry.pitStop.resultMs).toBe(1810);
+    expect(completedRetry.pitStop.phase).toBe("idle");
+    expect(selectPitComplete(completedRetry)).toBe(true);
+    expect(selectPitWarning(completedRetry)).toBe(false);
+  });
+
+  it("keeps prior completion if retry is abandoned mid-run", () => {
+    const leftMidRetry = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "pitstop" } },
+      { type: "PIT_COMPLETE", timeMs: 1720 },
+      { type: "PIT_RETRY" },
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 2 } },
+      { type: "NAVIGATE", target: { kind: "pitstop" } },
+    ]);
+
+    expect(leftMidRetry.pitStop.resultMs).toBe(1720);
+    expect(selectPitComplete(leftMidRetry)).toBe(true);
+    expect(selectPitWarning(leftMidRetry)).toBe(false);
+    expect(leftMidRetry.pitStop.phase).toBe("idle");
+  });
+
   it("keeps skip action incomplete and uses finish summary fallback labels", () => {
     const skippedState = run(moveToStartDrill(), [
       { type: "START_DRILL_SKIP" },

@@ -405,6 +405,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         pitStop: {
           ...state.pitStop,
           attemptStarted: true,
+          needsAttention: false,
           phase: "running",
           step: 0,
           penaltyMs: 0,
@@ -470,6 +471,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         pitStop: {
           ...state.pitStop,
           attemptStarted: true,
+          needsAttention: false,
           phase: "running",
           step: 0,
           penaltyMs: 0,
