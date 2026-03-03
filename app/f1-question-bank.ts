@@ -707,7 +707,7 @@ const questionBank: Question[] = [
     "prompt": "what did sebastian vettel do after winning the 2013 indian gp to celebrate his 4th title?",
     "options": [
       "sprinted to the crowd",
-      "did donuts on the straight",
+      "did doughnuts on the straight",
       "threw his steering wheel",
       "climbed a fence"
     ],

@@ -1745,17 +1745,17 @@ export default function Home() {
                         </motion.div>
 
                         <motion.div
-                          className="pointer-events-none absolute bottom-24 right-40 text-3xl sm:bottom-28 sm:right-52"
+                          className="pointer-events-none absolute bottom-22 right-37 text-3xl sm:bottom-25 sm:right-48"
                           initial={{ opacity: 0, scale: 0.6, rotate: -18 }}
-                          animate={{ opacity: 1, scale: 1, rotate: -7 }}
+                          animate={{ opacity: 1, scale: 1, rotate: -1 }}
                           transition={{ delay: 2, duration: 0.35, ease: "easeOut" }}
                         >
                           🍾
                         </motion.div>
                         <motion.div
-                          className="pointer-events-none absolute bottom-24 right-2 text-3xl sm:bottom-28 sm:right-10"
+                          className="pointer-events-none absolute bottom-18 right-9 text-3xl sm:bottom-21.5 sm:right-15"
                           initial={{ opacity: 0, scale: 0.6, rotate: 18 }}
-                          animate={{ opacity: 1, scale: 1, rotate: 8 }}
+                          animate={{ opacity: 1, scale: 1, rotate: -1 }}
                           transition={{ delay: 2, duration: 0.35, ease: "easeOut" }}
                         >
                           🍾
@@ -1828,7 +1828,7 @@ export default function Home() {
                         </motion.div>
                       ))}
 
-                    <div className="relative flex h-full flex-col gap-3">
+                    <div className="relative flex h-full flex-col gap-3 pt-6 sm:pt-0">
                       <Chip color="default" variant="flat" className="w-fit bg-zinc-800 text-zinc-100">
                         chequered flag
                       </Chip>
@@ -1855,7 +1855,7 @@ export default function Home() {
                           transition={{ duration: 0.35 }}
                           className="mt-auto flex flex-col gap-3"
                         >
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                             {finishChips.startDrill.kind === "time" && finishChips.startDrill.timeMs !== null ? (
                               <Chip variant="flat" className="bg-zinc-800 text-zinc-100">
                                 start-drill
