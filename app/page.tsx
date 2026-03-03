@@ -280,13 +280,15 @@ export default function Home() {
   const finishSparkles = useMemo(() => {
     const count = finishTier === 1 ? 6 : finishTier === 2 ? 4 : 0;
     return Array.from({ length: count }, (_, index) => {
-      const angle = (index / Math.max(count, 1)) * Math.PI * 1.8 + 0.35;
+      const angle = isMobileTrack
+        ? (index / Math.max(count, 1)) * Math.PI * 2 - Math.PI / 2
+        : (index / Math.max(count, 1)) * Math.PI * 1.8 + 0.35;
       const radiusX = 13;
-      const radiusY = 19;
+      const radiusY = isMobileTrack ? 14 : 19;
       return {
         id: `sparkle-${index}`,
         left: `${76 + Math.cos(angle) * radiusX}%`,
-        top: `${44 + Math.sin(angle) * radiusY}%`,
+        top: `${44 + Math.sin(angle) * radiusY + (index === 0 && !isMobileTrack ? -7.2 : 0)}%`,
         delay: 1.5 + index * 0.18,
       };
     });
@@ -1605,7 +1607,14 @@ export default function Home() {
                     <motion.div
                       className="pointer-events-none absolute top-[43%] text-5xl sm:text-6xl"
                       initial={{ left: "6%", y: "-50%" }}
-                      animate={{ left: finishTier === 0 ? "46%" : "76%", y: "-50%" }}
+                      animate={{
+                        left: finishTier === 0
+                          ? "46%"
+                          : isMobileTrack
+                            ? "72%"  // mobile
+                            : "74%", // desktop
+                        y: "-40%",
+                      }}
                       transition={{
                         duration: finishTier === 4 ? 6 : finishTier === 0 ? 2.4 : 2.1,
                         ease: finishTier === 4 ? "linear" : finishTier === 0 ? "easeOut" : "easeInOut",
