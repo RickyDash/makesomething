@@ -121,76 +121,73 @@ const getPitFeedback = (ms: number, bands: PitBands) => {
 const getMarkerInnerClass = (state: MarkerState) =>
   state === "correct" ? "bg-emerald-400" : state === "incorrect" ? "bg-red-500" : "bg-zinc-900";
 
-const getRadioMessage = (
-  currentLap: number,
-  totalLaps: number,
-  score: number,
-  pitStopLap: number,
-  lastAnswerCorrect: boolean | null,
-): string => {
-  const pick = (pool: string[]) => pool[(currentLap * 7 + totalLaps) % pool.length];
+const RADIO_START = [
+  "lights out and away we go, keep it clean through turn one",
+  "okay let's have a good start, stay out of trouble",
+  "green light, go go go, nice and smooth off the line",
+];
+const RADIO_POST_PIT = [
+  "fresh rubber, let's make these tyres count",
+  "new tyres on, push now, we've got pace in hand",
+  "box exit clean, these tyres should be good to the end",
+];
+const RADIO_LAST_LAP = [
+  "last lap, give it everything",
+  "final lap, bring it home",
+  "this is it, one more lap, leave nothing on the table",
+];
+const RADIO_PRE_PIT = [
+  "box box next lap, standby for pit window",
+  "pit next lap, we'll go for a quick stop",
+  "prepare to box next time around",
+];
+const RADIO_FLAWLESS = [
+  "flawless so far, don't lift",
+  "perfect run, keep this pace up",
+  "zero mistakes, you're in the zone",
+];
+const RADIO_STRUGGLING = [
+  "tough weekend, let's finish strong",
+  "keep pushing, anything can happen",
+  "head down, points are still possible",
+];
+const RADIO_CORRECT = [
+  "good pace, tyres are in the window",
+  "nice work, gap's looking healthy",
+  "solid lap, keep this rhythm",
+];
+const RADIO_INCORRECT = [
+  "we'll get that back, stay focused",
+  "no worries, long race ahead",
+  "shake it off, plenty of laps to recover",
+];
+const RADIO_NEUTRAL = [
+  "copy, keep your head down",
+  "understood, maintain position",
+  "roger, stay on plan",
+];
 
-  if (currentLap === 0) {
-    return pick([
-      "lights out and away we go, keep it clean through turn one",
-      "okay let's have a good start, stay out of trouble",
-      "green light, go go go, nice and smooth off the line",
-    ]);
-  }
-  if (currentLap === pitStopLap) {
-    return pick([
-      "fresh rubber, let's make these tyres count",
-      "new tyres on, push now, we've got pace in hand",
-      "box exit clean, these tyres should be good to the end",
-    ]);
-  }
-  if (currentLap === totalLaps - 1) {
-    return pick([
-      "last lap, give it everything",
-      "final lap, bring it home",
-      "this is it, one more lap, leave nothing on the table",
-    ]);
-  }
-  if (currentLap === pitStopLap - 1) {
-    return pick([
-      "box box next lap, standby for pit window",
-      "pit next lap, we'll go for a quick stop",
-      "prepare to box next time around",
-    ]);
-  }
-  if (score > 0 && score === currentLap) {
-    return pick([
-      "flawless so far, don't lift",
-      "perfect run, keep this pace up",
-      "zero mistakes, you're in the zone",
-    ]);
-  }
-  if (score === 0 && currentLap > 2) {
-    return pick([
-      "tough weekend, let's finish strong",
-      "keep pushing, anything can happen",
-      "head down, points are still possible",
-    ]);
-  }
-  if (lastAnswerCorrect === true) {
-    return pick([
-      "good pace, tyres are in the window",
-      "nice work, gap's looking healthy",
-      "solid lap, keep this rhythm",
-    ]);
-  }
-  if (lastAnswerCorrect === false) {
-    return pick([
-      "we'll get that back, stay focused",
-      "no worries, long race ahead",
-      "shake it off, plenty of laps to recover",
-    ]);
-  }
-  return pick([
-    "copy, keep your head down",
-    "understood, maintain position",
-    "roger, stay on plan",
-  ]);
+const getRadioMessage = (opts: {
+  currentLap: number;
+  totalLaps: number;
+  score: number;
+  pitStopLap: number;
+  lastAnswerCorrect: boolean | null;
+}): string => {
+  const { currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect } = opts;
+  // Deterministic pick: branch index adds variety across conditions on the same lap
+  const pick = (pool: string[], branch: number) =>
+    pool[(currentLap * 7 + totalLaps + branch * 13) % pool.length];
+
+  if (currentLap === 0) return pick(RADIO_START, 0);
+  if (currentLap === pitStopLap) return pick(RADIO_POST_PIT, 1);
+  if (currentLap === totalLaps - 1) return pick(RADIO_LAST_LAP, 2);
+  if (currentLap === pitStopLap - 1) return pick(RADIO_PRE_PIT, 3);
+  if (score > 0 && score === currentLap) return pick(RADIO_FLAWLESS, 4);
+  if (score === 0 && currentLap > 2) return pick(RADIO_STRUGGLING, 5);
+  if (lastAnswerCorrect === true) return pick(RADIO_CORRECT, 6);
+  if (lastAnswerCorrect === false) return pick(RADIO_INCORRECT, 7);
+  return pick(RADIO_NEUTRAL, 8);
 };
 
 const clampPercent = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -308,18 +305,6 @@ export default function Home() {
     [lapAnswers, weekendQuestions],
   );
 
-  const lastAnswerCorrect: boolean | null = useMemo(() => {
-    if (currentLap === 0) return null;
-    const prevAnswer = lapAnswers[currentLap - 1];
-    if (prevAnswer === null) return null;
-    return prevAnswer === weekendQuestions[currentLap - 1]?.answer;
-  }, [currentLap, lapAnswers, weekendQuestions]);
-
-  const radioMessage = useMemo(
-    () => getRadioMessage(currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect),
-    [currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect],
-  );
-
   const tutorialCurrent = tutorialSteps[tutorialStep];
   const tutorialSelected = tutorialAnswers[tutorialStep] ?? null;
   const isCurrentTutorialCorrect =
@@ -411,6 +396,18 @@ export default function Home() {
         return answer === weekendQuestion.answer ? "correct" : "incorrect";
       }),
     [lapAnswers, weekendQuestions],
+  );
+
+  const lastAnswerCorrect: boolean | null = useMemo(() => {
+    if (currentLap === 0) return null;
+    const prev = raceMarkerStates[currentLap - 1];
+    if (prev === "unanswered") return null;
+    return prev === "correct";
+  }, [currentLap, raceMarkerStates]);
+
+  const radioMessage = useMemo(
+    () => getRadioMessage({ currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect }),
+    [currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect],
   );
 
   const baseTutorialCheckpoints = useMemo(
