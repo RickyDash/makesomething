@@ -121,6 +121,78 @@ const getPitFeedback = (ms: number, bands: PitBands) => {
 const getMarkerInnerClass = (state: MarkerState) =>
   state === "correct" ? "bg-emerald-400" : state === "incorrect" ? "bg-red-500" : "bg-zinc-900";
 
+const getRadioMessage = (
+  currentLap: number,
+  totalLaps: number,
+  score: number,
+  pitStopLap: number,
+  lastAnswerCorrect: boolean | null,
+): string => {
+  const pick = (pool: string[]) => pool[(currentLap * 7 + totalLaps) % pool.length];
+
+  if (currentLap === 0) {
+    return pick([
+      "lights out and away we go, keep it clean through turn one",
+      "okay let's have a good start, stay out of trouble",
+      "green light, go go go, nice and smooth off the line",
+    ]);
+  }
+  if (currentLap === pitStopLap) {
+    return pick([
+      "fresh rubber, let's make these tyres count",
+      "new tyres on, push now, we've got pace in hand",
+      "box exit clean, these tyres should be good to the end",
+    ]);
+  }
+  if (currentLap === totalLaps - 1) {
+    return pick([
+      "last lap, give it everything",
+      "final lap, bring it home",
+      "this is it, one more lap, leave nothing on the table",
+    ]);
+  }
+  if (currentLap === pitStopLap - 1) {
+    return pick([
+      "box box next lap, standby for pit window",
+      "pit next lap, we'll go for a quick stop",
+      "prepare to box next time around",
+    ]);
+  }
+  if (score > 0 && score === currentLap) {
+    return pick([
+      "flawless so far, don't lift",
+      "perfect run, keep this pace up",
+      "zero mistakes, you're in the zone",
+    ]);
+  }
+  if (score === 0 && currentLap > 2) {
+    return pick([
+      "tough weekend, let's finish strong",
+      "keep pushing, anything can happen",
+      "head down, points are still possible",
+    ]);
+  }
+  if (lastAnswerCorrect === true) {
+    return pick([
+      "good pace, tyres are in the window",
+      "nice work, gap's looking healthy",
+      "solid lap, keep this rhythm",
+    ]);
+  }
+  if (lastAnswerCorrect === false) {
+    return pick([
+      "we'll get that back, stay focused",
+      "no worries, long race ahead",
+      "shake it off, plenty of laps to recover",
+    ]);
+  }
+  return pick([
+    "copy, keep your head down",
+    "understood, maintain position",
+    "roger, stay on plan",
+  ]);
+};
+
 const clampPercent = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 const clampToSegment = (value: number, start: number, end: number, padding = 0.2) => {
@@ -234,6 +306,18 @@ export default function Home() {
         return answer === weekendQuestions[lapIndex]?.answer ? total + 1 : total;
       }, 0),
     [lapAnswers, weekendQuestions],
+  );
+
+  const lastAnswerCorrect: boolean | null = useMemo(() => {
+    if (currentLap === 0) return null;
+    const prevAnswer = lapAnswers[currentLap - 1];
+    if (prevAnswer === null) return null;
+    return prevAnswer === weekendQuestions[currentLap - 1]?.answer;
+  }, [currentLap, lapAnswers, weekendQuestions]);
+
+  const radioMessage = useMemo(
+    () => getRadioMessage(currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect),
+    [currentLap, totalLaps, score, pitStopLap, lastAnswerCorrect],
   );
 
   const tutorialCurrent = tutorialSteps[tutorialStep];
@@ -981,7 +1065,7 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 pb-0.5 pt-3.5">
+              <div className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 pb-0.5 pt-6">
                 <div className="relative mx-2 h-2 rounded-full bg-zinc-700">
                   <motion.div
                     className="absolute left-0 top-0 h-2 rounded-full bg-zinc-100"
@@ -995,6 +1079,16 @@ export default function Home() {
                     animate={{ width: `${raceFillWidth}%` }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   />
+
+                  {stage !== "finish_intro" && stage !== "finished" && (
+                    <motion.div
+                      className="pointer-events-none absolute z-10 -top-5 -translate-x-1/2 text-sm sm:text-base"
+                      animate={{ left: `${currentTrackPercent}%` }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                      🏎️
+                    </motion.div>
+                  )}
 
                   <div className="absolute inset-x-0 top-1/2 h-0">
                     {tutorialCheckpoints.map((leftPercent, stepIndex) => {
@@ -1392,6 +1486,18 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex h-full flex-col gap-2.5"
                   >
+                    <motion.div
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className="flex items-start gap-1.5 border-l-2 border-zinc-600 pl-2.5 py-0.5"
+                    >
+                      <span className="text-xs leading-none mt-px">📻</span>
+                      <p className="font-mono text-[11px] italic leading-snug text-zinc-400">
+                        &ldquo;{radioMessage}&rdquo;
+                      </p>
+                    </motion.div>
+
                     <div className="flex items-center justify-between gap-2">
                       <Chip variant="flat" color="danger" className="capitalize bg-red-400/25 text-red-100">
                         {question.event}
@@ -1713,7 +1819,7 @@ export default function Home() {
                               </span>
                               {finishTier === 2 && (
                                 <motion.div
-                                  className="absolute -top-8 text-2xl"
+                                  className="absolute -top-17 text-2xl"
                                   initial={{ scale: 0, opacity: 0 }}
                                   animate={{ scale: 1, opacity: 1 }}
                                   transition={{ delay: 1.6, type: "spring", stiffness: 360, damping: 16 }}
@@ -1741,7 +1847,7 @@ export default function Home() {
                               </span>
                               {finishTier === 2 && (
                                 <motion.div
-                                  className="absolute -top-7 text-2xl"
+                                  className="absolute -top-18 text-2xl"
                                   initial={{ scale: 0, opacity: 0 }}
                                   animate={{ scale: 1, opacity: 1 }}
                                   transition={{ delay: 1.8, type: "spring", stiffness: 360, damping: 16 }}
