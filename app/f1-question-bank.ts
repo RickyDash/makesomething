@@ -22,24 +22,24 @@ const questionBank: Question[] = [
   {
     "prompt": "what color flag signals immediate race stoppage?",
     "options": [
-      "yellow",
-      "blue",
       "red",
+      "blue",
+      "yellow",
       "black"
     ],
-    "answer": 2,
+    "answer": 0,
     "fact": "a red flag stops the session and sends everyone back to pit lane.",
     "event": "track control"
   },
   {
     "prompt": "what does the chequered flag mean?",
     "options": [
-      "safety car deployed",
-      "session suspended",
       "race finished",
+      "session suspended",
+      "safety car deployed",
       "mandatory pit stop"
     ],
-    "answer": 2,
+    "answer": 0,
     "fact": "the chequered flag marks the end of the race session.",
     "event": "final lap"
   },
@@ -58,192 +58,192 @@ const questionBank: Question[] = [
   {
     "prompt": "what does parc ferme limit after qualifying?",
     "options": [
-      "radio messages",
       "major car setup changes",
+      "radio messages",
       "pit stop practice",
       "tyre blankets"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "parc ferme rules lock most setup changes between qualifying and race start.",
     "event": "regulation check"
   },
   {
     "prompt": "what is the main purpose of the safety car?",
     "options": [
-      "increase race speed",
       "neutralize race pace for safety",
+      "increase race speed",
       "start rain procedures",
       "award half points"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the safety car slows and bunches the field so marshals can work safely.",
     "event": "track control"
   },
   {
     "prompt": "under a virtual safety car, what must drivers do?",
     "options": [
-      "pit immediately",
       "follow a reduced delta pace",
+      "pit immediately",
       "switch to wet tyres",
       "line up on the grid"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "under vsc, drivers follow a minimum delta time instead of racing flat out.",
     "event": "track control"
   },
   {
     "prompt": "what does a blue flag usually indicate?",
     "options": [
-      "rain expected",
       "faster car is lapping you",
+      "rain expected",
       "session suspended",
       "pit lane closed"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "blue flags warn a slower car that a faster one is approaching to lap.",
     "event": "flag signal"
   },
   {
     "prompt": "what does a black flag mean?",
     "options": [
-      "race canceled",
       "car is disqualified and must return",
+      "race canceled",
       "safety car ending",
       "driver wins pole"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "a black flag means disqualification from the session.",
     "event": "flag signal"
   },
   {
     "prompt": "what does a yellow flag mean for drivers?",
     "options": [
-      "full speed racing",
       "danger ahead, no overtaking",
+      "full speed racing",
       "mandatory pit stop",
       "race finished"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "yellow flag means caution and no overtaking in that zone.",
     "event": "flag signal"
   },
   {
     "prompt": "which tyre is designed for damp conditions without standing water?",
     "options": [
-      "soft",
       "intermediate",
+      "soft",
       "full wet",
       "hard"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "intermediates are made for a damp track and light spray conditions.",
     "event": "tyre strategy"
   },
   {
     "prompt": "which tyre is designed for heavy rain and standing water?",
     "options": [
-      "hard",
-      "intermediate",
       "full wet",
+      "intermediate",
+      "hard",
       "medium"
     ],
-    "answer": 2,
+    "answer": 0,
     "fact": "full wet tyres clear much more water than intermediates.",
     "event": "tyre strategy"
   },
   {
     "prompt": "what is a chicane?",
     "options": [
-      "a long straight",
       "a quick left-right or right-left sequence",
+      "a long straight",
       "a pit lane tool",
       "a wet tyre type"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "a chicane is a rapid change of direction added to slow cars down.",
     "event": "track layout"
   },
   {
     "prompt": "what is slipstreaming in f1?",
     "options": [
-      "driving through pit lane",
       "using reduced drag behind another car",
+      "driving through pit lane",
       "locking brakes into a corner",
       "saving fuel under safety car"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "a car behind can gain speed by sitting in lower-pressure air.",
     "event": "overtake setup"
   },
   {
     "prompt": "what is a delta time under safety procedures?",
     "options": [
-      "pit stop target",
       "minimum reference pace drivers must respect",
+      "pit stop target",
       "gap to championship leader",
       "time of day for sunset"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the delta is a target lap pace used to keep speeds controlled.",
     "event": "track control"
   },
   {
     "prompt": "what is an out lap?",
     "options": [
-      "lap returning to pits",
       "lap leaving pits to start a run",
+      "lap returning to pits",
       "final race lap",
       "lap under red flag"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "an out lap starts when a car exits the pit lane before a timed push lap.",
     "event": "qualifying run"
   },
   {
     "prompt": "what is an in lap?",
     "options": [
-      "lap before lights out",
       "lap returning to the pit lane",
+      "lap before lights out",
       "lap under drs",
       "formation lap"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "an in lap is the lap where the driver comes back to pits.",
     "event": "qualifying run"
   },
   {
     "prompt": "what does downforce mainly help with?",
     "options": [
-      "top speed on straights",
       "cornering grip",
+      "top speed on straights",
       "radio quality",
       "fuel flow"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "more downforce improves corner speed but usually increases drag.",
     "event": "car setup"
   },
   {
     "prompt": "when is drs typically enabled in a race?",
     "options": [
-      "anytime in sector 1",
       "when a driver is within one second at detection",
+      "anytime in sector 1",
       "only on the final lap",
       "only in wet races"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "drs is usually available if the chasing car is within one second at the detection point.",
     "event": "overtake setup"
   },
   {
     "prompt": "roughly how long is a full grand prix race distance (except monaco)?",
     "options": [
-      "about 150 km",
-      "about 220 km",
       "about 305 km",
+      "about 220 km",
+      "about 150 km",
       "about 500 km"
     ],
-    "answer": 2,
+    "answer": 0,
     "fact": "f1 races are set to about 305 km, with monaco as the classic exception.",
     "event": "race format"
   },
@@ -262,24 +262,24 @@ const questionBank: Question[] = [
   {
     "prompt": "which company supplies f1 tyres in the current era?",
     "options": [
-      "bridgestone",
-      "michelin",
       "pirelli",
+      "michelin",
+      "bridgestone",
       "goodyear"
     ],
-    "answer": 2,
+    "answer": 0,
     "fact": "pirelli is the current official tyre supplier in formula 1.",
     "event": "paddock tech"
   },
   {
     "prompt": "which era began in 2014 in formula 1?",
     "options": [
-      "v10 return era",
       "turbo-hybrid power unit era",
+      "v10 return era",
       "ground effect ban era",
       "manual gearbox era"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "2014 introduced the current turbo-hybrid power unit regulations.",
     "event": "regulation era"
   },
@@ -646,12 +646,12 @@ const questionBank: Question[] = [
   {
     "prompt": "which team is often called the silver arrows in modern f1?",
     "options": [
-      "red bull",
       "mercedes",
+      "red bull",
       "aston martin",
       "alpine"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "silver arrows is the classic nickname for mercedes motorsport.",
     "event": "team identity"
   },
@@ -682,36 +682,36 @@ const questionBank: Question[] = [
   {
     "prompt": "in 2021, what controversial event decided the championship on the final lap at abu dhabi?",
     "options": [
-      "a red flag restart",
       "a late safety car restart",
+      "a red flag restart",
       "a penalty for max verstappen",
       "a mechanical failure for hamilton"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "a controversial late safety car and restart allowed verstappen to overtake hamilton on the final lap to win the 2021 title.",
     "event": "iconic moment"
   },
   {
     "prompt": "what did lando norris famously lose in russia 2021 by staying out in worsening rain?",
     "options": [
-      "his front wing",
       "his first f1 win",
+      "his front wing",
       "a podium finish",
       "his grid penalty appeal"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "norris led the race but stayed out on slicks as rain intensified, dropping him down the order and handing the win to hamilton.",
     "event": "iconic moment"
   },
   {
     "prompt": "what did sebastian vettel do after winning the 2013 indian gp to celebrate his 4th title?",
     "options": [
-      "sprinted to the crowd",
       "did doughnuts on the straight",
+      "sprinted to the crowd",
       "threw his steering wheel",
       "climbed a fence"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "vettel's iconic donuts on the main straight became one of f1's most memorable celebrations.",
     "event": "iconic moment"
   },
@@ -754,12 +754,12 @@ const questionBank: Question[] = [
   {
     "prompt": "what is 'porpoising' that plagued teams in 2022?",
     "options": [
-      "excessive tyre wear",
       "car bouncing violently at high speed",
+      "excessive tyre wear",
       "engine overheating",
       "gearbox vibrations"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the 2022 ground effect cars caused violent vertical oscillations on straights as downforce rapidly stalled and reattached.",
     "event": "tech drama"
   },
@@ -778,12 +778,12 @@ const questionBank: Question[] = [
   {
     "prompt": "what is a 'megapixel' in f1 slang?",
     "options": [
-      "a really clean qualifying lap",
       "nothing — it's not real f1 slang",
+      "a really clean qualifying lap",
       "a high-res onboard camera",
       "a sponsor deal worth millions"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "there's no such thing as a megapixel in f1 jargon — don't let fake terms trip you up.",
     "event": "bluff call"
   },
@@ -802,12 +802,12 @@ const questionBank: Question[] = [
   {
     "prompt": "what is the 'halo' device on modern f1 cars designed to protect against?",
     "options": [
-      "rain spray",
       "head impacts from debris",
+      "rain spray",
       "engine fires",
       "tyre blowouts"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the halo has been credited with saving multiple lives since its introduction in 2018, including romain grosjean's fiery 2020 crash.",
     "event": "safety tech"
   },
@@ -826,24 +826,24 @@ const questionBank: Question[] = [
   {
     "prompt": "if it starts raining mid-race, who makes the call to switch to wet tyres?",
     "options": [
-      "the fia race director",
       "the driver and their team",
+      "the fia race director",
       "the safety car driver",
       "the tyre supplier pirelli"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "tyre strategy including weather calls is entirely the team's decision — getting the timing right can make or break a race.",
     "event": "strategy call"
   },
   {
     "prompt": "what does 'box box box' mean on f1 team radio?",
     "options": [
-      "penalty incoming",
-      "retire the car",
       "come into the pits this lap",
+      "retire the car",
+      "penalty incoming",
       "push for fastest lap"
     ],
-    "answer": 2,
+    "answer": 0,
     "fact": "'box' comes from the german word for pit stop area and is repeated three times for clarity over radio.",
     "event": "radio call"
   },
@@ -946,12 +946,12 @@ const questionBank: Question[] = [
   {
     "prompt": "what happened when mclaren's pit crew released the car with a wheel gun issue at bahrain 2021?",
     "options": [
-      "nothing unusual",
       "the car was released with a loose wheel",
+      "nothing unusual",
       "the mechanic was dragged along",
       "the pit stop took over 40 seconds"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "unsafe releases remain one of the most dangerous pit stop failures and carry heavy penalties.",
     "event": "pit drama"
   },
@@ -970,24 +970,24 @@ const questionBank: Question[] = [
   {
     "prompt": "what does a driver mean when they report 'understeer' to their engineer?",
     "options": [
-      "the car turns more than expected",
       "the front doesn't turn enough into the corner",
+      "the car turns more than expected",
       "the rear slides out",
       "the brakes are locking up"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "understeer means the car pushes wide — the front tyres lose grip before the rears.",
     "event": "driving feel"
   },
   {
     "prompt": "what is 'dirty air' and why do drivers hate following closely in it?",
     "options": [
-      "exhaust fumes that smell bad",
       "turbulence that reduces the following car's downforce",
+      "exhaust fumes that smell bad",
       "oil spray from the car ahead",
       "brake dust clouding visibility"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "dirty air causes the following car to lose grip in corners, which is why the 2022 rules aimed to reduce this effect.",
     "event": "aero battle"
   },
@@ -1018,24 +1018,24 @@ const questionBank: Question[] = [
   {
     "prompt": "what is the 'parc ferme' period in an f1 weekend?",
     "options": [
-      "the cooldown window after the race ends",
       "a lockdown on car changes between qualifying and race",
+      "the cooldown window after the race ends",
       "the mandatory rest period for drivers overnight",
       "the pre-race media obligations window"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "parc ferme prevents teams from making major setup changes once qualifying ends, ensuring the car you qualified is the car you race.",
     "event": "regulation check"
   },
   {
     "prompt": "what happens if a driver exceeds track limits three times during a race?",
     "options": [
-      "nothing until a fourth offense",
       "they receive a black and white flag warning",
+      "nothing until a fourth offense",
       "immediate 5-second penalty",
       "they must give back any positions gained"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the black and white flag serves as an official warning — further violations lead to time penalties.",
     "event": "regulation check"
   },
@@ -1054,24 +1054,24 @@ const questionBank: Question[] = [
   {
     "prompt": "what was special about the 2021 spa-francorchamps grand prix?",
     "options": [
-      "it was the longest race in f1 history",
       "it lasted only a few laps behind the safety car due to rain",
+      "it was the longest race in f1 history",
       "three drivers were disqualified",
       "it was canceled entirely"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the 2021 belgian gp was widely criticized as a farce — half points were awarded for what was essentially no racing.",
     "event": "race drama"
   },
   {
     "prompt": "what does 'oversteer' feel like to a driver?",
     "options": [
-      "the front washes wide",
       "the rear steps out and the car wants to spin",
+      "the front washes wide",
       "the brakes lock under pressure",
       "the steering goes heavy"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "oversteer happens when the rear tyres lose grip before the fronts, rotating the car more than the driver intended.",
     "event": "driving feel"
   },
@@ -1102,12 +1102,12 @@ const questionBank: Question[] = [
   {
     "prompt": "what does a driver mean when they say the car feels 'on rails'?",
     "options": [
-      "it's stuck behind the safety car",
       "it has perfect grip and balance",
+      "it's stuck behind the safety car",
       "the steering is locked",
       "it's running out of fuel"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "when a car feels 'on rails', the driver has total confidence in the grip level through every corner.",
     "event": "driving feel"
   },
@@ -1126,12 +1126,12 @@ const questionBank: Question[] = [
   {
     "prompt": "what is a 'power unit' in modern f1?",
     "options": [
-      "just the engine",
       "the complete hybrid system including engine, turbo, and electrical motors",
+      "just the engine",
       "the gearbox assembly",
       "the battery pack only"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "a modern f1 power unit combines a v6 turbo engine with mgu-k and mgu-h energy recovery systems producing over 1000hp.",
     "event": "tech specs"
   },
@@ -1174,36 +1174,36 @@ const questionBank: Question[] = [
   {
     "prompt": "what famously happens to the championship leader's car number board?",
     "options": [
-      "it turns gold",
       "it gets a number 1 option for the next season",
+      "it turns gold",
       "it glows on the halo",
       "nothing special"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "the reigning world champion can choose to race with number 1 instead of their permanent number — verstappen has taken it, hamilton never did.",
     "event": "f1 culture"
   },
   {
     "prompt": "what is a safety car restart often called by fans?",
     "options": [
-      "a standing start",
       "a rolling restart",
+      "a standing start",
       "a red flag restart",
       "a formation restart"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "after a safety car period, the leader controls the restart pace and the field goes green at racing speed — no standing start.",
     "event": "race format"
   },
   {
     "prompt": "what does 'flat out' mean in f1 driver language?",
     "options": [
-      "the tyres are completely worn",
       "driving at maximum speed without lifting",
+      "the tyres are completely worn",
       "the car is bottoming out on the track",
       "running on fumes"
     ],
-    "answer": 1,
+    "answer": 0,
     "fact": "taking a corner 'flat out' means the driver keeps full throttle through it — a sign of extreme downforce and bravery.",
     "event": "driving feel"
   },
@@ -1293,7 +1293,18 @@ export const getRandomWeekendQuestions = (): Question[] => {
     [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
   }
 
-  return pool.slice(0, LAPS_PER_WEEKEND);
+  return pool.slice(0, LAPS_PER_WEEKEND).map((q) => {
+    const indices = [0, 1, 2, 3];
+    for (let i = indices.length - 1; i > 0; i -= 1) {
+      const j = getRandomIndex(i + 1);
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return {
+      ...q,
+      options: indices.map((i) => q.options[i]),
+      answer: indices.indexOf(q.answer),
+    };
+  });
 };
 
 export const initialWeekendQuestions = getRandomWeekendQuestions();

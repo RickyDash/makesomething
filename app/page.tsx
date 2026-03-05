@@ -292,7 +292,7 @@ export default function Home() {
         delay: 1.5 + index * 0.18,
       };
     });
-  }, [finishTier]);
+  }, [finishTier, isMobileTrack]);
 
   const pitStopMarkerPos = useMemo(() => {
     const basePosition = grandPrixMarkerPos + raceTrackWidth * (pitStopLap / totalLaps);
