@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev          # Start dev server (Next.js + Turbopack)
 npm run build        # Production build (also runs TypeScript checks)
-npm run lint         # ESLint on app/ directory
+npm run lint         # ESLint on app/, components/, and tests/
 npm run test         # Vitest unit tests (one-shot)
 npm run test:watch   # Vitest in watch mode
 npm run test:e2e     # Playwright end-to-end tests
@@ -34,8 +34,8 @@ The game progresses through stages managed by a `useReducer` in `app/page.tsx`:
 This single file contains the entire game UI. Key sections:
 - **Utility functions** (top) — scoring, feedback text, track geometry helpers like `getSegmentCheckpoints` and `clampToSegment`
 - **Component body** — `useReducer` for flow state, `useMemo` chains for derived values (track positions, marker states, checkpoints), side effects for timers/sounds/localStorage
-- **Track bar** — A horizontal progress bar with animated fill bars, clickable checkpoint markers (diamonds for tutorial, circles for race laps), milestone markers (formation/GP/pit/finish)
-- **Card stages** — Conditional rendering blocks for each stage: formation intro, tutorial cards, start drill (reaction time), race lap cards, pit stop challenge (tyre-clicking minigame), finish screen with podium
+- **Track bar** — A horizontal progress bar with animated fill bars, clickable checkpoint markers (diamonds for tutorial, circles for race laps), a persistent checkered finish diamond, a car that stays visible into finish states, and DNF-only crash accents/`❌` overlays
+- **Card stages** — Conditional rendering blocks for each stage: formation intro, tutorial cards, start drill (reaction time), race lap cards, pit stop challenge (tyre-clicking minigame), and finish/report variants for podium, points, backmarker, and DNF outcomes
 
 ### Question bank (`app/f1-question-bank.ts`)
 
@@ -46,7 +46,8 @@ Pool of F1 trivia questions with `prompt`, `options`, `answer` (index), `fact`, 
 The track bar maps game progress to a 0–100% horizontal range:
 - `formationAnchor` (0%) → `grandPrixMarkerPos` (~24% desktop, ~33% mobile) → `pitStopMarkerPos` (computed from lap ratio) → `finishMarkerPos` (100%)
 - Checkpoints are distributed within segments using `getSegmentCheckpoints()` with edge insets
-- `currentTrackPercent` is a memo that resolves the car's position based on current stage/lap
+- `currentTrackPercent` is a memo that resolves the car's position based on stage, lap, and finish outcome
+- Successful finishes park the mirrored car at the end marker; DNF finishes stop short and add smoke/wrench crash accents plus a finish-marker `❌`
 
 ## Commit Preferences
 

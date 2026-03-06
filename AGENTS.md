@@ -75,6 +75,8 @@ choose fonts that match the user's vibe. don't default to the same font every ti
 
 **files:** build in `app/`. new pages go in `app/pagename/page.tsx`. reusable pieces go in `components/`. keep it flat.
 
+**editor:** when the user asks to open a file at a specific line, use `cursor --goto /absolute/path:line`.
+
 **critical:** always add `"use client"` at the top of page files — HeroUI components require it.
 
 ## off limits

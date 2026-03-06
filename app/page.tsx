@@ -17,7 +17,7 @@ import {
   selectStartWarning,
 } from "./flow/selectors";
 import { createInitialFlowState, flowReducer } from "./flow/reducer";
-import type { TrackTarget } from "./flow/types";
+import type { FormationMode, Stage, TrackTarget } from "./flow/types";
 
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
 type MarkerState = "unanswered" | "correct" | "incorrect";
@@ -226,6 +226,19 @@ const raceMiniBorderColors = [
   "border-zinc-300",
 ] as const;
 
+const mirroredCarStyle = {
+  display: "inline-block",
+  transform: "scaleX(-1)",
+} as const;
+
+const chequeredMarkerFillStyle = {
+  backgroundColor: "#09090b",
+  backgroundImage:
+    "linear-gradient(45deg,#f4f4f5 25%,transparent 25%),linear-gradient(-45deg,#f4f4f5 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#f4f4f5 75%),linear-gradient(-45deg,transparent 75%,#f4f4f5 75%)",
+  backgroundPosition: "0 0, 0 3px, 3px -3px, -3px 0",
+  backgroundSize: "6px 6px",
+} as const;
+
 const getNowMs = () => performance.now();
 const getReactionLightsOutDelayMs = () => 3500 + 900 + Math.random() * 900;
 
@@ -239,6 +252,43 @@ const getStoredBestScore = () => {
   if (typeof window === "undefined") return 0;
   const stored = window.localStorage.getItem("f1-best-score");
   return stored ? Number(stored) : 0;
+};
+
+const getStageTitle = (opts: {
+  stage: Stage;
+  formationMode: FormationMode;
+  currentLap: number;
+  totalLaps: number;
+}) => {
+  const { stage, formationMode, currentLap, totalLaps } = opts;
+
+  if (stage === "formation") {
+    return formationMode === "drill" ? "starting-lights sequence" : "formation lap (practice)";
+  }
+  if (stage === "race") {
+    return `grand prix live · lap ${currentLap + 1}/${totalLaps}`;
+  }
+  if (stage === "pitstop") {
+    return "pit stop window";
+  }
+  if (stage === "finish_intro") {
+    return "chequered flag cutscene";
+  }
+
+  return "race report";
+};
+
+const getNextRaceButtonLabel = (opts: { currentLap: number; totalLaps: number; pitStopLap: number }) => {
+  const { currentLap, totalLaps, pitStopLap } = opts;
+
+  if (currentLap === totalLaps - 1) return "chequered flag ->";
+  if (currentLap === pitStopLap - 1) return "box, box! ->";
+  return "next lap ->";
+};
+
+const clearTimerList = (timerListRef: { current: number[] }) => {
+  timerListRef.current.forEach((timer) => window.clearTimeout(timer));
+  timerListRef.current = [];
 };
 
 export default function Home() {
@@ -450,6 +500,27 @@ export default function Home() {
     [postPitCheckpoints, prePitCheckpoints],
   );
 
+  const progressBarCarFinalPosition = {
+    successOffsetFromFinish: isMobileTrack ? 1.2 : 0.5,
+    dnfStopFactor: isMobileTrack ? 0.36 : 0.5,
+  };
+
+  const progressBarDnfMarkerXPosition = {
+    left: isMobileTrack ? "48%" : "50%",
+    top: isMobileTrack ? "45%" : "42%",
+  };
+
+  const successTrackPercent = useMemo(
+    () => finishAnchor - progressBarCarFinalPosition.successOffsetFromFinish,
+    [finishAnchor, progressBarCarFinalPosition.successOffsetFromFinish],
+  );
+
+  const dnfTrackPercent = useMemo(() => {
+    const lastRaceMarker = raceCheckpoints[raceCheckpoints.length - 1] ?? pitAnchor;
+    const stopFactor = progressBarCarFinalPosition.dnfStopFactor;
+    return lastRaceMarker + (finishAnchor - lastRaceMarker) * stopFactor;
+  }, [finishAnchor, pitAnchor, progressBarCarFinalPosition.dnfStopFactor, raceCheckpoints]);
+
   const currentTrackPercent = useMemo(() => {
     if (stage === "formation") {
       if (formationMode === "intro") return formationAnchor;
@@ -465,15 +536,18 @@ export default function Home() {
       return pitAnchor;
     }
 
-    return finishAnchor;
+    return finishTier === 0 ? dnfTrackPercent : successTrackPercent;
   }, [
     currentLap,
+    dnfTrackPercent,
     finishAnchor,
+    finishTier,
     formationAnchor,
     formationMode,
     grandPrixAnchor,
     pitAnchor,
     raceCheckpoints,
+    successTrackPercent,
     stage,
     tutorialCheckpoints,
     tutorialStep,
@@ -489,10 +563,14 @@ export default function Home() {
   const scoreValueClass = getScoreValueClass(score);
   const bestScoreValueClass = getScoreValueClass(bestScore);
 
+  const isFinishStage = stage === "finish_intro" || stage === "finished";
+  const isDnfFinish = isFinishStage && finishTier === 0;
+  const trackCarMoveDuration = isFinishStage ? 0.16 : 0.3;
+  const trackCrashDelay = 0.18;
   const formationActive = true;
   const grandPrixActive = hasCompletedStartDrill;
   const pitStopActive = hasCompletedPitStop;
-  const chequeredActive = stage === "finish_intro" || stage === "finished";
+  const chequeredActive = isFinishStage;
   const grandPrixBand = reactionMs === null ? null : getReactionBand(reactionMs);
   const pitStopBand = pitTimeMs === null ? null : getPitBand(pitTimeMs, activePitBands);
 
@@ -568,8 +646,8 @@ export default function Home() {
 
   useEffect(() => {
     return () => {
-      timersRef.current.forEach((timer) => window.clearTimeout(timer));
-      soundTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      clearTimerList(timersRef);
+      clearTimerList(soundTimersRef);
       if (finishTimerRef.current !== null) {
         window.clearTimeout(finishTimerRef.current);
       }
@@ -577,14 +655,12 @@ export default function Home() {
   }, []);
 
   const clearReactionTimers = () => {
-    timersRef.current.forEach((timer) => window.clearTimeout(timer));
-    timersRef.current = [];
+    clearTimerList(timersRef);
     goTimeRef.current = null;
   };
 
   const clearSoundTimers = () => {
-    soundTimersRef.current.forEach((timer) => window.clearTimeout(timer));
-    soundTimersRef.current = [];
+    clearTimerList(soundTimersRef);
   };
 
   const clearFinishTimer = () => {
@@ -625,6 +701,23 @@ export default function Home() {
     oscillator.stop(now + durationMs / 1000 + 0.02);
   };
 
+  const playBeepSequence = (opts: {
+    frequencies: number[];
+    noteDurationMs: number;
+    gapMs: number;
+    waveform?: OscillatorType;
+    volume?: number;
+  }) => {
+    const { frequencies, noteDurationMs, gapMs, waveform = "triangle", volume = 0.14 } = opts;
+
+    frequencies.forEach((frequency, index) => {
+      const timer = window.setTimeout(() => {
+        playBeep(frequency, noteDurationMs, { waveform, volume });
+      }, index * (noteDurationMs + gapMs));
+      soundTimersRef.current.push(timer);
+    });
+  };
+
   const playFinishFanfare = () => {
     clearSoundTimers();
 
@@ -642,67 +735,52 @@ export default function Home() {
   };
 
   const playPrepActionSound = () => {
-    const frequencies = [500, 620];
-    const noteDurationMs = 48;
-    const gapMs = 14;
-
-    frequencies.forEach((frequency, index) => {
-      const timer = window.setTimeout(() => {
-        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.14 });
-      }, index * (noteDurationMs + gapMs));
-      soundTimersRef.current.push(timer);
+    playBeepSequence({
+      frequencies: [500, 620],
+      noteDurationMs: 48,
+      gapMs: 14,
+      waveform: "triangle",
+      volume: 0.14,
     });
   };
 
   const playRestartSound = () => {
-    const frequencies = [700, 560, 430];
-    const noteDurationMs = 55;
-    const gapMs = 18;
-
-    frequencies.forEach((frequency, index) => {
-      const timer = window.setTimeout(() => {
-        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.16 });
-      }, index * (noteDurationMs + gapMs));
-      soundTimersRef.current.push(timer);
+    playBeepSequence({
+      frequencies: [700, 560, 430],
+      noteDurationMs: 55,
+      gapMs: 18,
+      waveform: "triangle",
+      volume: 0.16,
     });
   };
 
   const playRunAgainSound = () => {
-    const frequencies = [980, 760];
-    const noteDurationMs = 48;
-    const gapMs = 12;
-
-    frequencies.forEach((frequency, index) => {
-      const timer = window.setTimeout(() => {
-        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.14 });
-      }, index * (noteDurationMs + gapMs));
-      soundTimersRef.current.push(timer);
+    playBeepSequence({
+      frequencies: [980, 760],
+      noteDurationMs: 48,
+      gapMs: 12,
+      waveform: "triangle",
+      volume: 0.14,
     });
   };
 
   const playAnswerCorrectSound = () => {
-    const frequencies = [540, 660, 820];
-    const noteDurationMs = 34;
-    const gapMs = 8;
-
-    frequencies.forEach((frequency, index) => {
-      const timer = window.setTimeout(() => {
-        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.14 });
-      }, index * (noteDurationMs + gapMs));
-      soundTimersRef.current.push(timer);
+    playBeepSequence({
+      frequencies: [540, 660, 820],
+      noteDurationMs: 34,
+      gapMs: 8,
+      waveform: "triangle",
+      volume: 0.14,
     });
   };
 
   const playAnswerWrongSound = () => {
-    const frequencies = [430, 330];
-    const noteDurationMs = 58;
-    const gapMs = 12;
-
-    frequencies.forEach((frequency, index) => {
-      const timer = window.setTimeout(() => {
-        playBeep(frequency, noteDurationMs, { waveform: "triangle", volume: 0.13 });
-      }, index * (noteDurationMs + gapMs));
-      soundTimersRef.current.push(timer);
+    playBeepSequence({
+      frequencies: [430, 330],
+      noteDurationMs: 58,
+      gapMs: 12,
+      waveform: "triangle",
+      volume: 0.13,
     });
   };
 
@@ -934,25 +1012,9 @@ export default function Home() {
     pitStartRef.current = null;
   };
 
-  const stageTitle =
-    stage === "formation"
-      ? formationMode === "drill"
-        ? "starting-lights sequence"
-        : "formation lap (practice)"
-      : stage === "race"
-        ? `grand prix live · lap ${currentLap + 1}/${totalLaps}`
-        : stage === "pitstop"
-          ? "pit stop window"
-          : stage === "finish_intro"
-            ? "chequered flag cutscene"
-            : "race report";
+  const stageTitle = getStageTitle({ stage, formationMode, currentLap, totalLaps });
 
-  const nextRaceButtonLabel =
-    currentLap === totalLaps - 1
-      ? "chequered flag ->"
-      : currentLap === pitStopLap - 1
-        ? "box, box! ->"
-        : "next lap ->";
+  const nextRaceButtonLabel = getNextRaceButtonLabel({ currentLap, totalLaps, pitStopLap });
 
   return (
     <main className="h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] px-3 py-1.5 sm:px-5 sm:py-2">
@@ -1077,15 +1139,67 @@ export default function Home() {
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   />
 
-                  {stage !== "finish_intro" && stage !== "finished" && (
-                    <motion.div
-                      className="pointer-events-none absolute z-10 -top-5 -translate-x-1/2 text-sm sm:text-base"
-                      animate={{ left: `${currentTrackPercent}%` }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
+                  <motion.div
+                    className="pointer-events-none absolute z-10 -top-5 -translate-x-1/2 text-sm sm:text-base relative inline-flex w-fit"
+                    animate={{ left: `${currentTrackPercent}%` }}
+                    transition={{ duration: trackCarMoveDuration, ease: "easeOut" }}
+                  >
+                    {isDnfFinish &&
+                      [0, 1, 2].map((smokeIndex) => (
+                        <motion.span
+                          key={`track-dnf-smoke-${smokeIndex}`}
+                          className="absolute text-[7px] leading-none sm:text-[8px]"
+                          style={{ left: `${-6 - smokeIndex * 5}px`, top: `${4 - smokeIndex}px` }}
+                          initial={false}
+                          animate={{
+                            opacity: [0, 0.85, 0],
+                            x: [0, -3, -7],
+                            y: [0, -2, -4],
+                            scale: [0.7, 1.05, 1.15],
+                          }}
+                          transition={{
+                            duration: 1.05,
+                            delay: trackCrashDelay + smokeIndex * 0.12,
+                            ease: "easeOut",
+                            repeat: Infinity,
+                            repeatDelay: 0.2,
+                          }}
+                        >
+                          💨
+                        </motion.span>
+                      ))}
+
+                    {isDnfFinish && (
+                      <motion.span
+                        className="absolute text-[8px] leading-none sm:text-[9px]"
+                        style={{ left: "8px", top: "-8px" }}
+                        initial={false}
+                        animate={{
+                          opacity: [0, 1, 1],
+                          y: [4, 0, 2],
+                          rotate: [-18, 8, -10],
+                        }}
+                        transition={{
+                          duration: 1.15,
+                          delay: trackCrashDelay + 0.12,
+                          ease: "easeInOut",
+                          repeat: Infinity,
+                          repeatDelay: 0.2,
+                        }}
+                      >
+                        🔧
+                      </motion.span>
+                    )}
+
+                    <motion.span
+                      className="inline-block"
+                      initial={false}
+                      animate={{ scaleX: isDnfFinish ? 1 : -1 }}
+                      transition={{ duration: 0.28, ease: "easeInOut" }}
                     >
                       🏎️
-                    </motion.div>
-                  )}
+                    </motion.span>
+                  </motion.div>
 
                   <div className="absolute inset-x-0 top-1/2 h-0">
                     {tutorialCheckpoints.map((leftPercent, stepIndex) => {
@@ -1169,15 +1283,44 @@ export default function Home() {
                       } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                     />
 
-                    <button
-                      type="button"
-                      aria-label="Go to final race report"
-                      onClick={() => jumpToTrackCard({ kind: "finish" })}
+                    <div
+                      className="absolute top-0 z-[2] -translate-x-1/2 -translate-y-1/2"
                       style={{ left: "100%" }}
-                      className={`absolute top-0 h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 sm:h-5 sm:w-5 ${
-                        chequeredActive ? "border-zinc-400 bg-zinc-100" : "border-zinc-500 bg-zinc-900"
-                      } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
-                    />
+                    >
+                      <button
+                        type="button"
+                        aria-label="Go to final race report"
+                        onClick={() => jumpToTrackCard({ kind: "finish" })}
+                        className={`relative isolate h-4.5 w-4.5 rotate-45 overflow-hidden border-2 sm:h-5 sm:w-5 ${
+                          chequeredActive ? "border-zinc-300" : "border-zinc-500"
+                        } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-0 -rotate-45 scale-[1.4]"
+                          style={chequeredMarkerFillStyle}
+                        />
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none absolute inset-0 ${
+                            chequeredActive ? "bg-white/8" : "bg-zinc-950/28"
+                          }`}
+                        />
+                      </button>
+
+                      {isDnfFinish && (
+                        <motion.span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute z-[3] -translate-x-1/2 -translate-y-1/2 text-[14px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] sm:text-[16px]"
+                          style={progressBarDnfMarkerXPosition}
+                          initial={{ opacity: 0, scale: 0.65, rotate: -12 }}
+                          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                          transition={{ delay: 0.16, duration: 0.2, ease: "easeOut" }}
+                        >
+                          ❌
+                        </motion.span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1712,7 +1855,9 @@ export default function Home() {
                       initial={{ left: "6%", y: "-50%" }}
                       animate={{
                         left: finishTier === 0
-                          ? "46%"
+                          ? isMobileTrack
+                            ? "51%"
+                            : "46%"
                           : isMobileTrack
                             ? "72%"  // mobile
                             : "74%", // desktop
@@ -1723,7 +1868,7 @@ export default function Home() {
                         ease: finishTier === 4 ? "linear" : finishTier === 0 ? "easeOut" : "easeInOut",
                       }}
                     >
-                      🏎️
+                      {finishTier === 0 ? "🏎️" : <span style={mirroredCarStyle}>🏎️</span>}
                     </motion.div>
 
                     {finishTier === 0 && (
@@ -1731,11 +1876,17 @@ export default function Home() {
                         {[0, 1, 2].map((smokeIndex) => (
                           <motion.div
                             key={`dnf-smoke-${smokeIndex}`}
-                            className="pointer-events-none absolute top-[38%] text-2xl sm:text-3xl"
-                            initial={{ left: `${44 + smokeIndex * 2.4}%`, opacity: 0, scale: 0.65 }}
+                            className={`pointer-events-none absolute text-2xl ${
+                              isMobileTrack ? "top-[40%]" : "top-[38%] sm:text-3xl"
+                            }`}
+                            initial={{
+                              left: `${(isMobileTrack ? 48 : 44) + smokeIndex * (isMobileTrack ? 1.8 : 2.4)}%`,
+                              opacity: 0,
+                              scale: 0.65,
+                            }}
                             animate={{
-                              left: `${42 + smokeIndex * 3.6}%`,
-                              top: `${30 + smokeIndex * 2}%`,
+                              left: `${(isMobileTrack ? 46 : 42) + smokeIndex * (isMobileTrack ? 2.4 : 3.6)}%`,
+                              top: `${(isMobileTrack ? 33 : 30) + smokeIndex * (isMobileTrack ? 1.5 : 2)}%`,
                               opacity: [0, 0.85, 0],
                               scale: [0.65, 1.2, 1.35],
                             }}
@@ -1752,7 +1903,9 @@ export default function Home() {
                         ))}
 
                         <motion.div
-                          className="pointer-events-none absolute left-[52%] top-[38%] text-3xl sm:text-4xl"
+                          className={`pointer-events-none absolute ${
+                            isMobileTrack ? "left-[66%] top-[41%] text-[1.5rem]" : "left-[52%] top-[38%] text-3xl sm:text-4xl"
+                          }`}
                           initial={{ opacity: 0, y: -8, rotate: -14 }}
                           animate={{ opacity: [0, 1, 1], y: [-8, -12, -8], rotate: [-14, -6, -14] }}
                           transition={{ delay: 1.5, duration: 1.4, ease: "easeInOut", repeat: Infinity }}
@@ -1793,13 +1946,26 @@ export default function Home() {
                       </>
                     )}
 
-                    <motion.div
-                      className="pointer-events-none absolute right-4 top-4 text-6xl"
-                      animate={{ rotate: [0, -16, 14, -8, 0] }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                    >
-                      🏁
-                    </motion.div>
+                    <div className="pointer-events-none absolute right-3 top-3 grid h-16 w-16 place-items-center sm:right-4 sm:top-4 sm:h-[4.5rem] sm:w-[4.5rem]">
+                      <motion.div
+                        className="text-6xl leading-none"
+                        animate={{ rotate: [0, -16, 14, -8, 0] }}
+                        transition={{ duration: 0.8, repeat: Infinity }}
+                      >
+                        🏁
+                      </motion.div>
+
+                      {finishTier === 0 && (
+                        <motion.div
+                          className="absolute inset-0 grid place-items-center text-5xl leading-none sm:text-6xl"
+                          initial={{ opacity: 0, scale: 0.5, rotate: -18 }}
+                          animate={{ opacity: 1, scale: 1, rotate: [-18, 8, -8] }}
+                          transition={{ delay: 0.5, duration: 0.45, ease: "easeOut" }}
+                        >
+                          ❌
+                        </motion.div>
+                      )}
+                    </div>
 
                     {(finishTier === 1 || finishTier === 2) && (
                       <>
