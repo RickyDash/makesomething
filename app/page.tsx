@@ -1167,7 +1167,7 @@ export default function Home() {
                     {isDnfFinish && (
                       <motion.span
                         className="absolute text-[8px] leading-none sm:text-[9px]"
-                        style={{ left: "8px", top: "-8px" }}
+                        style={{ left: "8px", top: "-1px" }}
                         initial={false}
                         animate={{
                           opacity: [0, 1, 1],
