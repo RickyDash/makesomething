@@ -505,11 +505,6 @@ export default function Home() {
     dnfStopFactor: isMobileTrack ? 0.36 : 0.5,
   };
 
-  const progressBarDnfMarkerXPosition = {
-    left: isMobileTrack ? "48%" : "50%",
-    top: isMobileTrack ? "45%" : "42%",
-  };
-
   const successTrackPercent = useMemo(
     () => finishAnchor - progressBarCarFinalPosition.successOffsetFromFinish,
     [finishAnchor, progressBarCarFinalPosition.successOffsetFromFinish],
@@ -1284,14 +1279,14 @@ export default function Home() {
                     />
 
                     <div
-                      className="absolute top-0 z-[2] -translate-x-1/2 -translate-y-1/2"
+                      className="absolute top-0 z-[2] h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 sm:h-5 sm:w-5"
                       style={{ left: "100%" }}
                     >
                       <button
                         type="button"
                         aria-label="Go to final race report"
                         onClick={() => jumpToTrackCard({ kind: "finish" })}
-                        className={`relative isolate h-4.5 w-4.5 rotate-45 overflow-hidden border-2 sm:h-5 sm:w-5 ${
+                        className={`relative isolate block h-full w-full rotate-45 overflow-hidden border-2 leading-none ${
                           chequeredActive ? "border-zinc-300" : "border-zinc-500"
                         } transition-transform hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/80`}
                       >
@@ -1311,8 +1306,7 @@ export default function Home() {
                       {isDnfFinish && (
                         <motion.span
                           aria-hidden="true"
-                          className="pointer-events-none absolute z-[3] -translate-x-1/2 -translate-y-1/2 text-[14px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] sm:text-[16px]"
-                          style={progressBarDnfMarkerXPosition}
+                          className="pointer-events-none absolute left-1/2 top-1/2 z-[3] -translate-x-1/2 -translate-y-1/2 text-[14px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] sm:text-[16px]"
                           initial={{ opacity: 0, scale: 0.65, rotate: -12 }}
                           animate={{ opacity: 1, scale: 1, rotate: 0 }}
                           transition={{ delay: 0.16, duration: 0.2, ease: "easeOut" }}
@@ -1325,14 +1319,14 @@ export default function Home() {
                 </div>
 
                 <div className="relative mx-2 mt-3 hidden h-4 font-mono text-[10px] uppercase tracking-widest text-zinc-400 sm:block">
-                  <p className="absolute left-0">formation lap</p>
+                  <p className="absolute -left-3">formation lap</p>
                   <p style={{ left: `${grandPrixMarkerPos}%` }} className="absolute -translate-x-1/2">
                     grand prix
                   </p>
                   <p style={{ left: `${pitStopMarkerPos}%` }} className="absolute -translate-x-1/2">
                     pit stop
                   </p>
-                  <p className="absolute right-0">chequered flag</p>
+                  <p className="absolute -right-3">chequered flag</p>
                 </div>
 
                 <div className="relative mx-2 mt-2 h-4 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-400 sm:hidden">
