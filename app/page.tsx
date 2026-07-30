@@ -636,6 +636,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    document.documentElement.dataset.uiVersion = uiVersion;
+    document.documentElement.dataset.v2Mode = v2Mode;
+
     if (skipInitialPreferenceSaveRef.current) {
       skipInitialPreferenceSaveRef.current = false;
       return;
@@ -1562,7 +1565,7 @@ export default function Home() {
         data-skin="v2"
         data-mode={v2Mode}
         data-phase={v2RacePhase}
-        className={`flex h-[100dvh] w-full justify-center overflow-hidden ${
+        className={`fixed inset-0 flex h-[100svh] w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${
           v2Mode === "notte" ? "bg-[#0e0e0e]" : "bg-[#f3edde]"
         }`}
       >

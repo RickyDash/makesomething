@@ -550,6 +550,7 @@ function CircuitMap({
   onSkipLap: MonzaV2SkinProps["onSkipLap"];
   raceSim: MonzaV2SkinProps["raceSim"];
 }) {
+  const mapRef = useRef<HTMLDivElement>(null);
   const carRefs = useRef(new Map<string, HTMLDivElement>());
   const rotationRefs = useRef(new Map<string, HTMLDivElement>());
   const tagRefs = useRef(new Map<string, HTMLDivElement>());
@@ -576,6 +577,24 @@ function CircuitMap({
     lossTagDirectionRefs,
   );
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const updateMapScale = () => {
+      const { width, height } = map.getBoundingClientRect();
+      map.style.setProperty(
+        "--map-scale",
+        String(Math.min(width / 945, height / 510)),
+      );
+    };
+
+    updateMapScale();
+    const observer = new ResizeObserver(updateMapScale);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, []);
+
   const sortedForPaint = useMemo(
     () =>
       [...classification].sort(
@@ -586,7 +605,7 @@ function CircuitMap({
   );
 
   return (
-    <div className={styles.map} aria-label="Live Monza circuit map">
+    <div ref={mapRef} className={styles.map} aria-label="Live Monza circuit map">
       <svg viewBox="55 5 945 510" className={styles.trackSvg} aria-hidden="true">
         <path d={MONZA_PIT_LANE_PATH_D} className={styles.pitPath} />
         <text x="660" y="412" textAnchor="middle" className={styles.pitLaneLabel}>PIT LANE</text>
@@ -933,7 +952,7 @@ function ClassificationStrip({
           );
           visiblePositions.set(id, nextPosition);
           if (chip) {
-            chip.style.transform = `translate3d(${(car.position - 1) * 37}px, 0, 0)`;
+            chip.style.transform = `translate3d(${(car.position - 1) * 100}%, 0, 0)`;
           }
         }
       });
@@ -968,7 +987,7 @@ function ClassificationStrip({
               style={
                 {
                   "--driver-color": entry.color,
-                  transform: `translate3d(${(entry.position - 1) * 37}px, 0, 0)`,
+                  transform: `translate3d(${(entry.position - 1) * 100}%, 0, 0)`,
                 } as CSSProperties
               }
               aria-label={`${entry.code}, ${entry.status === "dnf" ? "did not finish" : `position ${entry.position}`}`}
@@ -1714,32 +1733,8 @@ export function MonzaV2Skin({
           ? "FIN"
           : `LAP ${Math.min(state.currentLap + 1, 6)}/6`;
   const finishPosition = finalPosition ?? playerPosition;
-  const rootRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const updateScale = () => {
-      const viewport = window.visualViewport;
-      const width = viewport?.width ?? window.innerWidth;
-      const height = viewport?.height ?? window.innerHeight;
-      const scale = Math.min(width / 390, height / 844, 430 / 390);
-      root.style.setProperty("--v2-scale", String(scale));
-    };
-
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    window.visualViewport?.addEventListener("resize", updateScale);
-    return () => {
-      window.removeEventListener("resize", updateScale);
-      window.visualViewport?.removeEventListener("resize", updateScale);
-    };
-  }, []);
-
   return (
     <section
-      ref={rootRef}
       data-mode={mode}
       data-stage={state.stage}
       data-grid-ready={

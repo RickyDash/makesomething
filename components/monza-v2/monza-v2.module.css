@@ -1,4 +1,10 @@
 .root {
+  --header-height: clamp(52px, 6.872vh, 58px);
+  --map-height: clamp(188px, 28.2vh, 238px);
+  --classification-height: clamp(50px, 6.872vh, 58px);
+  --upper-stack-height: calc(
+    var(--header-height) + var(--map-height) + var(--classification-height)
+  );
   --page: #f3edde;
   --card: #f3edde;
   --panel: #fbf7ec;
@@ -27,9 +33,11 @@
 
   position: relative;
   display: flex;
-  width: 390px;
-  height: 844px;
-  min-width: 390px;
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
   flex: none;
   overflow: hidden;
@@ -38,9 +46,6 @@
   color: var(--ink);
   font-family: var(--sans);
   isolation: isolate;
-  transform: scale(var(--v2-scale, 1));
-  transform-origin: top center;
-  will-change: transform;
 }
 
 .root[data-mode="notte"] {
@@ -84,7 +89,7 @@
 .header {
   z-index: 41;
   display: flex;
-  height: 58px;
+  height: var(--header-height);
   flex: none;
   align-items: center;
   gap: 10px;
@@ -296,7 +301,7 @@
 
 .map {
   position: relative;
-  height: 238px;
+  height: var(--map-height);
   flex: none;
   overflow: hidden;
   background: var(--page);
@@ -312,13 +317,13 @@
 .raceOverlay {
   position: absolute;
   z-index: 1;
-  top: calc(50% - 255px);
-  left: 0;
+  top: 50%;
+  left: 50%;
   width: 945px;
   height: 510px;
   pointer-events: none;
-  transform: scale(0.4126984127);
-  transform-origin: left center;
+  transform: translate(-50%, -50%) scale(var(--map-scale, 0.4126984127));
+  transform-origin: center;
 }
 
 .pitPath {
@@ -717,7 +722,7 @@
 }
 
 .classification {
-  height: 58px;
+  height: var(--classification-height);
   flex: none;
   padding-top: 4px;
   border-top: var(--border);
@@ -738,8 +743,8 @@
 
 .classificationList {
   position: relative;
-  width: 372px;
-  height: 40px;
+  width: calc(100% - 18px);
+  height: calc(var(--classification-height) - 18px);
   margin: 2px auto 0;
   padding: 0;
   list-style: none;
@@ -750,8 +755,8 @@
   top: 0;
   left: 0;
   display: flex;
-  width: 35px;
-  height: 40px;
+  width: 10%;
+  height: 100%;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -766,7 +771,7 @@
 
 .root[data-mode="notte"] .classificationChip {
   top: 2px;
-  height: 36px;
+  height: calc(100% - 4px);
   border: 2px solid var(--ink);
   background: var(--page);
 }
@@ -874,9 +879,18 @@
 .content {
   min-height: 0;
   flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   padding: 16px;
   opacity: 1;
   transition: opacity 400ms ease;
+}
+
+.content::-webkit-scrollbar,
+.lowerOverlay::-webkit-scrollbar,
+.finishBody::-webkit-scrollbar {
+  display: none;
 }
 
 .contentMuted {
@@ -1093,11 +1107,14 @@
 .lowerOverlay {
   position: absolute;
   z-index: 20;
-  inset: 360px 0 0;
+  inset: calc(var(--upper-stack-height) + 6px) 0 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 14px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   background: var(--page);
   animation: dropIn 300ms ease-out;
 }
@@ -1509,9 +1526,9 @@
 .mapModal {
   position: absolute;
   z-index: 15;
-  inset: 58px 0 auto;
+  inset: var(--header-height) 0 auto;
   display: flex;
-  height: 238px;
+  height: var(--map-height);
   align-items: center;
   justify-content: center;
   padding: 0 34px;
@@ -1613,6 +1630,9 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   gap: 13px;
   padding: 16px;
 }
@@ -1834,6 +1854,173 @@
   }
   100% {
     opacity: 0;
+  }
+}
+
+@media (max-height: 740px) {
+  .introOverlay {
+    padding: 14px;
+  }
+
+  .introCard {
+    gap: 8px;
+    padding: 17px 18px;
+  }
+
+  .introCard h1 {
+    font-size: 48px;
+  }
+
+  .root[data-mode="notte"] .introCard h1 {
+    font-size: 42px;
+  }
+
+  .stamp {
+    width: 84px;
+    height: 84px;
+  }
+
+  .introCopy {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .introFoot {
+    padding-top: 6px;
+    font-size: 7px;
+  }
+
+  .content,
+  .finishBody {
+    padding: 12px;
+  }
+
+  .quizPanel {
+    gap: 8px;
+  }
+
+  .options {
+    gap: 6px;
+  }
+
+  .option {
+    min-height: 44px !important;
+    padding: 9px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .feedbackSlot {
+    min-height: 70px;
+  }
+
+  .lowerOverlay {
+    gap: 7px;
+    padding: 10px 12px;
+  }
+
+  .finishArt {
+    height: clamp(120px, 23.7vh, 176px);
+  }
+
+  .finishBody {
+    gap: 9px;
+  }
+}
+
+@media (max-height: 600px), (max-width: 340px) {
+  .header {
+    gap: 6px;
+    padding-inline: 10px;
+  }
+
+  .headerTools {
+    gap: 4px;
+  }
+
+  .themeSegment {
+    padding-inline: 5px;
+  }
+
+  .positionBadge {
+    min-width: 43px;
+    padding-inline: 7px;
+  }
+
+  .introOverlay {
+    padding: 10px;
+  }
+
+  .introCard {
+    gap: 5px;
+    padding: 12px 14px;
+    box-shadow: 6px 6px 0 var(--gold);
+  }
+
+  .epigraph em {
+    font-size: 12px;
+  }
+
+  .root[data-mode="notte"] .epigraph em {
+    font-size: 7.5px;
+  }
+
+  .introCard h1 {
+    font-size: 42px;
+  }
+
+  .root[data-mode="notte"] .introCard h1 {
+    font-size: 37px;
+  }
+
+  .gpSubtitle {
+    margin-top: -2px;
+    font-size: 8.5px;
+  }
+
+  .stamp {
+    width: 68px;
+    height: 68px;
+  }
+
+  .introCopy {
+    font-size: 11.25px;
+    line-height: 1.3;
+  }
+
+  .introFoot {
+    padding-top: 4px;
+    font-size: 6.25px;
+  }
+
+  .introCard .primaryButton {
+    min-height: 40px !important;
+    padding-block: 10px !important;
+  }
+
+  .mapModal {
+    padding-inline: 20px;
+  }
+
+  .compactCard {
+    gap: 5px;
+    padding: 10px 12px;
+  }
+
+  .reactionActions {
+    gap: 5px;
+  }
+
+  .finishOverlay > header {
+    height: 46px;
+    padding-inline: 12px;
+  }
+
+  .finishBody h1 {
+    font-size: 26px;
+  }
+
+  .root[data-mode="notte"] .finishBody h1 {
+    font-size: 23px;
   }
 }
 
