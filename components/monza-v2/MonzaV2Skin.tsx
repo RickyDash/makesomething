@@ -1005,13 +1005,12 @@ function QuizPanel({
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+      const feedbackBottomInScroller =
+        scroller.scrollTop + feedbackRect.bottom - scrollerRect.top;
       scroller.scrollTo({
         top: Math.max(
           0,
-          feedback.offsetTop +
-            feedback.offsetHeight -
-            scroller.clientHeight +
-            8,
+          feedbackBottomInScroller - scroller.clientHeight + 8,
         ),
         behavior: reducedMotion ? "auto" : "smooth",
       });

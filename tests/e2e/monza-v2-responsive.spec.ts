@@ -135,6 +135,23 @@ test("long verdicts scroll inside the race panel without colliding with the foot
 
   await answerCurrentLap(page, "wrong", { skipPlayback: true });
   await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      quiz.evaluate((panel) => {
+        const scrollArea = panel.querySelector<HTMLElement>(
+          '[class*="quizScroller"]',
+        );
+        const verdict = panel.querySelector<HTMLElement>(
+          '[class*="verdictCard"]',
+        );
+        if (!scrollArea || !verdict) return Number.POSITIVE_INFINITY;
+        return (
+          verdict.getBoundingClientRect().bottom -
+          scrollArea.getBoundingClientRect().bottom
+        );
+      }),
+    )
+    .toBeLessThanOrEqual(-1);
 
   const layout = await quiz.evaluate((panel) => {
     const scrollArea = panel.querySelector<HTMLElement>('[class*="quizScroller"]');
@@ -161,7 +178,7 @@ test("long verdicts scroll inside the race panel without colliding with the foot
 
   expect(layout).not.toBeNull();
   expect(layout!.scrollHeight).toBeGreaterThan(layout!.clientHeight);
-  expect(layout!.verdictBottom).toBeLessThanOrEqual(layout!.scrollerBottom + 1);
+  expect(layout!.verdictBottom).toBeLessThanOrEqual(layout!.scrollerBottom - 1);
   expect(layout!.footerTop).toBeGreaterThanOrEqual(layout!.scrollerBottom - 1);
   expect(layout!.footerRight).toBeLessThanOrEqual(layout!.markLeft + 1);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
