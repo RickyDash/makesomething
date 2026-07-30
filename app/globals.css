@@ -13,4 +13,8 @@
   --font-space-grotesk: var(--font-space-grotesk), system-ui, sans-serif;
   --font-bricolage: var(--font-bricolage), system-ui, sans-serif;
   --font-instrument-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-bodoni-moda: var(--font-bodoni-moda), Didot, Georgia, serif;
+  --font-libre-franklin: var(--font-libre-franklin), Arial, sans-serif;
+  --font-courier-prime: var(--font-courier-prime), "Courier New", monospace;
+  --font-ibm-plex-mono: var(--font-ibm-plex-mono), monospace;
 }

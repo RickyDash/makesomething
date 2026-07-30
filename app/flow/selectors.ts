@@ -14,6 +14,29 @@ export const selectStartSkipVisible = (state: FlowState) => !selectStartComplete
 
 export const selectPitSkipVisible = (state: FlowState) => !selectPitComplete(state);
 
+export const selectRaceCounts = (state: FlowState) =>
+  state.raceLedger.reduce(
+    (counts, entry) => {
+      if (entry.result === "correct") counts.correct += 1;
+      if (entry.result === "wrong") counts.wrong += 1;
+      return counts;
+    },
+    { correct: 0, wrong: 0 },
+  );
+
+export const selectDisplayedRacePosition = (state: FlowState) =>
+  state.finalPosition ?? state.currentPosition;
+
+export const selectCurrentLapLedgerEntry = (state: FlowState) =>
+  state.raceLedger[state.currentLap] ?? null;
+
+export const selectVersionMarkEnabled = (state: FlowState) =>
+  !(
+    state.stage === "formation" &&
+    state.formationMode === "drill" &&
+    (state.startDrill.phase === "countdown" || state.startDrill.phase === "go")
+  );
+
 export const selectFinishChips = (state: FlowState) => {
   const startComplete = selectStartComplete(state);
   const pitComplete = selectPitComplete(state);

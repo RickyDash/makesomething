@@ -1,0 +1,7 @@
+# Paste this into Codex (in the repo of the live quiz app)
+
+A `design-handoff/` folder has been committed to this repo. Read `design-handoff/IMPLEMENTATION-BRIEF.md` and `design-handoff/V1-V2-TOGGLE-SPEC.md` fully before writing any code. Open `design-handoff/monza-v2-reference.html` in a browser — it is a complete working reference implementation of the redesign ("V2") with a day/night toggle, a live circuit map with animated cars, and a full quiz flow. Treat it as the source of truth for layout, colors, typography, copy, and animation timing; its source contains the race-sim math and SVG track paths to port.
+
+Implement per the brief's architecture: REUSE this app's existing quiz state machine (phases, questions, reaction, pit, scoring); EXTEND it with the position ledger; PORT the race sim from the reference as an isolated subscribe-only module; build the V2 skin (both giorno and notte modes) rendering from shared state. Keep the existing UI ("V1") fully intact and implement the hidden V1⇄V2 corner-mark toggle exactly per the spec — one shared state machine, two skins, marks at 0.4 opacity, lights-phase fade rule, race sim ticking headless while V1 shows. Do not harmonize V1's copy or styling.
+
+Work in a branch. Before declaring done, run the full acceptance checklist in the brief: complete playthroughs in V2 giorno and notte, V1 regression, mid-race toggles (including mid-pit), jump-start retry, persistence, and performance. Fix everything the checklist catches.

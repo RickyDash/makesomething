@@ -16,8 +16,30 @@ import {
   selectStartSkipVisible,
   selectStartWarning,
 } from "./flow/selectors";
-import { createInitialFlowState, flowReducer } from "./flow/reducer";
-import type { FormationMode, Stage, TrackTarget } from "./flow/types";
+import {
+  createInitialFlowState,
+  flowReducer,
+  recomputeRaceLedger,
+} from "./flow/reducer";
+import {
+  SEQUENCE_TIMINGS,
+  createReactionTimeline,
+  getPitRejoinDelayMs,
+  scheduleReactionTimeline,
+  scheduleV2LapTimeline,
+} from "./flow/timing";
+import type { FormationMode, Stage, TrackTarget, UiVersion } from "./flow/types";
+import {
+  createRaceSim,
+  createSvgPathGeometrySampler,
+  MONZA_MAIN_TRACK_PATH_D,
+  MONZA_PIT_LANE_PATH_D,
+  type RaceSim,
+  type RaceSimGameSnapshot,
+  type RaceSimPhase,
+} from "./race-sim/raceSim";
+import { loadUiPreferences, saveUiPreferences } from "./ui-preferences";
+import { MonzaV2Skin } from "../components/monza-v2";
 
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
 type MarkerState = "unanswered" | "correct" | "incorrect";
@@ -240,7 +262,6 @@ const chequeredMarkerFillStyle = {
 } as const;
 
 const getNowMs = () => performance.now();
-const getReactionLightsOutDelayMs = () => 3500 + 900 + Math.random() * 900;
 
 const getStoredBestReaction = () => {
   if (typeof window === "undefined") return null;
@@ -306,16 +327,38 @@ export default function Home() {
 
   const [isMobileTrack, setIsMobileTrack] = useState(false);
   const [isTouchLikeDevice, setIsTouchLikeDevice] = useState(false);
+  const [v2WarmupLocked, setV2WarmupLocked] = useState(false);
+  const [formationTravelPending, setFormationTravelPending] = useState(false);
+  const [v2Launching, setV2Launching] = useState(false);
+  const [pitElapsedMs, setPitElapsedMs] = useState<number | null>(null);
+  const [jumpStartCount, setJumpStartCount] = useState(0);
+  const [raceSim, setRaceSim] = useState<RaceSim | null>(null);
+  const [pitSequenceProfile, setPitSequenceProfile] =
+    useState<UiVersion>("v1");
+  const [raceSequenceProfile, setRaceSequenceProfile] =
+    useState<UiVersion | null>(null);
+  const [pitRejoinPending, setPitRejoinPending] = useState(false);
 
   const timersRef = useRef<number[]>([]);
   const soundTimersRef = useRef<number[]>([]);
+  const v2TimersRef = useRef<number[]>([]);
   const goTimeRef = useRef<number | null>(null);
   const pitStartRef = useRef<number | null>(null);
+  const pitAttemptIdRef = useRef(0);
+  const pitRejoinTimerRef = useRef<number | null>(null);
   const finishTimerRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const flowStateRef = useRef(flowState);
+  const skipInitialPreferenceSaveRef = useRef(true);
+  const formationSequenceProfileRef = useRef<UiVersion | null>(null);
+  const formationTravelPendingRef = useRef(false);
+  const formationAutoStartedRef = useRef(false);
+  const startReactionSequenceRef = useRef<(profile: UiVersion) => void>(() => {});
 
   const stage = flowState.stage;
   const formationMode = flowState.formationMode;
+  const uiVersion = flowState.uiVersion;
+  const v2Mode = flowState.v2Mode;
   const weekendQuestions = flowState.weekendQuestions;
   const currentLap = flowState.currentLap;
   const lapAnswers = flowState.lapAnswers;
@@ -345,6 +388,22 @@ export default function Home() {
   const selectedForCurrentLap = lapAnswers[currentLap] ?? null;
   const isCurrentLapCorrect =
     selectedForCurrentLap !== null && selectedForCurrentLap === question.answer;
+  const v2RaceSequencePending =
+    stage === "race" &&
+    raceSequenceProfile === "v2" &&
+    selectedForCurrentLap !== null;
+  const v2FormationSequencePending =
+    formationTravelPending &&
+    formationSequenceProfileRef.current === "v2";
+  const v2FinishSequencePending =
+    stage === "finish_intro" && raceSequenceProfile === "v2";
+  const v2OriginSequencePending =
+    v2WarmupLocked ||
+    v2FormationSequencePending ||
+    v2Launching ||
+    v2RaceSequencePending ||
+    pitRejoinPending ||
+    v2FinishSequencePending;
 
   const score = useMemo(
     () =>
@@ -570,6 +629,139 @@ export default function Home() {
   const pitStopBand = pitTimeMs === null ? null : getPitBand(pitTimeMs, activePitBands);
 
   useEffect(() => {
+    const storedPreferences = loadUiPreferences();
+    dispatch({ type: "SET_UI_VERSION", uiVersion: storedPreferences.uiVersion });
+    dispatch({ type: "SET_V2_MODE", mode: storedPreferences.v2Mode });
+    saveUiPreferences(storedPreferences);
+  }, []);
+
+  useEffect(() => {
+    if (skipInitialPreferenceSaveRef.current) {
+      skipInitialPreferenceSaveRef.current = false;
+      return;
+    }
+    saveUiPreferences({ uiVersion, v2Mode });
+  }, [uiVersion, v2Mode]);
+
+  useEffect(() => {
+    flowStateRef.current = flowState;
+  }, [flowState]);
+
+  useEffect(() => {
+    const svgNamespace = "http://www.w3.org/2000/svg";
+    const geometrySvg = document.createElementNS(svgNamespace, "svg");
+    const mainPath = document.createElementNS(svgNamespace, "path");
+    const pitPath = document.createElementNS(svgNamespace, "path");
+
+    geometrySvg.setAttribute("aria-hidden", "true");
+    geometrySvg.setAttribute("viewBox", "55 5 945 510");
+    geometrySvg.style.position = "fixed";
+    geometrySvg.style.width = "0";
+    geometrySvg.style.height = "0";
+    geometrySvg.style.visibility = "hidden";
+    geometrySvg.style.pointerEvents = "none";
+    mainPath.setAttribute("d", MONZA_MAIN_TRACK_PATH_D);
+    pitPath.setAttribute("d", MONZA_PIT_LANE_PATH_D);
+    geometrySvg.append(mainPath, pitPath);
+    document.body.append(geometrySvg);
+
+    const instance = createRaceSim({
+      geometry: createSvgPathGeometrySampler(mainPath, pitPath),
+    });
+    instance.start();
+    const revealSimFrame = window.requestAnimationFrame(() => {
+      setRaceSim(instance);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(revealSimFrame);
+      instance.destroy();
+      geometrySvg.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!raceSim) return;
+
+    let phase: RaceSimPhase;
+    if (flowState.stage === "formation") {
+      if (flowState.formationMode === "intro") {
+        phase = "grid";
+      } else if (flowState.formationMode === "briefing") {
+        phase = "formation";
+      } else if (v2Launching) {
+        phase = "launch";
+      } else if (flowState.startDrill.phase === "countdown") {
+        phase = "lights";
+      } else if (flowState.startDrill.phase === "go") {
+        phase = "go";
+      } else if (flowState.startDrill.phase === "early") {
+        phase = "jump";
+      } else if (flowState.startDrill.resultMs !== null) {
+        phase = "reacted";
+      } else {
+        phase = "forming";
+      }
+    } else if (flowState.stage === "race") {
+      const presentationPhase = flowState.racePresentation.phase;
+      if (presentationPhase === "lap") {
+        phase = "lap";
+      } else if (
+        presentationPhase === "result" &&
+        raceSim.getFrame().lap.active
+      ) {
+        // Keep the visual lap script running when V1 reveals immediately.
+        phase = "lap";
+      } else {
+        phase = presentationPhase === "result" ? "result" : "question";
+      }
+    } else if (flowState.stage === "pitstop") {
+      phase = "pit";
+    } else if (
+      flowState.stage === "finish_intro" &&
+      flowState.finalPosition === "DNF"
+    ) {
+      phase = "dnf";
+    } else {
+      phase = "finish";
+    }
+
+    const answeredFormationSector =
+      flowState.formationMode === "briefing" &&
+      flowState.tutorialAnswers[flowState.tutorialStep] !== null
+        ? 1
+        : 0;
+    const formationSector = Math.min(
+      3,
+      flowState.tutorialStep + answeredFormationSector,
+    ) as RaceSimGameSnapshot["formationSector"];
+    const currentLedgerEntry = flowState.raceLedger[flowState.currentLap];
+
+    raceSim.sync({
+      phase,
+      lap: flowState.currentLap,
+      ledgerPosition:
+        flowState.finalPosition === "DNF"
+          ? "DNF"
+          : flowState.currentPosition,
+      lastAnswerCorrect:
+        currentLedgerEntry?.result === null ||
+        currentLedgerEntry?.result === undefined
+          ? null
+          : currentLedgerEntry.result === "correct",
+      formationSector,
+      pitState:
+        flowState.stage !== "pitstop"
+          ? "none"
+          : flowState.pitStop.resultMs !== null
+            ? "done"
+            : flowState.pitStop.phase === "running"
+              ? "running"
+              : "idle",
+    });
+  }, [flowState, raceSim, v2Launching]);
+
+  useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
 
     const mobileTrackQuery = window.matchMedia("(max-width: 639px)");
@@ -640,11 +832,29 @@ export default function Home() {
   }, [bestScore]);
 
   useEffect(() => {
+    if (!pitStarted || pitStartRef.current === null || uiVersion !== "v2") return;
+
+    const updatePitClock = () => {
+      const startedAt = pitStartRef.current;
+      if (startedAt === null) return;
+      setPitElapsedMs(Math.round(getNowMs() - startedAt + pitPenalty));
+    };
+
+    updatePitClock();
+    const timer = window.setInterval(updatePitClock, 100);
+    return () => window.clearInterval(timer);
+  }, [pitPenalty, pitStarted, uiVersion]);
+
+  useEffect(() => {
     return () => {
       clearTimerList(timersRef);
       clearTimerList(soundTimersRef);
+      clearTimerList(v2TimersRef);
       if (finishTimerRef.current !== null) {
         window.clearTimeout(finishTimerRef.current);
+      }
+      if (pitRejoinTimerRef.current !== null) {
+        window.clearTimeout(pitRejoinTimerRef.current);
       }
     };
   }, []);
@@ -656,6 +866,19 @@ export default function Home() {
 
   const clearSoundTimers = () => {
     clearTimerList(soundTimersRef);
+  };
+
+  const clearV2Timers = () => {
+    clearTimerList(v2TimersRef);
+  };
+
+  const cancelPitRejoin = () => {
+    pitAttemptIdRef.current += 1;
+    if (pitRejoinTimerRef.current !== null) {
+      window.clearTimeout(pitRejoinTimerRef.current);
+      pitRejoinTimerRef.current = null;
+    }
+    setPitRejoinPending(false);
   };
 
   const clearFinishTimer = () => {
@@ -780,7 +1003,14 @@ export default function Home() {
   };
 
   const handleTutorialPick = (optionIndex: number) => {
-    if (stage !== "formation" || formationMode !== "briefing" || tutorialSelected !== null) return;
+    if (
+      v2WarmupLocked ||
+      stage !== "formation" ||
+      formationMode !== "briefing" ||
+      tutorialSelected !== null
+    ) {
+      return;
+    }
     const isCorrect = optionIndex === tutorialSteps[tutorialStep]?.answer;
     if (isCorrect) {
       playAnswerCorrectSound();
@@ -790,35 +1020,87 @@ export default function Home() {
     dispatch({ type: "TUTORIAL_PICK", optionIndex });
   };
 
+  const handleV2WarmupAnswer = (optionIndex: number) => {
+    if (stage !== "formation" || formationMode !== "briefing" || tutorialSelected !== null) return;
+
+    const isCorrect = optionIndex === tutorialSteps[tutorialStep]?.answer;
+    if (isCorrect) {
+      playAnswerCorrectSound();
+    } else {
+      playAnswerWrongSound();
+    }
+
+    clearV2Timers();
+    setV2WarmupLocked(true);
+    dispatch({ type: "TUTORIAL_PICK", optionIndex });
+    const timer = window.setTimeout(() => {
+      setV2WarmupLocked(false);
+    }, SEQUENCE_TIMINGS.v2.formationLockMs);
+    v2TimersRef.current.push(timer);
+  };
+
   const goToNextBriefing = () => {
+    if (v2WarmupLocked) return;
     playArrowButtonSound();
+    setV2WarmupLocked(false);
     dispatch({ type: "TUTORIAL_NEXT" });
   };
 
   const goToPreviousBriefing = () => {
+    if (v2WarmupLocked) return;
     playArrowButtonSound();
     dispatch({ type: "TUTORIAL_PREVIOUS" });
   };
 
   const skipFormationLab = () => {
+    if (v2WarmupLocked) return;
     playArrowButtonSound();
+    formationTravelPendingRef.current = false;
+    setFormationTravelPending(false);
+    formationSequenceProfileRef.current ??= uiVersion;
+    raceSim?.publish({ type: "formation:finish", rushed: true });
     dispatch({ type: "FORMATION_SKIP_TO_DRILL" });
   };
 
   const startFormationLapTutorial = () => {
     playArrowButtonSound();
+    formationSequenceProfileRef.current = uiVersion;
+    formationTravelPendingRef.current = true;
+    setFormationTravelPending(true);
+    formationAutoStartedRef.current = false;
+    raceSim?.publish({ type: "formation:start" });
     dispatch({ type: "START_FORMATION_TUTORIAL" });
   };
 
   const jumpToTrackCard = (target: TrackTarget) => {
+    if (v2OriginSequencePending) return;
     playArrowButtonSound();
     clearReactionTimers();
+    clearV2Timers();
     clearFinishTimer();
+    cancelPitRejoin();
+    setV2WarmupLocked(false);
+    setV2Launching(false);
     pitStartRef.current = null;
+    setPitElapsedMs(null);
+    setRaceSequenceProfile(null);
+    setPitSequenceProfile("v1");
+    formationSequenceProfileRef.current =
+      target.kind === "formation_intro" ||
+      target.kind === "tutorial" ||
+      target.kind === "formation_drill"
+        ? "v1"
+        : null;
+    formationAutoStartedRef.current = false;
+    formationTravelPendingRef.current = false;
+    setFormationTravelPending(false);
+    if (raceSim?.getFrame().lap.active) {
+      raceSim.publish({ type: "lap:skip" });
+    }
     dispatch({ type: "NAVIGATE", target });
   };
 
-  const startReactionSequence = (withActivationBeep = true) => {
+  const startReactionSequence = (profile: UiVersion, withActivationBeep = true) => {
     if (stage !== "formation" || formationMode !== "drill") return;
 
     clearReactionTimers();
@@ -827,37 +1109,88 @@ export default function Home() {
     }
     dispatch({ type: "START_DRILL_INITIATE" });
 
-    for (let i = 1; i <= 5; i += 1) {
-      const timer = window.setTimeout(() => {
-        dispatch({ type: "START_DRILL_SET_LIGHTS", lightsOnCount: i });
-        playBeep(760 + i * 30, 100);
-      }, i * 700);
-      timersRef.current.push(timer);
-    }
-
-    const lightsOutDelay = getReactionLightsOutDelayMs();
-    const goTimer = window.setTimeout(() => {
-      dispatch({ type: "START_DRILL_GO" });
-      goTimeRef.current = getNowMs();
-      playBeep(520, 180);
-    }, lightsOutDelay);
-    timersRef.current.push(goTimer);
+    const scheduledTimers = scheduleReactionTimeline(
+      createReactionTimeline(profile),
+      (callback, delayMs) => window.setTimeout(callback, delayMs),
+      {
+        onLight: (lightsOnCount) => {
+          dispatch({ type: "START_DRILL_SET_LIGHTS", lightsOnCount });
+          playBeep(760 + lightsOnCount * 30, 100);
+        },
+        onGo: () => {
+          dispatch({ type: "START_DRILL_GO" });
+          goTimeRef.current = getNowMs();
+          playBeep(520, 180);
+        },
+      },
+    );
+    timersRef.current.push(...scheduledTimers);
   };
 
+  useEffect(() => {
+    startReactionSequenceRef.current = startReactionSequence;
+  });
+
+  useEffect(() => {
+    if (!raceSim) return;
+
+    return raceSim.subscribe((frame) => {
+      const current = flowStateRef.current;
+      const originatingProfile =
+        formationSequenceProfileRef.current ?? current.uiVersion;
+      const shouldAutoStart =
+        originatingProfile === "v2" || current.uiVersion === "v2";
+      const readyForLights =
+        current.stage === "formation" &&
+        current.formationMode === "drill" &&
+        current.startDrill.phase === "idle" &&
+        current.startDrill.resultMs === null;
+
+      if (formationTravelPendingRef.current && frame.formation.arrived) {
+        formationTravelPendingRef.current = false;
+        setFormationTravelPending(false);
+      }
+
+      if (
+        shouldAutoStart &&
+        readyForLights &&
+        frame.formation.arrived &&
+        !formationAutoStartedRef.current
+      ) {
+        formationAutoStartedRef.current = true;
+        startReactionSequenceRef.current(originatingProfile);
+      }
+    });
+  }, [raceSim]);
+
   const handleRunAgainStartDrill = () => {
+    if (v2Launching) return;
     playRunAgainSound();
     dispatch({ type: "START_DRILL_RETRY" });
-    startReactionSequence(false);
+    startReactionSequence("v1", false);
   };
 
   const handleStartDrillSequence = () => {
-    startReactionSequence();
+    formationAutoStartedRef.current = true;
+    startReactionSequence("v1");
+  };
+
+  const handleV2StartDrillSequence = () => {
+    formationAutoStartedRef.current = true;
+    startReactionSequence("v2");
+  };
+
+  const handleV2RunAgainStartDrill = () => {
+    playRunAgainSound();
+    dispatch({ type: "START_DRILL_RETRY" });
+    startReactionSequence("v2", false);
   };
 
   const handleReactionTap = () => {
     dispatch({ type: "START_DRILL_LAUNCH" });
 
     if (reactionPhase === "countdown") {
+      setJumpStartCount((count) => count + 1);
       clearReactionTimers();
       dispatch({ type: "START_DRILL_EARLY" });
       playBeep(220, 220);
@@ -873,14 +1206,23 @@ export default function Home() {
   };
 
   const goPreviousFromStartDrill = () => {
+    if (v2Launching) return;
     playArrowButtonSound();
     clearReactionTimers();
+    formationSequenceProfileRef.current = "v1";
+    formationAutoStartedRef.current = false;
+    formationTravelPendingRef.current = false;
+    setFormationTravelPending(false);
     dispatch({ type: "NAVIGATE", target: { kind: "tutorial", stepIndex: tutorialSteps.length - 1 } });
   };
 
   const goNextFromStartDrill = () => {
     playArrowButtonSound();
     clearReactionTimers();
+    formationSequenceProfileRef.current = null;
+    formationAutoStartedRef.current = false;
+    formationTravelPendingRef.current = false;
+    setFormationTravelPending(false);
     dispatch({ type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } });
   };
 
@@ -890,24 +1232,146 @@ export default function Home() {
   };
 
   const startRace = () => {
+    if (v2Launching) return;
     goNextFromStartDrill();
   };
 
+  const startV2Race = () => {
+    if (reactionMs === null || v2Launching) return;
+    clearV2Timers();
+    setV2Launching(true);
+    raceSim?.publish({ type: "launch" });
+    const timer = window.setTimeout(() => {
+      setV2Launching(false);
+      goNextFromStartDrill();
+    }, SEQUENCE_TIMINGS.v2.launchMs);
+    v2TimersRef.current.push(timer);
+  };
+
   const goPreviousFromRace = () => {
-    if (stage !== "race") return;
+    if (stage !== "race" || v2RaceSequencePending) return;
     playArrowButtonSound();
+    if (raceSim?.getFrame().lap.active) {
+      raceSim.publish({ type: "lap:skip" });
+    }
     dispatch({ type: "RACE_PREVIOUS" });
   };
 
   const handlePick = (optionIndex: number) => {
     if (stage !== "race" || selectedForCurrentLap !== null) return;
+    setRaceSequenceProfile("v1");
     const isCorrect = optionIndex === weekendQuestions[currentLap]?.answer;
     if (isCorrect) {
       playAnswerCorrectSound();
     } else {
       playAnswerWrongSound();
     }
+    const nextLapAnswers = [...lapAnswers];
+    nextLapAnswers[currentLap] = optionIndex;
+    const nextLedger = recomputeRaceLedger(
+      nextLapAnswers,
+      weekendQuestions,
+      flowState.raceCurve,
+    );
+    const target = nextLedger[currentLap];
+    if (target) {
+      raceSim?.publish({
+        type: "lap:start",
+        lap: currentLap,
+        targetPosition: target.after,
+        correct: target.result === "correct",
+        durationMs: SEQUENCE_TIMINGS.v2.lapMs,
+      });
+    }
     dispatch({ type: "RACE_PICK", optionIndex });
+    dispatch({ type: "RACE_REVEAL" });
+  };
+
+  const advanceV2Race = () => {
+    const current = flowStateRef.current;
+    if (current.stage !== "race") {
+      return;
+    }
+
+    if (current.currentLap >= current.weekendQuestions.length - 1) {
+      clearFinishTimer();
+      dispatch({ type: "START_FINISH_INTRO" });
+      playFinishFanfare();
+
+      const currentScore = current.lapAnswers.reduce<number>((total, answer, lapIndex) => {
+        if (answer === null) return total;
+        return answer === current.weekendQuestions[lapIndex]?.answer ? total + 1 : total;
+      }, 0);
+      const finishDelayMs =
+        currentScore === 0
+          ? SEQUENCE_TIMINGS.v2.dnfMs
+          : SEQUENCE_TIMINGS.v2.finishMs;
+      finishTimerRef.current = window.setTimeout(() => {
+        dispatch({ type: "FINISH_INTRO_DONE" });
+        setRaceSequenceProfile(null);
+        finishTimerRef.current = null;
+      }, finishDelayMs);
+      return;
+    }
+
+    playArrowButtonSound();
+    setRaceSequenceProfile(null);
+    dispatch({ type: "RACE_NEXT" });
+  };
+
+  const scheduleV2RaceAdvance = (delayMs = SEQUENCE_TIMINGS.v2.verdictMs) => {
+    const timer = window.setTimeout(advanceV2Race, delayMs);
+    v2TimersRef.current.push(timer);
+  };
+
+  const handleV2RaceAnswer = (optionIndex: number) => {
+    if (stage !== "race" || selectedForCurrentLap !== null) return;
+    setRaceSequenceProfile("v2");
+
+    const isCorrect = optionIndex === weekendQuestions[currentLap]?.answer;
+    if (isCorrect) {
+      playAnswerCorrectSound();
+    } else {
+      playAnswerWrongSound();
+    }
+
+    clearV2Timers();
+    const nextLapAnswers = [...lapAnswers];
+    nextLapAnswers[currentLap] = optionIndex;
+    const nextLedger = recomputeRaceLedger(
+      nextLapAnswers,
+      weekendQuestions,
+      flowState.raceCurve,
+    );
+    const target = nextLedger[currentLap];
+    if (target) {
+      raceSim?.publish({
+        type: "lap:start",
+        lap: currentLap,
+        targetPosition: target.after,
+        correct: target.result === "correct",
+        durationMs: SEQUENCE_TIMINGS.v2.lapMs,
+      });
+    }
+    dispatch({ type: "RACE_PICK", optionIndex });
+
+    v2TimersRef.current.push(
+      ...scheduleV2LapTimeline(
+        (callback, delayMs) => window.setTimeout(callback, delayMs),
+        {
+          onReveal: () => dispatch({ type: "RACE_REVEAL" }),
+          onAdvance: advanceV2Race,
+        },
+      ),
+    );
+  };
+
+  const handleV2SkipLap = () => {
+    if (stage !== "race" || selectedForCurrentLap === null) return;
+    clearV2Timers();
+    raceSim?.publish({ type: "lap:skip" });
+    dispatch({ type: "RACE_REVEAL" });
+    scheduleV2RaceAdvance();
   };
 
   const runFinishSequence = () => {
@@ -918,33 +1382,49 @@ export default function Home() {
     finishTimerRef.current = window.setTimeout(() => {
       dispatch({ type: "FINISH_INTRO_DONE" });
       finishTimerRef.current = null;
-    }, 2600);
+    }, SEQUENCE_TIMINGS.v1.finishMs);
   };
 
   const handleNextLap = () => {
+    if (v2RaceSequencePending) return;
+    clearV2Timers();
+    if (raceSim?.getFrame().lap.active) {
+      raceSim.publish({ type: "lap:skip" });
+    }
     if (currentLap === totalLaps - 1) {
+      setRaceSequenceProfile(null);
       runFinishSequence();
       return;
     }
 
     playArrowButtonSound();
+    setRaceSequenceProfile(null);
     dispatch({ type: "RACE_NEXT" });
   };
 
   const startPitStop = () => {
     dispatch({ type: "PIT_BEGIN" });
     pitStartRef.current = getNowMs();
+    setPitElapsedMs(0);
   };
 
   const handleBeginPitStop = () => {
+    cancelPitRejoin();
     playPrepActionSound();
+    setPitSequenceProfile(uiVersion);
+    raceSim?.publish({ type: "pit:enter" });
     startPitStop();
   };
 
   const handleRetryPitStop = () => {
+    if (pitRejoinPending) return;
+    cancelPitRejoin();
     playRunAgainSound();
+    setPitSequenceProfile(uiVersion);
+    raceSim?.publish({ type: "pit:enter" });
     dispatch({ type: "PIT_RETRY" });
     pitStartRef.current = getNowMs();
+    setPitElapsedMs(0);
   };
 
   const handlePitClick = (tyreIndex: number) => {
@@ -955,12 +1435,38 @@ export default function Home() {
 
     if (tyreIndex === expectedTyre) {
       if (pitStep === pitOrder.length - 1) {
+        const rawElapsed = Math.round(
+          getNowMs() - (pitStartRef.current ?? getNowMs()),
+        );
         const elapsed = Math.round(
-          getNowMs() - (pitStartRef.current ?? getNowMs()) + pitPenalty,
+          rawElapsed + pitPenalty,
         );
 
         dispatch({ type: "PIT_COMPLETE", timeMs: elapsed });
+        setPitElapsedMs(elapsed);
+        raceSim?.publish({ type: "pit:complete" });
         playBeep(1000, 140);
+
+        if (pitSequenceProfile === "v2") {
+          const attemptId = pitAttemptIdRef.current;
+          const rejoinDelayMs = getPitRejoinDelayMs(rawElapsed);
+          setPitRejoinPending(true);
+          pitRejoinTimerRef.current = window.setTimeout(() => {
+            const current = flowStateRef.current;
+            if (pitAttemptIdRef.current !== attemptId) return;
+            pitRejoinTimerRef.current = null;
+            if (
+              current.stage !== "pitstop" ||
+              current.pitStop.phase !== "idle" ||
+              current.pitStop.resultMs === null
+            ) {
+              setPitRejoinPending(false);
+              return;
+            }
+            setPitRejoinPending(false);
+            advanceFromPitStop();
+          }, rejoinDelayMs);
+        }
         return;
       }
 
@@ -974,21 +1480,33 @@ export default function Home() {
   };
 
   const goPreviousFromPitStop = () => {
+    if (pitRejoinPending) return;
     playArrowButtonSound();
+    cancelPitRejoin();
     pitStartRef.current = null;
+    setPitElapsedMs(null);
     dispatch({ type: "NAVIGATE", target: { kind: "lap", lapIndex: Math.max(pitStopLap - 1, 0) } });
   };
 
-  const goNextFromPitStop = () => {
+  const advanceFromPitStop = () => {
+    cancelPitRejoin();
     playArrowButtonSound();
     pitStartRef.current = null;
+    setPitElapsedMs(null);
     dispatch({ type: "NAVIGATE", target: { kind: "lap", lapIndex: pitStopLap } });
   };
 
+  const goNextFromPitStop = () => {
+    if (pitRejoinPending) return;
+    advanceFromPitStop();
+  };
+
   const skipPitStop = () => {
+    if (pitRejoinPending) return;
     dispatch({ type: "PIT_SKIP" });
     pitStartRef.current = null;
-    goNextFromPitStop();
+    setPitElapsedMs(null);
+    advanceFromPitStop();
   };
 
   const goPreviousFromFinish = () => {
@@ -999,20 +1517,110 @@ export default function Home() {
   const restartWeekend = () => {
     clearReactionTimers();
     clearSoundTimers();
+    clearV2Timers();
     clearFinishTimer();
+    cancelPitRejoin();
     playRestartSound();
+    setV2WarmupLocked(false);
+    setV2Launching(false);
+    setPitElapsedMs(null);
+    setJumpStartCount(0);
+    setRaceSequenceProfile(null);
+    formationSequenceProfileRef.current = null;
+    formationAutoStartedRef.current = false;
+    formationTravelPendingRef.current = false;
+    setFormationTravelPending(false);
+    raceSim?.publish({ type: "reset" });
 
     const nextWeekendQuestions = getRandomWeekendQuestions();
     dispatch({ type: "RESTART_WEEKEND", weekendQuestions: nextWeekendQuestions });
     pitStartRef.current = null;
   };
 
+  const switchUiVersion = (nextVersion: UiVersion) => {
+    dispatch({ type: "SET_UI_VERSION", uiVersion: nextVersion });
+  };
+
+  const versionMarkHidden =
+    stage === "formation" &&
+    formationMode === "drill" &&
+    (flowState.startDrill.phase === "countdown" || flowState.startDrill.phase === "go");
+
   const stageTitle = getStageTitle({ stage, formationMode, currentLap, totalLaps });
 
   const nextRaceButtonLabel = getNextRaceButtonLabel({ currentLap, totalLaps, pitStopLap });
 
+  if (uiVersion === "v2") {
+    const v2RacePhase =
+      flowState.racePresentation.phase === "lap" ||
+      flowState.racePresentation.phase === "result"
+        ? flowState.racePresentation.phase
+        : "question";
+
+    return (
+      <main
+        data-skin="v2"
+        data-mode={v2Mode}
+        data-phase={v2RacePhase}
+        className={`flex h-[100dvh] w-full justify-center overflow-hidden ${
+          v2Mode === "notte" ? "bg-[#0e0e0e]" : "bg-[#f3edde]"
+        }`}
+      >
+        <motion.div
+          className="flex h-full w-full justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
+        >
+          <MonzaV2Skin
+            state={flowState}
+            mode={v2Mode}
+            raceSim={raceSim ?? undefined}
+            racePhase={v2RacePhase}
+            playerPosition={flowState.currentPosition}
+            lapStartPosition={flowState.raceLedger[currentLap]?.before}
+            banner={flowState.racePresentation.banner}
+            pitElapsedMs={pitElapsedMs ?? pitTimeMs}
+            jumpStartCount={jumpStartCount}
+            warmupLocked={v2WarmupLocked}
+            launching={v2Launching}
+            onModeChange={(mode) => dispatch({ type: "SET_V2_MODE", mode })}
+            onSwitchToV1={() => switchUiVersion("v1")}
+            onStartFormation={startFormationLapTutorial}
+            onWarmupAnswer={handleV2WarmupAnswer}
+            onWarmupNext={goToNextBriefing}
+            onWarmupSkip={skipFormationLab}
+            onStartLights={handleV2StartDrillSequence}
+            onLaunchTap={handleReactionTap}
+            onRetryStart={handleV2RunAgainStartDrill}
+            onBeginRace={startV2Race}
+            onRaceAnswer={handleV2RaceAnswer}
+            onSkipLap={handleV2SkipLap}
+            onPitBegin={handleBeginPitStop}
+            onPitTyre={handlePitClick}
+            onPitContinue={goNextFromPitStop}
+            pitRequiresManualContinue={
+              pitTimeMs !== null && !pitRejoinPending
+            }
+            manualRaceAdvance={
+              selectedForCurrentLap !== null &&
+              flowState.racePresentation.phase === "result" &&
+              raceSequenceProfile !== "v2"
+            }
+            onManualRaceAdvance={handleNextLap}
+            onRestart={restartWeekend}
+          />
+        </motion.div>
+      </main>
+    );
+  }
+
   return (
-    <main className="h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] px-3 py-1.5 sm:px-5 sm:py-2">
+    <main
+      data-skin="v1"
+      data-phase={flowState.racePresentation.phase}
+      className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] px-3 py-1.5 sm:px-5 sm:py-2"
+    >
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-1.5 sm:gap-2">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -1206,6 +1814,7 @@ export default function Home() {
                         <button
                           type="button"
                           key={`tutorial-marker-${stepIndex}`}
+                          disabled={v2OriginSequencePending}
                           aria-label={`Go to tutorial step ${stepIndex + 1}`}
                           onClick={() => jumpToTrackCard({ kind: "tutorial", stepIndex })}
                           style={{ left: `${leftPercent}%` }}
@@ -1228,6 +1837,7 @@ export default function Home() {
                         <button
                           type="button"
                           key={`race-marker-${lapIndex}`}
+                          disabled={v2OriginSequencePending}
                           aria-label={`Go to lap ${lapIndex + 1}`}
                           onClick={() => jumpToTrackCard({ kind: "lap", lapIndex })}
                           style={{ left: `${leftPercent}%` }}
@@ -1244,6 +1854,7 @@ export default function Home() {
                   <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
                     <button
                       type="button"
+                      disabled={v2OriginSequencePending}
                       aria-label="Go to formation intro"
                       onClick={() => jumpToTrackCard({ kind: "formation_intro" })}
                       style={{ left: "0%" }}
@@ -1256,6 +1867,7 @@ export default function Home() {
 
                     <button
                       type="button"
+                      disabled={v2OriginSequencePending}
                       aria-label="Go to starting-lights sequence"
                       onClick={() => jumpToTrackCard({ kind: "formation_drill" })}
                       style={{ left: `${grandPrixMarkerPos}%` }}
@@ -1268,6 +1880,7 @@ export default function Home() {
 
                     <button
                       type="button"
+                      disabled={v2OriginSequencePending}
                       aria-label="Go to pit stop"
                       onClick={() => jumpToTrackCard({ kind: "pitstop" })}
                       style={{ left: `${pitStopMarkerPos}%` }}
@@ -1284,6 +1897,7 @@ export default function Home() {
                     >
                       <button
                         type="button"
+                        disabled={v2OriginSequencePending}
                         aria-label="Go to final race report"
                         onClick={() => jumpToTrackCard({ kind: "finish" })}
                         className={`relative isolate block h-full w-full rotate-45 overflow-hidden border-2 leading-none ${
@@ -1431,6 +2045,7 @@ export default function Home() {
                             size="md"
                             variant={variant}
                             color={color}
+                            isDisabled={v2WarmupLocked}
                             className={className}
                             onPress={() => handleTutorialPick(index)}
                           >
@@ -1458,6 +2073,7 @@ export default function Home() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         variant="flat"
+                        isDisabled={v2WarmupLocked}
                         onPress={goToPreviousBriefing}
                         className="w-fit bg-zinc-800 text-zinc-100"
                       >
@@ -1465,6 +2081,7 @@ export default function Home() {
                       </Button>
                       <Button
                         color="danger"
+                        isDisabled={v2WarmupLocked}
                         onPress={goToNextBriefing}
                         className="w-fit font-semibold"
                       >
@@ -1477,6 +2094,7 @@ export default function Home() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         variant="flat"
+                        isDisabled={v2WarmupLocked}
                         onPress={skipFormationLab}
                         className="w-fit border border-transparent bg-stone-900 lowercase font-semibold tracking-wide text-stone-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                       >
@@ -1551,12 +2169,18 @@ export default function Home() {
                         <div className="flex flex-wrap items-center gap-2">
                           <Button
                             variant="flat"
+                            isDisabled={v2Launching}
                             onPress={goPreviousFromStartDrill}
                             className="w-fit bg-zinc-800 text-zinc-100"
                           >
                             &lt;- previous
                           </Button>
-                          <Button color="warning" onPress={handleRunAgainStartDrill} className="font-semibold">
+                          <Button
+                            color="warning"
+                            isDisabled={v2Launching}
+                            onPress={handleRunAgainStartDrill}
+                            className="font-semibold"
+                          >
                             retry starting-lights sequence
                           </Button>
                         </div>
@@ -1571,15 +2195,26 @@ export default function Home() {
                         <div className="flex w-full flex-wrap items-center gap-2">
                           <Button
                             variant="flat"
+                            isDisabled={v2Launching}
                             onPress={goPreviousFromStartDrill}
                             className="w-fit bg-zinc-800 text-zinc-100"
                           >
                             &lt;- previous
                           </Button>
-                          <Button color="danger" onPress={startRace} className="font-semibold">
+                          <Button
+                            color="danger"
+                            isDisabled={v2Launching}
+                            onPress={startRace}
+                            className="font-semibold"
+                          >
                             lights out and away we go! -&gt;
                           </Button>
-                          <Button color="warning" onPress={handleRunAgainStartDrill} className="font-semibold">
+                          <Button
+                            color="warning"
+                            isDisabled={v2Launching}
+                            onPress={handleRunAgainStartDrill}
+                            className="font-semibold"
+                          >
                             retry starting-lights sequence
                           </Button>
                         </div>
@@ -1706,6 +2341,7 @@ export default function Home() {
                     <div className="mt-auto flex flex-wrap items-center gap-3">
                       <Button
                         variant="flat"
+                        isDisabled={v2RaceSequencePending}
                         onPress={goPreviousFromRace}
                         className="w-fit bg-zinc-800 text-zinc-100"
                       >
@@ -1713,6 +2349,7 @@ export default function Home() {
                       </Button>
                       <Button
                         color="danger"
+                        isDisabled={v2RaceSequencePending}
                         onPress={handleNextLap}
                         className="font-semibold"
                       >
@@ -1799,13 +2436,19 @@ export default function Home() {
                     <div className="mt-auto flex w-full flex-wrap items-center gap-2">
                       <Button
                         variant="flat"
+                        isDisabled={pitRejoinPending}
                         onPress={goPreviousFromPitStop}
                         className="w-fit bg-zinc-800 text-zinc-100"
                       >
                         &lt;- previous
                       </Button>
                       {!pitStarted && hasCompletedPitStop && (
-                        <Button color="danger" onPress={goNextFromPitStop} className="font-semibold">
+                        <Button
+                          color="danger"
+                          isDisabled={pitRejoinPending}
+                          onPress={goNextFromPitStop}
+                          className="font-semibold"
+                        >
                           rejoin the track -&gt;
                         </Button>
                       )}
@@ -1815,7 +2458,12 @@ export default function Home() {
                         </Button>
                       )}
                       {!pitStarted && hasCompletedPitStop && (
-                        <Button color="warning" onPress={handleRetryPitStop} className="font-semibold">
+                        <Button
+                          color="warning"
+                          isDisabled={pitRejoinPending}
+                          onPress={handleRetryPitStop}
+                          className="font-semibold"
+                        >
                           retry pit stop
                         </Button>
                       )}
@@ -2190,6 +2838,20 @@ export default function Home() {
           </CardBody>
         </Card>
       </div>
+      <button
+        type="button"
+        aria-label="Switch to the Monza V2 design"
+        aria-hidden={versionMarkHidden}
+        tabIndex={versionMarkHidden ? -1 : undefined}
+        onClick={() => switchUiVersion("v2")}
+        className="absolute bottom-[5px] right-[9px] z-[60] border-0 bg-transparent px-[6px] py-[4px] font-mono text-[10px] font-bold tracking-[.24em] text-zinc-400 transition-opacity duration-[400ms] active:translate-y-px"
+        style={{
+          opacity: versionMarkHidden ? 0 : 0.4,
+          pointerEvents: versionMarkHidden ? "none" : "auto",
+        }}
+      >
+        <span className="inline-block origin-bottom-right scale-[.7]">V1</span>
+      </button>
     </main>
   );
 }

@@ -1,7 +1,9 @@
 import type { Question } from "../f1-question-bank";
-import type { TrackTarget } from "./types";
+import type { RaceCurve, TrackTarget, UiVersion, V2Mode } from "./types";
 
 export type FlowEvent =
+  | { type: "SET_UI_VERSION"; uiVersion: UiVersion }
+  | { type: "SET_V2_MODE"; mode: V2Mode }
   | { type: "NAVIGATE"; target: TrackTarget }
   | { type: "START_FORMATION_TUTORIAL" }
   | { type: "FORMATION_SKIP_TO_DRILL" }
@@ -17,6 +19,8 @@ export type FlowEvent =
   | { type: "START_DRILL_RETRY" }
   | { type: "START_DRILL_SKIP" }
   | { type: "RACE_PICK"; optionIndex: number }
+  | { type: "RACE_REVEAL" }
+  | { type: "RACE_RESET_PRESENTATION" }
   | { type: "RACE_NEXT" }
   | { type: "RACE_PREVIOUS" }
   | { type: "PIT_BEGIN" }
@@ -29,4 +33,4 @@ export type FlowEvent =
   | { type: "START_FINISH_INTRO" }
   | { type: "FINISH_INTRO_DONE" }
   | { type: "GO_PREVIOUS_FROM_FINISH" }
-  | { type: "RESTART_WEEKEND"; weekendQuestions: Question[] };
+  | { type: "RESTART_WEEKEND"; weekendQuestions: Question[]; raceCurve?: RaceCurve };
