@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 test("completed start drill stays completed when returning via briefing next", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "f1-ui-preferences:v1",
+      JSON.stringify({ uiVersion: "v1", v2Mode: "giorno" }),
+    );
+  });
   await page.goto("/");
 
   await page.getByRole("button", { name: /start formation lap/i }).click();

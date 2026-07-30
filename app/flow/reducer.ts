@@ -4,11 +4,53 @@ import {
   PIT_DEFAULT_MESSAGE,
   PIT_RUNNING_MESSAGE,
   type FlowState,
+  type RaceBanner,
+  type RaceCurve,
+  type RaceGridPosition,
+  type RaceLedgerEntry,
+  type RacePresentationState,
   type TrackTarget,
+  type UiVersion,
+  type V2Mode,
 } from "./types";
 
 const tyreLabels = ["front left", "front right", "rear left", "rear right"] as const;
 const pitOrder = [0, 1, 2, 3] as const;
+const defendGains = [0, 2, 4, 5, 7, 9, 9] as const;
+const snatchGains = [0, 2, 3, 5, 6, 8, 9] as const;
+const raceCorners = ["THE RETTIFILO", "ROGGIA", "LESMO", "ASCARI", "PARABOLICA"] as const;
+
+const questionPresentation = (): RacePresentationState => ({
+  phase: "question",
+  verdict: null,
+  banner: null,
+});
+
+const pitPresentation = (): RacePresentationState => ({
+  phase: "pit",
+  verdict: null,
+  banner: {
+    text: "BOX BOX BOX",
+    sub: "TYRE CHANGE · POSITIONS HOLD",
+    tone: "pit",
+  },
+});
+
+const dnfPresentation = (): RacePresentationState => ({
+  phase: "dnf",
+  verdict: null,
+  banner: {
+    text: "RETIRING THE CAR",
+    sub: "TOO MUCH DAMAGE · DNF",
+    tone: "bad",
+  },
+});
+
+const finishPresentation = (): RacePresentationState => ({
+  phase: "finish",
+  verdict: null,
+  banner: null,
+});
 
 const getPitStopLap = (totalLaps: number) => Math.floor(totalLaps / 2);
 
@@ -17,6 +59,118 @@ const getScore = (state: FlowState) =>
     if (answer === null) return total;
     return answer === state.weekendQuestions[lapIndex]?.answer ? total + 1 : total;
   }, 0);
+
+const clampRacePosition = (position: number): RaceGridPosition =>
+  Math.max(1, Math.min(position, 10)) as RaceGridPosition;
+
+export const getLedgerPosition = (
+  correctCount: number,
+  wrongCount: number,
+  raceCurve: RaceCurve,
+): RaceGridPosition => {
+  const gains = raceCurve === "defend" ? defendGains : snatchGains;
+  const safeCorrectCount = Math.max(0, Math.min(Math.trunc(correctCount), gains.length - 1));
+  const safeWrongCount = Math.max(0, Math.trunc(wrongCount));
+  return clampRacePosition(10 - gains[safeCorrectCount] + safeWrongCount);
+};
+
+export const recomputeRaceLedger = (
+  lapAnswers: FlowState["lapAnswers"],
+  weekendQuestions: FlowState["weekendQuestions"],
+  raceCurve: RaceCurve,
+): RaceLedgerEntry[] => {
+  let correctCount = 0;
+  let wrongCount = 0;
+  let position: RaceGridPosition = 10;
+
+  return weekendQuestions.map((question, lapIndex) => {
+    const before = position;
+    const answer = lapAnswers[lapIndex] ?? null;
+    const result =
+      answer === null ? null : answer === question.answer ? ("correct" as const) : ("wrong" as const);
+
+    if (result === "correct") correctCount += 1;
+    if (result === "wrong") wrongCount += 1;
+
+    const after =
+      result === null ? before : getLedgerPosition(correctCount, wrongCount, raceCurve);
+    position = after;
+
+    return {
+      lapIndex,
+      result,
+      before,
+      after,
+      delta: before - after,
+    };
+  });
+};
+
+export const getRandomRaceCurve = (): RaceCurve =>
+  Math.random() < 0.5 ? "snatch" : "defend";
+
+const getCurrentPosition = (raceLedger: RaceLedgerEntry[]): RaceGridPosition =>
+  raceLedger[raceLedger.length - 1]?.after ?? 10;
+
+const getRaceBanner = (state: FlowState, lapIndex: number): RaceBanner | null => {
+  const entry = state.raceLedger[lapIndex];
+  if (!entry || entry.result === null) return null;
+
+  const corner = raceCorners[lapIndex % raceCorners.length];
+
+  if (entry.result === "correct") {
+    let text: string;
+    if (entry.after === 1 && entry.delta === 0) {
+      text = `P1 DEFENDED INTO ${corner}`;
+    } else if (entry.delta === 0) {
+      text = `HELD THROUGH ${corner}`;
+    } else {
+      text = `CLEAN PASS — UP ${entry.delta} INTO ${corner}`;
+    }
+
+    let streak = 0;
+    for (let index = lapIndex; index >= 0; index -= 1) {
+      if (state.raceLedger[index]?.result !== "correct") break;
+      streak += 1;
+    }
+
+    return {
+      text,
+      sub: streak >= 2 ? `PURPLE SECTOR · ${streak} CORRECT IN A ROW` : "",
+      tone: "good",
+    };
+  }
+
+  const wrongCount = state.raceLedger
+    .slice(0, lapIndex + 1)
+    .filter((ledgerEntry) => ledgerEntry.result === "wrong").length;
+
+  return {
+    text:
+      entry.delta === 0
+        ? `NO WAY THROUGH AT ${corner}`
+        : `LOST ${Math.abs(entry.delta)} AT ${corner}`,
+    sub: wrongCount >= 2 ? "DAMAGE BUILDING · CAREFUL" : "",
+    tone: "bad",
+  };
+};
+
+const getRevealedPresentation = (
+  state: FlowState,
+  lapIndex: number,
+): RacePresentationState => {
+  const result = state.raceLedger[lapIndex]?.result ?? null;
+  if (result === null) return questionPresentation();
+
+  return {
+    phase: "result",
+    verdict: result,
+    banner: getRaceBanner(state, lapIndex),
+  };
+};
+
+const getFinalPosition = (state: FlowState) =>
+  getScore(state) === 0 ? ("DNF" as const) : state.currentPosition;
 
 const getDrillRank = (state: FlowState) => state.tutorialAnswers.length + 1;
 
@@ -79,6 +233,8 @@ const applyNavigationTarget = (state: FlowState, target: TrackTarget): FlowState
       stage: "formation",
       formationMode: "intro",
       tutorialStep: 0,
+      finalPosition: null,
+      racePresentation: questionPresentation(),
       startDrill: { ...state.startDrill, phase: "idle", lightsOnCount: 0 },
       pitStop: { ...state.pitStop, phase: "idle" },
     };
@@ -90,6 +246,8 @@ const applyNavigationTarget = (state: FlowState, target: TrackTarget): FlowState
       stage: "formation",
       formationMode: "drill",
       tutorialStep: maxTutorialStep,
+      finalPosition: null,
+      racePresentation: questionPresentation(),
       startDrill: { ...state.startDrill, phase: "idle", lightsOnCount: 0 },
       pitStop: { ...state.pitStop, phase: "idle" },
     };
@@ -102,6 +260,8 @@ const applyNavigationTarget = (state: FlowState, target: TrackTarget): FlowState
       stage: "formation",
       formationMode: "briefing",
       tutorialStep: safeStep,
+      finalPosition: null,
+      racePresentation: questionPresentation(),
       startDrill: { ...state.startDrill, phase: "idle", lightsOnCount: 0 },
       pitStop: { ...state.pitStop, phase: "idle" },
     };
@@ -113,6 +273,8 @@ const applyNavigationTarget = (state: FlowState, target: TrackTarget): FlowState
       ...state,
       stage: "race",
       currentLap: safeLap,
+      finalPosition: null,
+      racePresentation: getRevealedPresentation(state, safeLap),
       startDrill: { ...state.startDrill, phase: "idle", lightsOnCount: 0 },
       pitStop: { ...state.pitStop, phase: "idle" },
     };
@@ -123,6 +285,8 @@ const applyNavigationTarget = (state: FlowState, target: TrackTarget): FlowState
       ...state,
       stage: "pitstop",
       currentLap: pitStopLap,
+      finalPosition: null,
+      racePresentation: pitPresentation(),
       startDrill: { ...state.startDrill, phase: "idle", lightsOnCount: 0 },
       pitStop: { ...state.pitStop, phase: "idle" },
     };
@@ -132,6 +296,8 @@ const applyNavigationTarget = (state: FlowState, target: TrackTarget): FlowState
     ...state,
     stage: "finished",
     currentLap: Math.max(totalLaps - 1, 0),
+    finalPosition: getFinalPosition(state),
+    racePresentation: finishPresentation(),
     startDrill: { ...state.startDrill, phase: "idle", lightsOnCount: 0 },
     pitStop: { ...state.pitStop, phase: "idle" },
   };
@@ -172,6 +338,18 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
   const maxTutorialStep = Math.max(state.tutorialAnswers.length - 1, 0);
 
   switch (event.type) {
+    case "SET_UI_VERSION":
+      return {
+        ...state,
+        uiVersion: event.uiVersion,
+      };
+
+    case "SET_V2_MODE":
+      return {
+        ...state,
+        v2Mode: event.mode,
+      };
+
     case "NAVIGATE": {
       const withAttention = applyAttentionOnNavigation(state, event.target);
       return applyNavigationTarget(withAttention, event.target);
@@ -344,12 +522,42 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
 
       const nextLapAnswers = [...state.lapAnswers];
       nextLapAnswers[state.currentLap] = event.optionIndex;
+      const nextRaceLedger = recomputeRaceLedger(
+        nextLapAnswers,
+        state.weekendQuestions,
+        state.raceCurve,
+      );
 
       return {
         ...state,
         lapAnswers: nextLapAnswers,
+        raceLedger: nextRaceLedger,
+        currentPosition: getCurrentPosition(nextRaceLedger),
+        finalPosition: null,
+        racePresentation: {
+          phase: "lap",
+          verdict: null,
+          banner: null,
+        },
       };
     }
+
+    case "RACE_REVEAL": {
+      if (state.stage !== "race") return state;
+      if (state.lapAnswers[state.currentLap] === null) return state;
+
+      return {
+        ...state,
+        racePresentation: getRevealedPresentation(state, state.currentLap),
+      };
+    }
+
+    case "RACE_RESET_PRESENTATION":
+      if (state.stage !== "race") return state;
+      return {
+        ...state,
+        racePresentation: questionPresentation(),
+      };
 
     case "RACE_NEXT": {
       if (state.stage !== "race") return state;
@@ -361,6 +569,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
           ...state,
           currentLap: nextLap,
           stage: "pitstop",
+          racePresentation: pitPresentation(),
           pitStop: { ...state.pitStop, phase: "idle" },
         };
       }
@@ -368,6 +577,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
       return {
         ...state,
         currentLap: nextLap,
+        racePresentation: getRevealedPresentation(state, nextLap),
       };
     }
 
@@ -385,10 +595,10 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
       }
 
       if (state.currentLap > 0) {
-        return {
-          ...state,
-          currentLap: state.currentLap - 1,
-        };
+        return applyNavigationTarget(state, {
+          kind: "lap",
+          lapIndex: state.currentLap - 1,
+        });
       }
 
       return applyNavigationTarget(
@@ -404,6 +614,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         ...state,
         pitStop: {
           ...state.pitStop,
+          resultMs: null,
           attemptStarted: true,
           needsAttention: false,
           phase: "running",
@@ -470,6 +681,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         ...state,
         pitStop: {
           ...state.pitStop,
+          resultMs: null,
           attemptStarted: true,
           needsAttention: false,
           phase: "running",
@@ -488,6 +700,8 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
       return {
         ...setPitStopIdle(setStartDrillIdle(state)),
         stage: "finish_intro",
+        finalPosition: getFinalPosition(state),
+        racePresentation: score === 0 ? dnfPresentation() : finishPresentation(),
         bestScore: Math.max(state.bestScore, score),
       };
     }
@@ -497,6 +711,7 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
       return {
         ...state,
         stage: "finished",
+        racePresentation: finishPresentation(),
       };
 
     case "GO_PREVIOUS_FROM_FINISH":
@@ -504,9 +719,19 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         ...state,
         stage: "race",
         currentLap: Math.max(totalLaps - 1, 0),
+        finalPosition: null,
+        racePresentation: getRevealedPresentation(state, Math.max(totalLaps - 1, 0)),
       };
 
     case "RESTART_WEEKEND": {
+      const nextRaceCurve = event.raceCurve ?? getRandomRaceCurve();
+      const nextLapAnswers = event.weekendQuestions.map(() => null);
+      const nextRaceLedger = recomputeRaceLedger(
+        nextLapAnswers,
+        event.weekendQuestions,
+        nextRaceCurve,
+      );
+
       return {
         ...state,
         stage: "formation",
@@ -515,7 +740,12 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         tutorialAnswers: state.tutorialAnswers.map(() => null),
         weekendQuestions: event.weekendQuestions,
         currentLap: 0,
-        lapAnswers: event.weekendQuestions.map(() => null),
+        lapAnswers: nextLapAnswers,
+        raceCurve: nextRaceCurve,
+        raceLedger: nextRaceLedger,
+        currentPosition: getCurrentPosition(nextRaceLedger),
+        finalPosition: null,
+        racePresentation: questionPresentation(),
         startDrill: {
           resultMs: null,
           attemptStarted: false,
@@ -557,6 +787,9 @@ type InitialFlowStateParams = {
   tutorialStepCount: number;
   bestReactionMs: number | null;
   bestScore: number;
+  uiVersion?: UiVersion;
+  v2Mode?: V2Mode;
+  raceCurve?: RaceCurve;
 };
 
 export const createInitialFlowState = ({
@@ -564,30 +797,45 @@ export const createInitialFlowState = ({
   tutorialStepCount,
   bestReactionMs,
   bestScore,
-}: InitialFlowStateParams): FlowState => ({
-  stage: "formation",
-  formationMode: "intro",
-  tutorialStep: 0,
-  tutorialAnswers: Array.from({ length: tutorialStepCount }, () => null),
-  weekendQuestions,
-  currentLap: 0,
-  lapAnswers: weekendQuestions.map(() => null),
-  startDrill: {
-    resultMs: null,
-    attemptStarted: false,
-    needsAttention: false,
-    phase: "idle",
-    lightsOnCount: 0,
-  },
-  pitStop: {
-    resultMs: null,
-    attemptStarted: false,
-    needsAttention: false,
-    phase: "idle",
-    step: 0,
-    penaltyMs: 0,
-    message: PIT_DEFAULT_MESSAGE,
-  },
-  bestReactionMs,
-  bestScore,
-});
+  uiVersion = "v2",
+  v2Mode = "giorno",
+  raceCurve = getRandomRaceCurve(),
+}: InitialFlowStateParams): FlowState => {
+  const lapAnswers = weekendQuestions.map(() => null);
+  const raceLedger = recomputeRaceLedger(lapAnswers, weekendQuestions, raceCurve);
+
+  return {
+    stage: "formation",
+    formationMode: "intro",
+    uiVersion,
+    v2Mode,
+    tutorialStep: 0,
+    tutorialAnswers: Array.from({ length: tutorialStepCount }, () => null),
+    weekendQuestions,
+    currentLap: 0,
+    lapAnswers,
+    raceCurve,
+    raceLedger,
+    currentPosition: getCurrentPosition(raceLedger),
+    finalPosition: null,
+    racePresentation: questionPresentation(),
+    startDrill: {
+      resultMs: null,
+      attemptStarted: false,
+      needsAttention: false,
+      phase: "idle",
+      lightsOnCount: 0,
+    },
+    pitStop: {
+      resultMs: null,
+      attemptStarted: false,
+      needsAttention: false,
+      phase: "idle",
+      step: 0,
+      penaltyMs: 0,
+      message: PIT_DEFAULT_MESSAGE,
+    },
+    bestReactionMs,
+    bestScore,
+  };
+};

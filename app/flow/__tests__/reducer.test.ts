@@ -1,15 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Question } from "../../f1-question-bank";
-import { flowReducer, createInitialFlowState } from "../reducer";
 import {
+  flowReducer,
+  createInitialFlowState,
+  getLedgerPosition,
+} from "../reducer";
+import {
+  selectDisplayedRacePosition,
   selectFinishChips,
   selectPitComplete,
+  selectRaceCounts,
   selectPitWarning,
   selectStartComplete,
   selectStartSkipVisible,
   selectStartWarning,
+  selectVersionMarkEnabled,
 } from "../selectors";
+import type { RaceCurve } from "../types";
 
 const makeQuestions = (): Question[] =>
   Array.from({ length: 6 }, (_, index) => ({
@@ -26,6 +34,7 @@ const makeState = () =>
     tutorialStepCount: 3,
     bestReactionMs: null,
     bestScore: 0,
+    raceCurve: "defend",
   });
 
 const run = (
@@ -112,7 +121,7 @@ describe("flow reducer", () => {
     expect(selectPitComplete(startedThenLeft)).toBe(false);
   });
 
-  it("keeps prior pit score on retry and allows progression during running retry", () => {
+  it("clears the prior pit result when retrying and allows progression during the new attempt", () => {
     const retried = run(makeState(), [
       { type: "NAVIGATE", target: { kind: "pitstop" } },
       { type: "PIT_COMPLETE", timeMs: 1720 },
@@ -120,12 +129,12 @@ describe("flow reducer", () => {
       { type: "PIT_ADVANCE" },
     ]);
 
-    expect(retried.pitStop.resultMs).toBe(1720);
+    expect(retried.pitStop.resultMs).toBeNull();
     expect(retried.pitStop.phase).toBe("running");
     expect(retried.pitStop.step).toBe(1);
     expect(retried.pitStop.penaltyMs).toBe(0);
     expect(retried.pitStop.needsAttention).toBe(false);
-    expect(selectPitComplete(retried)).toBe(true);
+    expect(selectPitComplete(retried)).toBe(false);
     expect(selectPitWarning(retried)).toBe(false);
   });
 
@@ -164,7 +173,7 @@ describe("flow reducer", () => {
     expect(selectPitWarning(completedRetry)).toBe(false);
   });
 
-  it("keeps prior completion if retry is abandoned mid-run", () => {
+  it("marks an abandoned retry incomplete instead of restoring the stale completion", () => {
     const leftMidRetry = run(makeState(), [
       { type: "NAVIGATE", target: { kind: "pitstop" } },
       { type: "PIT_COMPLETE", timeMs: 1720 },
@@ -173,9 +182,9 @@ describe("flow reducer", () => {
       { type: "NAVIGATE", target: { kind: "pitstop" } },
     ]);
 
-    expect(leftMidRetry.pitStop.resultMs).toBe(1720);
-    expect(selectPitComplete(leftMidRetry)).toBe(true);
-    expect(selectPitWarning(leftMidRetry)).toBe(false);
+    expect(leftMidRetry.pitStop.resultMs).toBeNull();
+    expect(selectPitComplete(leftMidRetry)).toBe(false);
+    expect(selectPitWarning(leftMidRetry)).toBe(true);
     expect(leftMidRetry.pitStop.phase).toBe("idle");
   });
 
@@ -203,5 +212,241 @@ describe("flow reducer", () => {
     expect(completeFinishChips.startDrill.timeMs).toBe(261);
     expect(completeFinishChips.pitStop.kind).toBe("time");
     expect(completeFinishChips.pitStop.timeMs).toBe(1720);
+  });
+});
+
+const answerRace = (curve: RaceCurve, correctAnswers: number) => {
+  let state = createInitialFlowState({
+    weekendQuestions: makeQuestions(),
+    tutorialStepCount: 3,
+    bestReactionMs: null,
+    bestScore: 0,
+    raceCurve: curve,
+  });
+
+  for (let lapIndex = 0; lapIndex < state.weekendQuestions.length; lapIndex += 1) {
+    const question = state.weekendQuestions[lapIndex];
+    const optionIndex =
+      lapIndex < correctAnswers
+        ? question.answer
+        : (question.answer + 1) % question.options.length;
+    state = run(state, [
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex } },
+      { type: "RACE_PICK", optionIndex },
+    ]);
+  }
+
+  return flowReducer(state, { type: "START_FINISH_INTRO" });
+};
+
+describe("Monza shared race state", () => {
+  it("uses the exact defend and snatch ledger formulas", () => {
+    expect(
+      Array.from({ length: 7 }, (_, correctCount) =>
+        getLedgerPosition(correctCount, 6 - correctCount, "defend"),
+      ),
+    ).toEqual([10, 10, 10, 8, 5, 2, 1]);
+
+    expect(
+      Array.from({ length: 7 }, (_, correctCount) =>
+        getLedgerPosition(correctCount, 6 - correctCount, "snatch"),
+      ),
+    ).toEqual([10, 10, 10, 8, 6, 3, 1]);
+  });
+
+  it.each([
+    ["defend", ["DNF", 10, 10, 8, 5, 2, 1]],
+    ["snatch", ["DNF", 10, 10, 8, 6, 3, 1]],
+  ] as const)("produces the reference final classification for %s", (curve, expected) => {
+    const classifications = Array.from(
+      { length: 7 },
+      (_, correctAnswers) => answerRace(curve, correctAnswers).finalPosition,
+    );
+
+    expect(classifications).toEqual(expected);
+  });
+
+  it("recomputes all six ledger entries in lap order after out-of-order V1 navigation", () => {
+    const questions = makeQuestions();
+    const lapFiveWrong = (questions[5].answer + 1) % questions[5].options.length;
+
+    const lateFirst = run(
+      createInitialFlowState({
+        weekendQuestions: questions,
+        tutorialStepCount: 3,
+        bestReactionMs: null,
+        bestScore: 0,
+        raceCurve: "defend",
+      }),
+      [
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 5 } },
+        { type: "RACE_PICK", optionIndex: lapFiveWrong },
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 2 } },
+        { type: "RACE_PICK", optionIndex: questions[2].answer },
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+        { type: "RACE_PICK", optionIndex: questions[0].answer },
+      ],
+    );
+
+    const earlyFirst = run(
+      createInitialFlowState({
+        weekendQuestions: questions,
+        tutorialStepCount: 3,
+        bestReactionMs: null,
+        bestScore: 0,
+        raceCurve: "defend",
+      }),
+      [
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+        { type: "RACE_PICK", optionIndex: questions[0].answer },
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 2 } },
+        { type: "RACE_PICK", optionIndex: questions[2].answer },
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 5 } },
+        { type: "RACE_PICK", optionIndex: lapFiveWrong },
+      ],
+    );
+
+    expect(lateFirst.raceLedger).toEqual(earlyFirst.raceLedger);
+    expect(lateFirst.raceLedger).toEqual([
+      { lapIndex: 0, result: "correct", before: 10, after: 8, delta: 2 },
+      { lapIndex: 1, result: null, before: 8, after: 8, delta: 0 },
+      { lapIndex: 2, result: "correct", before: 8, after: 6, delta: 2 },
+      { lapIndex: 3, result: null, before: 6, after: 6, delta: 0 },
+      { lapIndex: 4, result: null, before: 6, after: 6, delta: 0 },
+      { lapIndex: 5, result: "wrong", before: 6, after: 7, delta: -1 },
+    ]);
+    expect(lateFirst.currentPosition).toBe(7);
+    expect(selectRaceCounts(lateFirst)).toEqual({ correct: 2, wrong: 1 });
+  });
+
+  it("exposes lap, verdict, banner, reset, and marker-reentry presentation states", () => {
+    const questions = makeQuestions();
+    const picked = run(
+      createInitialFlowState({
+        weekendQuestions: questions,
+        tutorialStepCount: 3,
+        bestReactionMs: null,
+        bestScore: 0,
+        raceCurve: "defend",
+      }),
+      [
+        { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+        { type: "RACE_PICK", optionIndex: questions[0].answer },
+      ],
+    );
+
+    expect(picked.racePresentation).toEqual({
+      phase: "lap",
+      verdict: null,
+      banner: null,
+    });
+
+    const revealed = flowReducer(picked, { type: "RACE_REVEAL" });
+    expect(revealed.racePresentation).toEqual({
+      phase: "result",
+      verdict: "correct",
+      banner: {
+        text: "CLEAN PASS — UP 2 INTO THE RETTIFILO",
+        sub: "",
+        tone: "good",
+      },
+    });
+
+    const reset = flowReducer(revealed, { type: "RACE_RESET_PRESENTATION" });
+    expect(reset.racePresentation).toEqual({
+      phase: "question",
+      verdict: null,
+      banner: null,
+    });
+
+    const reentered = run(reset, [
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 1 } },
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+    ]);
+    expect(reentered.racePresentation).toEqual(revealed.racePresentation);
+  });
+
+  it("publishes DNF during a scoreless finish intro and the finish presentation afterward", () => {
+    const dnfIntro = flowReducer(makeState(), { type: "START_FINISH_INTRO" });
+
+    expect(dnfIntro.stage).toBe("finish_intro");
+    expect(dnfIntro.currentPosition).toBe(10);
+    expect(dnfIntro.finalPosition).toBe("DNF");
+    expect(selectDisplayedRacePosition(dnfIntro)).toBe("DNF");
+    expect(dnfIntro.racePresentation).toEqual({
+      phase: "dnf",
+      verdict: null,
+      banner: {
+        text: "RETIRING THE CAR",
+        sub: "TOO MUCH DAMAGE · DNF",
+        tone: "bad",
+      },
+    });
+
+    const finished = flowReducer(dnfIntro, { type: "FINISH_INTRO_DONE" });
+    expect(finished.racePresentation).toEqual({
+      phase: "finish",
+      verdict: null,
+      banner: null,
+    });
+    expect(finished.finalPosition).toBe("DNF");
+  });
+
+  it("updates skin and mode without touching the game, then preserves them across restart", () => {
+    const changed = run(makeState(), [
+      { type: "SET_UI_VERSION", uiVersion: "v1" },
+      { type: "SET_V2_MODE", mode: "notte" },
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+      { type: "RACE_PICK", optionIndex: makeQuestions()[0].answer },
+    ]);
+
+    const restarted = flowReducer(changed, {
+      type: "RESTART_WEEKEND",
+      weekendQuestions: makeQuestions(),
+      raceCurve: "snatch",
+    });
+
+    expect(restarted.uiVersion).toBe("v1");
+    expect(restarted.v2Mode).toBe("notte");
+    expect(restarted.raceCurve).toBe("snatch");
+    expect(restarted.raceLedger).toHaveLength(6);
+    expect(restarted.raceLedger.every((entry) => entry.result === null)).toBe(true);
+    expect(restarted.currentPosition).toBe(10);
+    expect(restarted.finalPosition).toBeNull();
+  });
+
+  it("chooses a fresh 50/50 curve when restart does not force one", () => {
+    const random = vi.spyOn(Math, "random");
+    random.mockReturnValueOnce(0.1);
+    const snatch = flowReducer(makeState(), {
+      type: "RESTART_WEEKEND",
+      weekendQuestions: makeQuestions(),
+    });
+
+    random.mockReturnValueOnce(0.9);
+    const defend = flowReducer(snatch, {
+      type: "RESTART_WEEKEND",
+      weekendQuestions: makeQuestions(),
+    });
+    random.mockRestore();
+
+    expect(snatch.raceCurve).toBe("snatch");
+    expect(defend.raceCurve).toBe("defend");
+  });
+
+  it("disables the hidden version mark only during countdown and go", () => {
+    const drill = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "formation_drill" } },
+    ]);
+    expect(selectVersionMarkEnabled(drill)).toBe(true);
+
+    const countdown = flowReducer(drill, { type: "START_DRILL_INITIATE" });
+    expect(selectVersionMarkEnabled(countdown)).toBe(false);
+
+    const go = flowReducer(countdown, { type: "START_DRILL_GO" });
+    expect(selectVersionMarkEnabled(go)).toBe(false);
+
+    const completed = flowReducer(go, { type: "START_DRILL_COMPLETE", timeMs: 250 });
+    expect(selectVersionMarkEnabled(completed)).toBe(true);
   });
 });

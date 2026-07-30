@@ -2,18 +2,24 @@ import { describe, expect, it } from "vitest";
 
 import type { FlowState } from "../types";
 import {
+  selectCurrentLapLedgerEntry,
+  selectDisplayedRacePosition,
   selectFinishChips,
   selectPitComplete,
   selectPitSkipVisible,
   selectPitWarning,
+  selectRaceCounts,
   selectStartComplete,
   selectStartSkipVisible,
   selectStartWarning,
+  selectVersionMarkEnabled,
 } from "../selectors";
 
 const baseState: FlowState = {
   stage: "formation",
   formationMode: "drill",
+  uiVersion: "v2",
+  v2Mode: "giorno",
   tutorialStep: 0,
   tutorialAnswers: [null, null, null],
   weekendQuestions: [
@@ -21,6 +27,17 @@ const baseState: FlowState = {
   ],
   currentLap: 0,
   lapAnswers: [null],
+  raceCurve: "defend",
+  raceLedger: [
+    { lapIndex: 0, result: null, before: 10, after: 10, delta: 0 },
+  ],
+  currentPosition: 10,
+  finalPosition: null,
+  racePresentation: {
+    phase: "question",
+    verdict: null,
+    banner: null,
+  },
   startDrill: {
     resultMs: null,
     attemptStarted: false,
@@ -76,5 +93,36 @@ describe("flow selectors", () => {
     expect(complete.startDrill.timeMs).toBe(250);
     expect(complete.pitStop.kind).toBe("time");
     expect(complete.pitStop.timeMs).toBe(1800);
+  });
+
+  it("selects race counts, position, current ledger entry, and mark availability", () => {
+    const raceState: FlowState = {
+      ...baseState,
+      stage: "race",
+      formationMode: "intro",
+      lapAnswers: [0],
+      raceLedger: [
+        { lapIndex: 0, result: "correct", before: 10, after: 8, delta: 2 },
+      ],
+      currentPosition: 8,
+      racePresentation: {
+        phase: "result",
+        verdict: "correct",
+        banner: { text: "CLEAN PASS", sub: "", tone: "good" },
+      },
+    };
+
+    expect(selectRaceCounts(raceState)).toEqual({ correct: 1, wrong: 0 });
+    expect(selectDisplayedRacePosition(raceState)).toBe(8);
+    expect(selectCurrentLapLedgerEntry(raceState)).toEqual(raceState.raceLedger[0]);
+    expect(selectVersionMarkEnabled(raceState)).toBe(true);
+
+    const finishedState: FlowState = {
+      ...baseState,
+      stage: "finished",
+      finalPosition: "DNF",
+      racePresentation: { phase: "finish", verdict: null, banner: null },
+    };
+    expect(selectDisplayedRacePosition(finishedState)).toBe("DNF");
   });
 });
