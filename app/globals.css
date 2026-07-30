@@ -6,6 +6,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html[data-ui-version="v2"],
+html[data-ui-version="v2"] body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 @theme {
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;

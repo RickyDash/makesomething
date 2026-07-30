@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Bodoni_Moda,
   Courier_Prime,
@@ -84,6 +84,12 @@ export const metadata: Metadata = {
     title: "makesomething ☀️",
     description: "look what i made!",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
