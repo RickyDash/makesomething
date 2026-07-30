@@ -833,235 +833,110 @@ function CircuitMap({
 
 function ClassificationStrip({
   entries,
-  raceSim,
 }: {
   entries: readonly MonzaClassificationEntry[];
-  raceSim: MonzaV2SkinProps["raceSim"];
 }) {
-  const chipRefs = useRef(new Map<string, HTMLLIElement>());
-  const chipFeedbackRefs = useRef(new Map<string, HTMLDivElement>());
-  const classificationPositionRefs = useRef(
-    new Map<string, HTMLSpanElement>(),
+  const fallbackOrder = useMemo(
+    () =>
+      [...entries]
+        .sort((left, right) => left.position - right.position)
+        .map((entry) => entry.id),
+    [entries],
   );
-  const gainArrowRefs = useRef(new Map<string, HTMLSpanElement>());
-  const lossArrowRefs = useRef(new Map<string, HTMLSpanElement>());
+  const fallbackOrderKey = fallbackOrder.join("|");
+  const entryById = useMemo(
+    () => new Map(entries.map((entry) => [entry.id, entry])),
+    [entries],
+  );
+  const [snapshot, setSnapshot] = useState<{
+    ids: string[];
+    directions: Map<string, "gain" | "loss">;
+    revision: number;
+  }>(() => ({
+    ids: fallbackOrder,
+    directions: new Map(),
+    revision: 0,
+  }));
+  const orderKeyRef = useRef(fallbackOrderKey);
 
   useEffect(() => {
-    if (!raceSim) return;
+    const applyOrder = (ids: readonly string[]) => {
+      if (ids.length !== RACE_POSITIONS.length) return;
+      const nextOrderKey = ids.join("|");
+      if (nextOrderKey === orderKeyRef.current) return;
+      orderKeyRef.current = nextOrderKey;
 
-    const previousPositions = new Map<string, number>();
-    const visiblePositions = new Map<string, string>();
-    const visibleDirections = new Map<string, "gain" | "loss">();
-    const motionUntil = new Map<string, number>();
-    const chipAnimations = new Map<string, Animation>();
+      setSnapshot((previous) => {
+        const previousPosition = new Map(
+          previous.ids.map((id, index) => [id, index]),
+        );
+        const directions = new Map<string, "gain" | "loss">();
+        ids.forEach((id, index) => {
+          const before = previousPosition.get(id);
+          if (before === undefined || before === index) return;
+          directions.set(id, index < before ? "gain" : "loss");
+        });
 
-    const paint = (frame: MonzaRaceFrame) => {
-      const now = performance.now();
-      frame.cars.forEach((car) => {
-        if (typeof car.position !== "number") return;
-        const id =
-          car.code?.toLowerCase() ??
-          BASE_DRIVERS[car.driverIndex]?.id ??
-          String(car.driverIndex);
-        const chip = chipRefs.current.get(id);
-        const previous = previousPositions.get(id);
-
-        if (!visibleDirections.has(id)) {
-          const initialDirection =
-            gainArrowRefs.current.get(id)?.style.opacity === "1"
-              ? "gain"
-              : lossArrowRefs.current.get(id)?.style.opacity === "1"
-                ? "loss"
-                : undefined;
-          if (initialDirection) visibleDirections.set(id, initialDirection);
-        }
-
-        if (previous !== undefined && previous !== car.position) {
-          const direction = car.position < previous ? "gain" : "loss";
-          const previousDirection = visibleDirections.get(id);
-          if (previousDirection) {
-            setInlineOpacity(
-              previousDirection === "gain"
-                ? gainArrowRefs.current.get(id)
-                : lossArrowRefs.current.get(id),
-              false,
-            );
-          }
-          setInlineOpacity(
-            direction === "gain"
-              ? gainArrowRefs.current.get(id)
-              : lossArrowRefs.current.get(id),
-            true,
-          );
-          visibleDirections.set(id, direction);
-          motionUntil.set(id, now + 900);
-          chipAnimations.get(id)?.cancel();
-          const feedback = chipFeedbackRefs.current.get(id);
-          if (feedback) {
-            chipAnimations.set(
-              id,
-              feedback.animate(
-                [
-                  { transform: "translateY(0)" },
-                  { offset: 0.42, transform: "translateY(-2px)" },
-                  { transform: "translateY(0)" },
-                ],
-                { duration: 900, easing: "ease-out" },
-              ),
-            );
-          }
-        } else if (
-          (motionUntil.get(id) ?? 0) <= now &&
-          visibleDirections.has(id)
-        ) {
-          const direction = visibleDirections.get(id);
-          setInlineOpacity(
-            direction === "gain"
-              ? gainArrowRefs.current.get(id)
-              : lossArrowRefs.current.get(id),
-            false,
-          );
-          visibleDirections.delete(id);
-        }
-        previousPositions.set(id, car.position);
-
-        const nextPosition = String(car.position);
-        let visiblePosition = visiblePositions.get(id);
-        if (visiblePosition === undefined) {
-          visiblePosition =
-            [...RACE_POSITIONS, "dnf"].find(
-              (position) =>
-                classificationPositionRefs.current.get(
-                  keyedPosition(id, position),
-                )?.style.opacity === "1",
-            )?.toString() ?? nextPosition;
-          visiblePositions.set(id, visiblePosition);
-        }
-        if (visiblePosition !== nextPosition) {
-          setInlineOpacity(
-            classificationPositionRefs.current.get(
-              keyedPosition(id, visiblePosition),
-            ),
-            false,
-          );
-          setInlineOpacity(
-            classificationPositionRefs.current.get(
-              keyedPosition(id, nextPosition),
-            ),
-            true,
-          );
-          visiblePositions.set(id, nextPosition);
-          if (chip) {
-            chip.style.transform = `translate3d(${(car.position - 1) * 100}%, 0, 0)`;
-          }
-        }
+        return {
+          ids: [...ids],
+          directions,
+          revision: previous.revision + 1,
+        };
       });
     };
 
-    paint(raceSim.getFrame());
-    const unsubscribe = raceSim.subscribe(paint);
-    return () => {
-      unsubscribe();
-      chipAnimations.forEach((animation) => animation.cancel());
-    };
-  }, [raceSim]);
+    applyOrder(fallbackOrder);
+  }, [fallbackOrder, fallbackOrderKey]);
 
   return (
     <section className={styles.classification} aria-label="Live classification">
       <p>LIVE CLASSIFICATION</p>
       <ol className={styles.classificationList}>
-        {entries.map((entry) => {
-          const delta = entry.delta ?? 0;
+        {snapshot.ids.map((id, slotIndex) => {
+          const entry = entryById.get(id);
+          if (!entry) return null;
+          const direction = snapshot.directions.get(id);
+          const position = slotIndex + 1;
+          const isDnf = entry.status === "dnf";
+
           return (
             <li
-              key={entry.id}
-              ref={(element) => {
-                if (element) chipRefs.current.set(entry.id, element);
-                else chipRefs.current.delete(entry.id);
-              }}
+              key={position}
               className={cx(
                 styles.classificationChip,
                 entry.isPlayer && styles.playerChip,
-                entry.status === "dnf" && styles.dnfChip,
+                isDnf && styles.dnfChip,
               )}
               style={
                 {
                   "--driver-color": entry.color,
-                  transform: `translate3d(${(entry.position - 1) * 100}%, 0, 0)`,
                 } as CSSProperties
               }
-              aria-label={`${entry.code}, ${entry.status === "dnf" ? "did not finish" : `position ${entry.position}`}`}
+              aria-label={`${entry.code}, ${isDnf ? "did not finish" : `position ${position}`}`}
             >
               <div
-                ref={(element) => {
-                  if (element) chipFeedbackRefs.current.set(entry.id, element);
-                  else chipFeedbackRefs.current.delete(entry.id);
-                }}
-                className={styles.classificationChipInner}
+                key={`${id}-${snapshot.revision}`}
+                className={cx(
+                  styles.classificationChipInner,
+                  direction && styles.classificationChipPulse,
+                )}
               >
                 <span className={styles.chipPosition}>
                   <span className={styles.chipDelta} aria-hidden="true">
-                    <span
-                      ref={(element) => {
-                        if (element) gainArrowRefs.current.set(entry.id, element);
-                        else gainArrowRefs.current.delete(entry.id);
-                      }}
-                      className={styles.deltaUp}
-                      style={{ opacity: delta > 0 ? 1 : 0 }}
-                    >
-                      ▲
-                    </span>
-                    <span
-                      ref={(element) => {
-                        if (element) lossArrowRefs.current.set(entry.id, element);
-                        else lossArrowRefs.current.delete(entry.id);
-                      }}
-                      className={styles.deltaDown}
-                      style={{ opacity: delta < 0 ? 1 : 0 }}
-                    >
-                      ▼
-                    </span>
+                    {direction && (
+                      <span
+                        className={
+                          direction === "gain"
+                            ? styles.deltaUp
+                            : styles.deltaDown
+                        }
+                      >
+                        {direction === "gain" ? "▲" : "▼"}
+                      </span>
+                    )}
                   </span>
                   <MicroText scale={0.5625} origin="center">
-                    <span className={styles.classificationPositionStack}>
-                      {RACE_POSITIONS.map((position) => (
-                        <span
-                          key={position}
-                          ref={(element) => {
-                            const key = keyedPosition(entry.id, position);
-                            if (element) {
-                              classificationPositionRefs.current.set(key, element);
-                            } else {
-                              classificationPositionRefs.current.delete(key);
-                            }
-                          }}
-                          className={styles.classificationPositionValue}
-                          style={{
-                            opacity:
-                              entry.status !== "dnf" &&
-                              entry.position === position
-                                ? 1
-                                : 0,
-                          }}
-                        >
-                          P{position}
-                        </span>
-                      ))}
-                      <span
-                        ref={(element) => {
-                          const key = keyedPosition(entry.id, "dnf");
-                          if (element) {
-                            classificationPositionRefs.current.set(key, element);
-                          } else {
-                            classificationPositionRefs.current.delete(key);
-                          }
-                        }}
-                        className={styles.classificationPositionValue}
-                        style={{ opacity: entry.status === "dnf" ? 1 : 0 }}
-                      >
-                        DNF
-                      </span>
-                    </span>
+                    {isDnf ? "DNF" : `P${position}`}
                   </MicroText>
                 </span>
                 <strong>
@@ -1109,79 +984,120 @@ function QuizPanel({
       : null;
   const radio = (mode === "notte" ? NIGHT_RADIOS : DAY_RADIOS)[Math.min(state.currentLap, 5)];
   const canPick = racePhase === "question" && selected === null;
+  const quizScrollRef = useRef<HTMLDivElement>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!verdict) return;
+
+    const frame = requestAnimationFrame(() => {
+      const scroller = quizScrollRef.current;
+      const feedback = feedbackRef.current;
+      if (!scroller || !feedback) return;
+
+      const scrollerRect = scroller.getBoundingClientRect();
+      const feedbackRect = feedback.getBoundingClientRect();
+      const isFullyVisible =
+        feedbackRect.top >= scrollerRect.top &&
+        feedbackRect.bottom <= scrollerRect.bottom;
+      if (isFullyVisible) return;
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      scroller.scrollTo({
+        top: Math.max(
+          0,
+          feedback.offsetTop +
+            feedback.offsetHeight -
+            scroller.clientHeight +
+            8,
+        ),
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [verdict]);
 
   return (
     <div className={styles.quizPanel}>
-      <div className={styles.questionMeta}>
-        <span className={styles.eventChip}>
-          <MicroText scale={0.5625}>{question.event.toUpperCase()}</MicroText>
-        </span>
-        <MicroText scale={0.625} origin="right center">
-          Q {Math.min(state.currentLap + 1, 6)} / 6
-        </MicroText>
-      </div>
-      <h2>{sentenceCase(question.prompt)}</h2>
-      <div className={styles.options}>
-        {question.options.map((option, index) => {
-          const chosen = selected === index;
-          const correct = verdict !== null && index === question.answer;
-          const wrong = verdict === "wrong" && chosen;
-          const dimmed = verdict !== null && !correct && !wrong;
-          return (
-            <Button
-              key={`${state.currentLap}-${option}`}
-              type="button"
-              radius="none"
-              variant="light"
-              disableRipple
-              onPress={() => onAnswer(index)}
-              isDisabled={!canPick}
-              aria-pressed={chosen}
-              className={cx(
-                styles.option,
-                racePhase === "lap" && chosen && styles.optionChosen,
-                correct && styles.optionCorrect,
-                wrong && styles.optionWrong,
-                dimmed && styles.optionDimmed,
-              )}
-            >
-              {sentenceCase(option)}
-            </Button>
-          );
-        })}
-      </div>
-      <div className={styles.feedbackSlot} aria-live="polite">
-        {racePhase === "lap" && (
-          <div className={styles.radioCard}>
-            <strong>
-              TEAM RADIO <span aria-hidden="true">▮</span>
-            </strong>
-            <p>{radio}</p>
-          </div>
-        )}
-        {verdict && (
-          <div className={styles.verdictCard}>
-            <strong className={verdict === "correct" ? styles.goodText : styles.badText}>
-              {verdict === "correct" ? "CORRECT" : "INCORRECT"}
-            </strong>
-            <p>{sentenceCase(question.fact)}</p>
-            {manualRaceAdvance && onManualRaceAdvance && (
+      <div ref={quizScrollRef} className={styles.quizScroller}>
+        <div className={styles.questionMeta}>
+          <span className={styles.eventChip}>
+            <MicroText scale={0.5625}>{question.event.toUpperCase()}</MicroText>
+          </span>
+          <MicroText scale={0.625} origin="right center">
+            Q {Math.min(state.currentLap + 1, 6)} / 6
+          </MicroText>
+        </div>
+        <h2>{sentenceCase(question.prompt)}</h2>
+        <div className={styles.options}>
+          {question.options.map((option, index) => {
+            const chosen = selected === index;
+            const correct = verdict !== null && index === question.answer;
+            const wrong = verdict === "wrong" && chosen;
+            const dimmed = verdict !== null && !correct && !wrong;
+            return (
               <Button
+                key={`${state.currentLap}-${option}`}
+                type="button"
                 radius="none"
                 variant="light"
                 disableRipple
-                onPress={onManualRaceAdvance}
-                className={styles.inlineAdvance}
+                onPress={() => onAnswer(index)}
+                isDisabled={!canPick}
+                aria-pressed={chosen}
+                className={cx(
+                  styles.option,
+                  racePhase === "lap" && chosen && styles.optionChosen,
+                  correct && styles.optionCorrect,
+                  wrong && styles.optionWrong,
+                  dimmed && styles.optionDimmed,
+                )}
               >
-                <MicroText scale={0.625} origin="center">
-                  NEXT LAP →
-                </MicroText>
+                {sentenceCase(option)}
               </Button>
-            )}
-          </div>
-        )}
+            );
+          })}
+        </div>
+        <div
+          ref={feedbackRef}
+          className={styles.feedbackSlot}
+          aria-live="polite"
+        >
+          {racePhase === "lap" && (
+            <div className={styles.radioCard}>
+              <strong>
+                TEAM RADIO <span aria-hidden="true">▮</span>
+              </strong>
+              <p>{radio}</p>
+            </div>
+          )}
+          {verdict && (
+            <div className={styles.verdictCard}>
+              <strong className={verdict === "correct" ? styles.goodText : styles.badText}>
+                {verdict === "correct" ? "CORRECT" : "INCORRECT"}
+              </strong>
+              <p>{sentenceCase(question.fact)}</p>
+              {manualRaceAdvance && onManualRaceAdvance && (
+                <Button
+                  radius="none"
+                  variant="light"
+                  disableRipple
+                  onPress={onManualRaceAdvance}
+                  className={styles.inlineAdvance}
+                >
+                  <MicroText scale={0.625} origin="center">
+                    NEXT LAP →
+                  </MicroText>
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      <p className={styles.debugLine}>
+      <p className={styles.raceFooter}>
         <MicroText scale={0.5625}>
           SIM · {state.raceCurve} curve · {score}✓{" "}
           {state.lapAnswers.filter((answer) => answer !== null).length - score}✕ ·
@@ -1791,7 +1707,7 @@ export function MonzaV2Skin({
         raceSim={raceSim}
       />
 
-      <ClassificationStrip entries={classification} raceSim={raceSim} />
+      <ClassificationStrip entries={classification} />
 
       <div
         className={cx(styles.content, contentInactive && styles.contentMuted)}

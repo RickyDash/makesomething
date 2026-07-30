@@ -57,4 +57,26 @@ A separate crop was not needed: the 1:1 side-by-side comparison keeps the masthe
 - [x] Adapt track cars and classification to container width
 - [x] Verify giorno, notte, and short-screen layouts
 
+## Race panel and classification follow-up
+
+### Evidence
+
+- User-supplied giorno classification reference: `/tmp/codex-remote-attachments/019fb3db-7285-7190-af9d-007939645513/98FDA492-BDDA-4204-8D62-5ED24CFAB1B5/3-Pasted-Image-3.jpg`
+- User-supplied notte classification reference: `/tmp/codex-remote-attachments/019fb3db-7285-7190-af9d-007939645513/98FDA492-BDDA-4204-8D62-5ED24CFAB1B5/4-Pasted-Image-4.jpg`
+- Giorno implementation crop: `output/playwright/v2-race-panel-cleanup/classification-giorno.png`
+- Notte implementation crop: `output/playwright/v2-race-panel-cleanup/classification-notte.png`
+- Normalized side-by-side comparison: `output/playwright/v2-race-panel-cleanup/classification-reference-vs-implementation.png`
+- Settled short-screen verdict: `output/playwright/v2-race-panel-cleanup/verdict-notte-390x700.png`
+
+The reference crops are Retina-density images, so they were reduced to their CSS-pixel dimensions before comparison. The resulting 780 × 124 contact sheet places the giorno reference beside the giorno implementation on the first row, and the notte reference beside the notte implementation on the second row. It confirms the fixed 58px strip, ten equal columns, 40px driver row, giorno open treatment, notte boxed treatment, player highlight, labels, and color bars.
+
+The 390 × 700 result capture confirms that the long verdict is fully visible after the reduced-motion-safe inner scroll settles. The telemetry remains in a dedicated row below the scroller, the V2 mark has reserved corner space, and the document remains locked. The race question, answers, and verdict retain their original copy and styling.
+
+### Findings and fixes
+
+- P1: the classification height had been clamped down to 50px on short screens. It is now a fixed 58px reference strip with a 40px grid row.
+- P1: translated driver chips could cross during order changes. The strip now has ten permanent position cells whose occupants swap and briefly pulse.
+- P1: the flexible feedback slot could shrink while its verdict card overflowed over telemetry. The quiz body now owns natural-height content and internal scrolling, while telemetry occupies a separate non-shrinking footer row.
+- No actionable P0, P1, or P2 visual differences remain after the focused comparison.
+
 final result: passed

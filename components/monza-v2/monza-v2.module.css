@@ -1,7 +1,7 @@
 .root {
   --header-height: clamp(52px, 6.872vh, 58px);
   --map-height: clamp(188px, 28.2vh, 238px);
-  --classification-height: clamp(50px, 6.872vh, 58px);
+  --classification-height: 58px;
   --upper-stack-height: calc(
     var(--header-height) + var(--map-height) + var(--classification-height)
   );
@@ -742,21 +742,20 @@
 }
 
 .classificationList {
-  position: relative;
+  display: grid;
   width: calc(100% - 18px);
-  height: calc(var(--classification-height) - 18px);
+  height: 40px;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   margin: 2px auto 0;
   padding: 0;
   list-style: none;
 }
 
 .classificationChip {
-  position: absolute;
-  top: 0;
-  left: 0;
   display: flex;
-  width: 10%;
+  width: 100%;
   height: 100%;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -764,14 +763,12 @@
   border: none;
   background: transparent;
   color: var(--ink);
-  transform: translate3d(0, 0, 0);
-  transition: transform 550ms cubic-bezier(0.2, 0.8, 0.25, 1), background 300ms;
-  will-change: transform;
+  transition: background 300ms;
 }
 
 .root[data-mode="notte"] .classificationChip {
-  top: 2px;
-  height: calc(100% - 4px);
+  height: 36px;
+  margin-top: 2px;
   border: 2px solid var(--ink);
   background: var(--page);
 }
@@ -785,7 +782,10 @@
   justify-content: center;
   gap: 1px;
   transform: translateY(0);
-  will-change: transform;
+}
+
+.classificationChipPulse {
+  animation: classificationChipPulse 900ms ease-out;
 }
 
 .playerChip {
@@ -811,36 +811,17 @@
 }
 
 .chipDelta {
-  position: relative;
-  display: block;
+  display: grid;
   width: 7px;
   height: 9px;
+  place-items: center;
   font-size: 7px;
   line-height: 1;
 }
 
 .chipDelta > span {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  will-change: opacity;
-}
-
-.classificationPositionStack {
-  position: relative;
-  display: inline-grid;
-  width: 34px;
-  height: 16px;
-}
-
-.classificationPositionValue {
-  display: flex;
   grid-area: 1 / 1;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  white-space: nowrap;
-  will-change: opacity;
+  animation: classificationDelta 900ms ease-out forwards;
 }
 
 .classificationChip strong {
@@ -879,15 +860,13 @@
 .content {
   min-height: 0;
   flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
+  overflow: hidden;
   padding: 16px;
   opacity: 1;
   transition: opacity 400ms ease;
 }
 
-.content::-webkit-scrollbar,
+.quizScroller::-webkit-scrollbar,
 .lowerOverlay::-webkit-scrollbar,
 .finishBody::-webkit-scrollbar {
   display: none;
@@ -902,7 +881,24 @@
   height: 100%;
   min-height: 0;
   flex-direction: column;
+}
+
+.quizScroller {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  scroll-padding-block: 8px;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quizScroller > * {
+  flex: none;
 }
 
 .questionMeta,
@@ -1029,6 +1025,7 @@
 .feedbackSlot {
   display: flex;
   min-height: 84px;
+  flex: none;
   flex-direction: column;
   gap: 8px;
 }
@@ -1077,13 +1074,17 @@
   font-style: italic;
 }
 
-.debugLine {
-  margin: auto 0 0;
+.raceFooter {
+  min-height: 16px;
+  flex: none;
+  margin: 6px 38px 0 0;
+  overflow: hidden;
   color: var(--faint);
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.02em;
   line-height: 1.6;
+  white-space: nowrap;
 }
 
 .goodText,
@@ -1847,6 +1848,26 @@
   }
 }
 
+@keyframes classificationChipPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  42% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes classificationDelta {
+  0%,
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes pitPenaltyRadio {
   0%,
   70% {
@@ -1895,7 +1916,7 @@
     padding: 12px;
   }
 
-  .quizPanel {
+  .quizScroller {
     gap: 8px;
   }
 
