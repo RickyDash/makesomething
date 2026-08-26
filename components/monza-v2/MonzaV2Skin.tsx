@@ -6,6 +6,7 @@ import type { CSSProperties, MutableRefObject } from "react";
 
 import type { FlowState } from "../../app/flow/types";
 import type { Question } from "../../app/f1-question-bank";
+import { formationWarmups } from "../../app/formation-warmups";
 import {
   MONZA_MAIN_TRACK_PATH_D,
   MONZA_PIT_LANE_PATH_D,
@@ -30,34 +31,8 @@ type MonzaV2SequenceBridgeProps = MonzaV2SkinProps & {
   onManualRaceAdvance?: () => void;
 };
 
-const WARMUPS = [
-  {
-    prompt: "You tap an answer — what happens?",
-    options: [
-      "I can change it before the lap",
-      "It locks in immediately",
-      "It skips the lap",
-    ],
-    answer: 1,
-    note: "Answers lock the moment you tap — the lap then plays out your call.",
-  },
-  {
-    prompt: "One question equals what out there?",
-    options: ["One lap of the race", "One full season", "One pit stop"],
-    answer: 0,
-    note: "Six questions, six laps. Every answer is a lap of racing.",
-  },
-  {
-    prompt: "What breaks the race at half distance?",
-    options: [
-      "A timed pit stop you perform",
-      "A double-points lap",
-      "A weather lottery",
-    ],
-    answer: 0,
-    note: "After lap 3 you box: four tyres, in order, against the clock.",
-  },
-] as const;
+const WARMUPS = formationWarmups;
+const WARMUP_COUNT = WARMUPS.length;
 
 const TYRES = ["FRONT LEFT", "FRONT RIGHT", "REAR LEFT", "REAR RIGHT"] as const;
 
@@ -1120,19 +1095,24 @@ function WarmupOverlay({
   onNext: MonzaV2SkinProps["onWarmupNext"];
   onSkip: MonzaV2SkinProps["onWarmupSkip"];
 }) {
-  const stepIndex = Math.min(state.tutorialStep, 2);
+  const stepIndex = Math.min(state.tutorialStep, WARMUP_COUNT - 1);
   const warmup = WARMUPS[stepIndex];
   const selected = state.tutorialAnswers[stepIndex] ?? null;
   const reveal = selected !== null && !locked;
   const correct = selected === warmup.answer;
 
   return (
-    <section className={styles.lowerOverlay} aria-label={`Formation warmup ${stepIndex + 1} of 3`}>
+    <section
+      className={styles.lowerOverlay}
+      aria-label={`Formation warmup ${stepIndex + 1} of ${WARMUP_COUNT}`}
+    >
       <div className={styles.overlayMeta}>
         <span className={styles.eventChip}>
           <MicroText scale={0.5625}>FORMATION LAP</MicroText>
         </span>
-        <MicroText scale={0.625}>W {stepIndex + 1} / 3</MicroText>
+        <MicroText scale={0.625}>
+          W {stepIndex + 1} / {WARMUP_COUNT}
+        </MicroText>
         <Button
           radius="none"
           variant="light"
@@ -1145,6 +1125,12 @@ function WarmupOverlay({
             SKIP »
           </MicroText>
         </Button>
+      </div>
+      <div className={styles.warmupLesson}>
+        <strong>
+          <MicroText scale={0.5625}>HOW IT WORKS</MicroText>
+        </strong>
+        <p>{warmup.lesson}</p>
       </div>
       <h2>{warmup.prompt}</h2>
       <div className={styles.warmupOptions}>
@@ -1181,7 +1167,7 @@ function WarmupOverlay({
             <strong className={correct ? styles.goodText : styles.badText}>
               {correct ? "RIGHT CALL" : "NOT QUITE"}
             </strong>
-            <p>{warmup.note}</p>
+            <p>{correct ? warmup.note : warmup.noteWrong}</p>
           </div>
           <Button
             radius="none"
@@ -1189,7 +1175,7 @@ function WarmupOverlay({
             onPress={onNext}
             className={styles.primaryButton}
           >
-            {stepIndex < 2 ? "NEXT →" : "TO THE GRID →"}
+            {stepIndex < WARMUP_COUNT - 1 ? "NEXT →" : "TO THE GRID →"}
           </Button>
         </>
       )}

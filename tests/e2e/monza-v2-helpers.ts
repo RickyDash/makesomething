@@ -88,19 +88,19 @@ export const completeFormationWarmups = async (page: Page) => {
   const warmups = [
     {
       region: "Formation warmup 1 of 3",
-      answer: "I can change it before the lap",
+      answer: "Yes — any time before the lap ends",
       verdict: "NOT QUITE",
       next: "NEXT →",
     },
     {
       region: "Formation warmup 2 of 3",
-      answer: "One lap of the race",
+      answer: "6 laps — one lap per question",
       verdict: "RIGHT CALL",
       next: "NEXT →",
     },
     {
       region: "Formation warmup 3 of 3",
-      answer: "A timed pit stop you perform",
+      answer: "Tap the 4 tyres in order, against the clock",
       verdict: "RIGHT CALL",
       next: "TO THE GRID →",
     },

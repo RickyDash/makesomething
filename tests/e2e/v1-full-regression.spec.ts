@@ -38,13 +38,13 @@ test("V1 completes its unchanged flow and shares best records with V2", async ({
     .click();
 
   for (const answer of [
-    "it locks immediately as final",
-    "one race lap",
-    "timed pit stop challenge",
+    "no — it locks the moment you tap",
+    "6 laps — one lap per question",
+    "tap the 4 tyres in order, against the clock",
   ]) {
     await page.getByRole("button", { name: answer, exact: true }).click();
     const next = page.getByRole("button", {
-      name: /next weave|line up on the grid/i,
+      name: /next warm-up|line up on the grid/i,
     });
     await next.click();
   }

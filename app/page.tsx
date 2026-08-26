@@ -39,43 +39,18 @@ import {
   type RaceSimPhase,
 } from "./race-sim/raceSim";
 import { loadUiPreferences, saveUiPreferences } from "./ui-preferences";
+import { formationWarmupsV1 } from "./formation-warmups";
 import { MonzaV2Skin } from "../components/monza-v2";
 
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
 type MarkerState = "unanswered" | "correct" | "incorrect";
-
-type TutorialStep = {
-  prompt: string;
-  options: string[];
-  answer: number;
-  note: string;
-};
 
 type PitBands = {
   greenUpper: number;
   yellowUpper: number;
 };
 
-const tutorialSteps: TutorialStep[] = [
-  {
-    prompt: "once you tap an answer, what happens next?",
-    options: ["you can keep changing it", "it locks immediately as final", "it auto-skips"],
-    answer: 1,
-    note: "answers lock immediately, then the race note appears for that lap.",
-  },
-  {
-    prompt: "in this game, each quiz question represents what?",
-    options: ["one race lap", "one full season", "one pit stop"],
-    answer: 0,
-    note: "each quiz question represents one lap in your grand prix run.",
-  },
-  {
-    prompt: "what happens around mid-race?",
-    options: ["timed pit stop challenge", "double points lap", "weather lottery"],
-    answer: 0,
-    note: "mid-race, the pit stop mini challenge appears before you continue laps.",
-  },
-];
+const tutorialSteps = formationWarmupsV1;
 
 const tyreLabels = ["front left", "front right", "rear left", "rear right"] as const;
 const pitOrder = [0, 1, 2, 3] as const;
@@ -2010,6 +1985,12 @@ export default function Home() {
                 {stage === "formation" && formationMode === "briefing" && (
                   <div className="flex flex-col gap-3.5">
                     <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">formation lap (practice)</p>
+                    <div className="rounded-xl border border-zinc-700/60 bg-zinc-900/45 p-3">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">how it works</p>
+                      <p className="mt-1 font-[family-name:var(--font-manrope)] text-sm text-zinc-200">
+                        {tutorialCurrent.lesson}
+                      </p>
+                    </div>
                     <p className="font-[family-name:var(--font-space-grotesk)] text-xl font-semibold text-white">
                       {tutorialCurrent.prompt}
                     </p>
@@ -2066,10 +2047,10 @@ export default function Home() {
                           >
                             {isCurrentTutorialCorrect ? "Correct:" : "Incorrect:"}
                           </span>{" "}
-                          {tutorialCurrent.note}
+                          {isCurrentTutorialCorrect ? tutorialCurrent.note : tutorialCurrent.noteWrong}
                         </p>
                       ) : (
-                        <p>race note: lock an answer and this panel shows the note for that step.</p>
+                        <p>pick an answer above — this panel confirms the rule.</p>
                       )}
                     </div>
 
@@ -2090,7 +2071,7 @@ export default function Home() {
                       >
                         {tutorialStep === tutorialSteps.length - 1
                           ? "line up on the grid ->"
-                          : "next weave ->"}
+                          : "next warm-up ->"}
                       </Button>
                     </div>
 
