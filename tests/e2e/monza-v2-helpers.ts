@@ -38,15 +38,16 @@ export const setPreference = async (
   page: Page,
   uiVersion: "v1" | "v2",
   v2Mode: "giorno" | "notte" = "giorno",
+  difficulty: "beginner" | "regular" = "beginner",
 ) => {
   await page.addInitScript(
-    ({ version, mode }) => {
+    ({ version, mode, level }) => {
       window.localStorage.setItem(
         "f1-ui-preferences:v1",
-        JSON.stringify({ uiVersion: version, v2Mode: mode }),
+        JSON.stringify({ uiVersion: version, v2Mode: mode, difficulty: level }),
       );
     },
-    { version: uiVersion, mode: v2Mode },
+    { version: uiVersion, mode: v2Mode, level: difficulty },
   );
 };
 

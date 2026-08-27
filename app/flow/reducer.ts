@@ -3,6 +3,7 @@ import { assertFlowInvariants } from "./invariants";
 import {
   PIT_DEFAULT_MESSAGE,
   PIT_RUNNING_MESSAGE,
+  type Difficulty,
   type FlowState,
   type RaceBanner,
   type RaceCurve,
@@ -349,6 +350,32 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
         ...state,
         v2Mode: event.mode,
       };
+
+    case "SET_DIFFICULTY": {
+      if (event.difficulty === state.difficulty) return state;
+      if (state.stage !== "formation" || state.formationMode !== "intro") {
+        return state;
+      }
+
+      const nextLapAnswers = event.weekendQuestions.map(() => null);
+      const nextRaceLedger = recomputeRaceLedger(
+        nextLapAnswers,
+        event.weekendQuestions,
+        state.raceCurve,
+      );
+
+      return {
+        ...state,
+        difficulty: event.difficulty,
+        weekendQuestions: event.weekendQuestions,
+        currentLap: 0,
+        lapAnswers: nextLapAnswers,
+        raceLedger: nextRaceLedger,
+        currentPosition: getCurrentPosition(nextRaceLedger),
+        finalPosition: null,
+        racePresentation: questionPresentation(),
+      };
+    }
 
     case "NAVIGATE": {
       const withAttention = applyAttentionOnNavigation(state, event.target);
@@ -789,6 +816,7 @@ type InitialFlowStateParams = {
   bestScore: number;
   uiVersion?: UiVersion;
   v2Mode?: V2Mode;
+  difficulty?: Difficulty;
   raceCurve?: RaceCurve;
 };
 
@@ -799,6 +827,7 @@ export const createInitialFlowState = ({
   bestScore,
   uiVersion = "v2",
   v2Mode = "giorno",
+  difficulty = "beginner",
   raceCurve = getRandomRaceCurve(),
 }: InitialFlowStateParams): FlowState => {
   const lapAnswers = weekendQuestions.map(() => null);
@@ -809,6 +838,7 @@ export const createInitialFlowState = ({
     formationMode: "intro",
     uiVersion,
     v2Mode,
+    difficulty,
     tutorialStep: 0,
     tutorialAnswers: Array.from({ length: tutorialStepCount }, () => null),
     weekendQuestions,

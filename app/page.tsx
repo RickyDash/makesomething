@@ -28,7 +28,7 @@ import {
   scheduleReactionTimeline,
   scheduleV2LapTimeline,
 } from "./flow/timing";
-import type { FormationMode, Stage, TrackTarget, UiVersion } from "./flow/types";
+import type { Difficulty, FormationMode, Stage, TrackTarget, UiVersion } from "./flow/types";
 import {
   createRaceSim,
   createSvgPathGeometrySampler,
@@ -334,6 +334,7 @@ export default function Home() {
   const formationMode = flowState.formationMode;
   const uiVersion = flowState.uiVersion;
   const v2Mode = flowState.v2Mode;
+  const difficulty = flowState.difficulty;
   const weekendQuestions = flowState.weekendQuestions;
   const currentLap = flowState.currentLap;
   const lapAnswers = flowState.lapAnswers;
@@ -607,19 +608,25 @@ export default function Home() {
     const storedPreferences = loadUiPreferences();
     dispatch({ type: "SET_UI_VERSION", uiVersion: storedPreferences.uiVersion });
     dispatch({ type: "SET_V2_MODE", mode: storedPreferences.v2Mode });
+    dispatch({
+      type: "SET_DIFFICULTY",
+      difficulty: storedPreferences.difficulty,
+      weekendQuestions: getRandomWeekendQuestions(storedPreferences.difficulty),
+    });
     saveUiPreferences(storedPreferences);
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.uiVersion = uiVersion;
     document.documentElement.dataset.v2Mode = v2Mode;
+    document.documentElement.dataset.difficulty = difficulty;
 
     if (skipInitialPreferenceSaveRef.current) {
       skipInitialPreferenceSaveRef.current = false;
       return;
     }
-    saveUiPreferences({ uiVersion, v2Mode });
-  }, [uiVersion, v2Mode]);
+    saveUiPreferences({ uiVersion, v2Mode, difficulty });
+  }, [uiVersion, v2Mode, difficulty]);
 
   useEffect(() => {
     flowStateRef.current = flowState;
@@ -1510,13 +1517,22 @@ export default function Home() {
     setFormationTravelPending(false);
     raceSim?.publish({ type: "reset" });
 
-    const nextWeekendQuestions = getRandomWeekendQuestions();
+    const nextWeekendQuestions = getRandomWeekendQuestions(flowState.difficulty);
     dispatch({ type: "RESTART_WEEKEND", weekendQuestions: nextWeekendQuestions });
     pitStartRef.current = null;
   };
 
   const switchUiVersion = (nextVersion: UiVersion) => {
     dispatch({ type: "SET_UI_VERSION", uiVersion: nextVersion });
+  };
+
+  const setDifficulty = (nextDifficulty: Difficulty) => {
+    if (nextDifficulty === flowState.difficulty) return;
+    dispatch({
+      type: "SET_DIFFICULTY",
+      difficulty: nextDifficulty,
+      weekendQuestions: getRandomWeekendQuestions(nextDifficulty),
+    });
   };
 
   const versionMarkHidden =
@@ -1563,6 +1579,8 @@ export default function Home() {
             warmupLocked={v2WarmupLocked}
             launching={v2Launching}
             onModeChange={(mode) => dispatch({ type: "SET_V2_MODE", mode })}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficulty}
             onSwitchToV1={() => switchUiVersion("v1")}
             onStartFormation={startFormationLapTutorial}
             onWarmupAnswer={handleV2WarmupAnswer}
@@ -1951,6 +1969,40 @@ export default function Home() {
                     <p className="font-[family-name:var(--font-manrope)] text-sm text-zinc-300">
                       let&apos;s get some heat in your tyres.
                     </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
+                        difficulty
+                      </span>
+                      <Button
+                        size="sm"
+                        variant={difficulty === "beginner" ? "solid" : "flat"}
+                        color={difficulty === "beginner" ? "danger" : "default"}
+                        aria-pressed={difficulty === "beginner"}
+                        onPress={() => setDifficulty("beginner")}
+                        className={
+                          difficulty === "beginner"
+                            ? "w-fit font-semibold"
+                            : "w-fit bg-zinc-800 text-zinc-100"
+                        }
+                      >
+                        beginner
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={difficulty === "regular" ? "solid" : "flat"}
+                        color={difficulty === "regular" ? "danger" : "default"}
+                        aria-pressed={difficulty === "regular"}
+                        onPress={() => setDifficulty("regular")}
+                        className={
+                          difficulty === "regular"
+                            ? "w-fit font-semibold"
+                            : "w-fit bg-zinc-800 text-zinc-100"
+                        }
+                      >
+                        regular
+                      </Button>
+                    </div>
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button

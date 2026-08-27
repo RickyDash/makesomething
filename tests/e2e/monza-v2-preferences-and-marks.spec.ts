@@ -24,7 +24,7 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
           ),
         ),
       )
-      .toEqual({ uiVersion: "v2", v2Mode: "giorno" });
+      .toEqual({ uiVersion: "v2", v2Mode: "giorno", difficulty: "beginner" });
 
     await page.getByRole("button", { name: /switch to notte dark mode/i }).click();
     await expect(v2Root(page)).toHaveAttribute("data-mode", "notte");
@@ -36,6 +36,45 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     await expect(page.locator('main[data-skin="v1"]')).toBeVisible();
     await switchToV2(page);
     await expect(v2Root(page)).toHaveAttribute("data-mode", "notte");
+  });
+
+  test("difficulty defaults to beginner and persists a regular pick across reload and V1", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    await expect(v2Root(page)).toHaveAttribute("data-difficulty", "beginner");
+    await page
+      .getByRole("button", { name: /switch to regular difficulty/i })
+      .click();
+    await expect(v2Root(page)).toHaveAttribute("data-difficulty", "regular");
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          JSON.parse(
+            window.localStorage.getItem("f1-ui-preferences:v1") ?? "{}",
+          ),
+        ),
+      )
+      .toEqual({ uiVersion: "v2", v2Mode: "giorno", difficulty: "regular" });
+
+    await page.reload();
+    await expect(v2Root(page)).toHaveAttribute("data-difficulty", "regular");
+
+    await switchToV1(page);
+    await expect(
+      page.getByRole("button", { name: "regular", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "beginner", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "beginner", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "beginner", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await switchToV2(page);
+    await expect(v2Root(page)).toHaveAttribute("data-difficulty", "beginner");
   });
 
   test("both marks use the specified offsets, opacity, padding, fade, and lights rule", async ({

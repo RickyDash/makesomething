@@ -437,6 +437,43 @@ function ThemeToggle({
   );
 }
 
+function DifficultyToggle({
+  difficulty,
+  onChange,
+}: {
+  difficulty: MonzaV2SkinProps["difficulty"];
+  onChange: MonzaV2SkinProps["onDifficultyChange"];
+}) {
+  const regular = difficulty === "regular";
+  return (
+    <Button
+      type="button"
+      radius="none"
+      variant="light"
+      disableRipple
+      onPress={() => onChange(regular ? "beginner" : "regular")}
+      aria-label={
+        regular ? "Switch to beginner difficulty" : "Switch to regular difficulty"
+      }
+      title={regular ? "Switch to beginner questions" : "Switch to regular questions"}
+      className={styles.difficultyToggle}
+    >
+      <span
+        className={cx(styles.difficultySegment, !regular && styles.difficultySegmentActive)}
+        aria-hidden="true"
+      >
+        BEGINNER
+      </span>
+      <span
+        className={cx(styles.difficultySegment, regular && styles.difficultySegmentActive)}
+        aria-hidden="true"
+      >
+        REGULAR
+      </span>
+    </Button>
+  );
+}
+
 function CarGlyph({ color }: { color: string }) {
   return (
     <g style={{ color }}>
@@ -1300,7 +1337,15 @@ function PitOverlay({
   );
 }
 
-function IntroOverlay({ onStart }: { onStart: MonzaV2SkinProps["onStartFormation"] }) {
+function IntroOverlay({
+  onStart,
+  difficulty,
+  onDifficultyChange,
+}: {
+  onStart: MonzaV2SkinProps["onStartFormation"];
+  difficulty: MonzaV2SkinProps["difficulty"];
+  onDifficultyChange: MonzaV2SkinProps["onDifficultyChange"];
+}) {
   return (
     <section className={styles.introOverlay} aria-labelledby="monza-v2-title">
       <div className={styles.introCard}>
@@ -1336,6 +1381,16 @@ function IntroOverlay({ onStart }: { onStart: MonzaV2SkinProps["onStartFormation
           warm-up questions while the field files round — then five lights and your
           launch reaction.
         </p>
+        <div className={styles.difficultyRow}>
+          <DifficultyToggle difficulty={difficulty} onChange={onDifficultyChange} />
+          <p className={styles.difficultyHint}>
+            <MicroText scale={0.5625} origin="center">
+              {difficulty === "beginner"
+                ? "ROOKIE QUESTIONS — STILL 6 LAPS"
+                : "THE FULL PADDOCK QUIZ — STILL 6 LAPS"}
+            </MicroText>
+          </p>
+        </div>
         <Button radius="none" disableRipple onPress={onStart} className={styles.primaryButton}>
           START FORMATION LAP
         </Button>
@@ -1538,6 +1593,8 @@ export function MonzaV2Skin({
   warmupLocked = false,
   launching = false,
   onModeChange,
+  difficulty,
+  onDifficultyChange,
   onSwitchToV1,
   onStartFormation,
   onWarmupAnswer,
@@ -1638,6 +1695,7 @@ export function MonzaV2Skin({
     <section
       data-mode={mode}
       data-stage={state.stage}
+      data-difficulty={difficulty}
       data-grid-ready={
         showGridReady && typeof onStartLights === "function" ? "true" : undefined
       }
@@ -1743,7 +1801,13 @@ export function MonzaV2Skin({
           onRace={onBeginRace}
         />
       )}
-      {isFormationIntro && <IntroOverlay onStart={onStartFormation} />}
+      {isFormationIntro && (
+        <IntroOverlay
+          onStart={onStartFormation}
+          difficulty={difficulty}
+          onDifficultyChange={onDifficultyChange}
+        />
+      )}
       {state.stage === "finished" && (
         <FinishReport
           state={state}

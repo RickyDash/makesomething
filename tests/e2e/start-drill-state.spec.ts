@@ -4,7 +4,7 @@ test("completed start drill stays completed when returning via briefing next", a
   await page.addInitScript(() => {
     window.localStorage.setItem(
       "f1-ui-preferences:v1",
-      JSON.stringify({ uiVersion: "v1", v2Mode: "giorno" }),
+      JSON.stringify({ uiVersion: "v1", v2Mode: "giorno", difficulty: "beginner" }),
     );
   });
   await page.goto("/");
