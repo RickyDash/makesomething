@@ -1970,6 +1970,7 @@ export default function Home() {
                       let&apos;s get some heat in your tyres.
                     </p>
 
+                    {lapAnswers.every((answer) => answer === null) && (
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
                         difficulty
@@ -2003,6 +2004,7 @@ export default function Home() {
                         regular
                       </Button>
                     </div>
+                    )}
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button

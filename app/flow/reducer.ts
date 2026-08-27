@@ -356,6 +356,11 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
       if (state.stage !== "formation" || state.formationMode !== "intro") {
         return state;
       }
+      if (state.lapAnswers.some((answer) => answer !== null)) {
+        // The intro card is reachable mid-race via track navigation; a
+        // difficulty change must never discard an in-progress weekend.
+        return state;
+      }
 
       const nextLapAnswers = event.weekendQuestions.map(() => null);
       const nextRaceLedger = recomputeRaceLedger(

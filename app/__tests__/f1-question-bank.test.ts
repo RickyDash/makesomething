@@ -61,10 +61,12 @@ describe("question bank integrity", () => {
   });
 
   it("keeps facts from answering other questions", () => {
-    // Core F1 entities appear across many facts without giving other questions
-    // away (a fact mentioning ferrari does not answer "who joined ferrari in
-    // 2025?"). Every entry here was reviewed against the actual collisions.
-    const reviewedEntities = new Set([
+    // Core F1 entities recur across facts without answering the flagged
+    // question (a fact mentioning ferrari does not answer "who joined ferrari
+    // in 2025?"). Each token below was checked against its actual collisions
+    // when added; when this test fails, review the collision — only add the
+    // token here if the fact genuinely reveals nothing.
+    const reviewedTokens = new Set([
       "ferrari",
       "mclaren",
       "mercedes",
@@ -75,20 +77,41 @@ describe("question bank integrity", () => {
       "singapore",
       "suzuka",
       "vettel",
+      "hamilton",
       "lewis hamilton",
       "full wet",
       "pirelli",
+      "norris",
+      "alonso",
+      "verstappen",
+      "ricciardo",
+      "intermediate",
     ]);
+
+    const asksForAPerson = (prompt: string) =>
+      /(^|\s)who\s|which (driver|team principal|team boss|legendary commentator)/.test(prompt);
 
     for (const q of questionBank) {
       const correct = q.correct.toLowerCase();
-      if (correct.length < 5 || reviewedEntities.has(correct)) continue;
+      // For person answers, also match by surname so "…since hamilton in 2008"
+      // style reveals of a "lewis hamilton" answer can't slip through.
+      const surname =
+        asksForAPerson(q.prompt) && correct.includes(" ")
+          ? correct.split(" ").pop() ?? ""
+          : "";
+      const needles = [correct, surname].filter(
+        (needle) => needle.length >= 5 && !reviewedTokens.has(needle),
+      );
+      if (needles.length === 0) continue;
       for (const other of questionBank) {
         if (other === q) continue;
-        expect(
-          other.fact.toLowerCase().includes(correct),
-          `fact of "${other.prompt}" reveals the answer to "${q.prompt}"`,
-        ).toBe(false);
+        const fact = other.fact.toLowerCase();
+        for (const needle of needles) {
+          expect(
+            fact.includes(needle),
+            `fact of "${other.prompt}" reveals the answer to "${q.prompt}" (${needle})`,
+          ).toBe(false);
+        }
       }
     }
   });

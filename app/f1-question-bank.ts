@@ -123,7 +123,7 @@ export const questionBank: BankQuestion[] = [
     "correct": "car is disqualified and must return",
     "distractors": [
       "a warning for driving standards",
-      "a mechanical problem — return to the pits",
+      "the car must serve a stop-go penalty",
       "the race is suspended"
     ],
     "beginnerDistractors": [
@@ -131,7 +131,7 @@ export const questionBank: BankQuestion[] = [
       "the safety car is ending",
       "the track is slippery ahead"
     ],
-    "fact": "the black flag is f1's rarest signal — instant disqualification. its cousins: black-and-white for a conduct warning, black-with-orange-disc for a damaged car.",
+    "fact": "the black flag means instant disqualification — f1's rarest and most final signal, shown only a handful of times in the modern era.",
     "category": "rules & flags",
     "tier": "both"
   },
@@ -194,18 +194,6 @@ export const questionBank: BankQuestion[] = [
     "fact": "a car behind can gain speed by sitting in lower-pressure air.",
     "category": "racecraft & feel",
     "tier": "both"
-  },
-  {
-    "prompt": "what is a delta time under safety procedures?",
-    "correct": "minimum reference pace drivers must respect",
-    "distractors": [
-      "the gap to the car ahead",
-      "the pit stop time target",
-      "the fuel-saving target for the stint"
-    ],
-    "fact": "the delta is a target lap pace used to keep speeds controlled.",
-    "category": "rules & flags",
-    "tier": "regular"
   },
   {
     "prompt": "what is an out lap?",
@@ -275,7 +263,7 @@ export const questionBank: BankQuestion[] = [
       "italian grand prix",
       "japanese grand prix"
     ],
-    "fact": "the streets are so slow that a full-length race would run over the time limit, so the race is set to roughly 260 km — 78 laps, the season's most.",
+    "fact": "the streets are so slow that a full-length race would blow past the time limit, so monaco runs to its own reduced distance of roughly 260 km.",
     "category": "race weekend",
     "tier": "regular"
   },
@@ -774,7 +762,7 @@ export const questionBank: BankQuestion[] = [
       "engine rev sync",
       "exhaust recirculation setup"
     ],
-    "fact": "through 2025 the ers harvested energy from braking and the exhaust turbo; the 2026 rules drop the exhaust recovery but nearly triple the electrical punch.",
+    "fact": "through 2025 the ers harvested energy from two sources — braking and the exhaust turbo; the exhaust half vanishes under the 2026 rules.",
     "category": "teams & culture",
     "tier": "regular"
   },
@@ -906,7 +894,7 @@ export const questionBank: BankQuestion[] = [
       "mclaren",
       "mercedes"
     ],
-    "fact": "ferrari leads with 16 constructors' crowns; mclaren's back-to-back 2024 and 2025 titles lifted them to 10, with williams on 9. (as of 2025)",
+    "fact": "ferrari's 16 constructors' crowns lead the field, and their most recent came all the way back in 2008 — yet no rival has ever got closer than six titles behind. (as of 2025)",
     "category": "champions & records",
     "tier": "both"
   },
@@ -954,7 +942,7 @@ export const questionBank: BankQuestion[] = [
       "the gearbox and driveshafts",
       "the battery pack and its cooling"
     ],
-    "fact": "through 2025 the package combined a v6 turbo with two energy-recovery motors; from 2026 the electrical side delivers roughly half the total power.",
+    "fact": "through 2025 the package combined a v6 turbo with two energy-recovery motors — well over a thousand horsepower all in.",
     "category": "teams & culture",
     "tier": "both"
   },
@@ -966,7 +954,7 @@ export const questionBank: BankQuestion[] = [
       "jumped out of the car",
       "sprayed his team with champagne"
     ],
-    "fact": "hamilton broke down in tears on the radio after equalling schumacher's record of 7 world titles in a dominant wet-weather drive.",
+    "fact": "hamilton sobbed through the radio after nearly 50 laps on a single set of intermediates — title number seven, sealed from p6 on a soaked track.",
     "category": "iconic moments",
     "tier": "regular"
   },
@@ -1002,7 +990,7 @@ export const questionBank: BankQuestion[] = [
       "99",
       "10"
     ],
-    "fact": "only the reigning champion may carry it — verstappen ran #1 for four straight seasons, and the 2025 champion claimed it for 2026.",
+    "fact": "only the reigning champion may carry it — the number sat unused from 2015 until the 2021 champion revived it, and it changed hands again for 2026.",
     "category": "champions & records",
     "tier": "both"
   },
@@ -1295,7 +1283,7 @@ export const questionBank: BankQuestion[] = [
       "sebastian vettel",
       "fernando alonso"
     ],
-    "fact": "norris pipped verstappen by two points at the abu dhabi decider — mclaren's first drivers' champion since hamilton in 2008.",
+    "fact": "norris pipped verstappen by two points at the abu dhabi decider — mclaren's first drivers' champion in seventeen years.",
     "category": "champions & records",
     "tier": "both"
   },
@@ -1432,7 +1420,7 @@ export const questionBank: BankQuestion[] = [
       "hungaroring",
       "marina bay"
     ],
-    "fact": "the 3.3 km lap takes 78 tours to reach race distance — the season's highest lap count for its shortest track.",
+    "fact": "at 3.3 km, monaco's lap is more than 800 metres shorter than any other on the calendar.",
     "category": "circuits",
     "tier": "both"
   },
@@ -1485,7 +1473,7 @@ export const questionBank: BankQuestion[] = [
       "lewis hamilton and fernando alonso",
       "sebastian vettel and lewis hamilton"
     ],
-    "fact": "schumacher's seventh came in 2004, hamilton's in 2020; fangio's five stood as the benchmark for almost half a century between them. (as of 2025)",
+    "fact": "the sevenths came in 2004 and 2020 — before that, fangio's five titles had stood as the benchmark for almost half a century. (as of 2025)",
     "category": "champions & records",
     "tier": "both"
   },

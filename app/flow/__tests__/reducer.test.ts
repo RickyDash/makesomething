@@ -436,6 +436,25 @@ describe("Monza shared race state", () => {
     expect(switched.finalPosition).toBeNull();
   });
 
+  it("refuses to switch difficulty from a revisited intro once a lap is answered", () => {
+    const midRace = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+      { type: "RACE_PICK", optionIndex: makeQuestions()[0].answer },
+      { type: "NAVIGATE", target: { kind: "formation_intro" } },
+    ]);
+    expect(midRace.stage).toBe("formation");
+    expect(midRace.formationMode).toBe("intro");
+
+    const ignored = flowReducer(midRace, {
+      type: "SET_DIFFICULTY",
+      difficulty: "regular",
+      weekendQuestions: makeQuestions(),
+    });
+
+    expect(ignored).toBe(midRace);
+    expect(ignored.lapAnswers[0]).not.toBeNull();
+  });
+
   it("ignores a same-value difficulty dispatch and any dispatch after leaving the intro", () => {
     const initial = makeState();
     const sameValue = flowReducer(initial, {
