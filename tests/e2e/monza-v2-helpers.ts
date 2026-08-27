@@ -5,8 +5,7 @@ import { expect, type Page } from "@playwright/test";
 
 type BankQuestion = {
   prompt: string;
-  options: string[];
-  answer: number;
+  correct: string;
 };
 
 const questionBankSource = readFileSync(
@@ -14,7 +13,7 @@ const questionBankSource = readFileSync(
   "utf8",
 );
 const questionBankStart = questionBankSource.indexOf(
-  "const questionBank: Question[] = ",
+  "const questionBank: BankQuestion[] = ",
 );
 const questionBankArrayStart =
   questionBankSource.indexOf("= [", questionBankStart) + 2;
@@ -31,7 +30,7 @@ const canonicalPrompt = (value: string) => value.trim().toLocaleLowerCase();
 export const correctAnswerByPrompt = new Map(
   questionBank.map((question) => [
     canonicalPrompt(question.prompt),
-    question.options[question.answer],
+    question.correct,
   ]),
 );
 
