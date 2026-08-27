@@ -18,7 +18,7 @@ const tierPool = (difficulty: Difficulty): BankQuestion[] =>
 
 describe("question bank integrity", () => {
   it("keeps a healthy bank size", () => {
-    expect(questionBank.length).toBeGreaterThanOrEqual(100);
+    expect(questionBank.length).toBeGreaterThanOrEqual(110);
   });
 
   it("keeps prompts unique (case-insensitive)", () => {
@@ -56,6 +56,39 @@ describe("question bank integrity", () => {
       expect(q.fact.trim()).not.toBe("");
       for (const distractor of [...q.distractors, ...(q.beginnerDistractors ?? [])]) {
         expect(distractor.trim(), q.prompt).not.toBe("");
+      }
+    }
+  });
+
+  it("keeps facts from answering other questions", () => {
+    // Core F1 entities appear across many facts without giving other questions
+    // away (a fact mentioning ferrari does not answer "who joined ferrari in
+    // 2025?"). Every entry here was reviewed against the actual collisions.
+    const reviewedEntities = new Set([
+      "ferrari",
+      "mclaren",
+      "mercedes",
+      "red bull",
+      "monza",
+      "monaco",
+      "brazil",
+      "singapore",
+      "suzuka",
+      "vettel",
+      "lewis hamilton",
+      "full wet",
+      "pirelli",
+    ]);
+
+    for (const q of questionBank) {
+      const correct = q.correct.toLowerCase();
+      if (correct.length < 5 || reviewedEntities.has(correct)) continue;
+      for (const other of questionBank) {
+        if (other === q) continue;
+        expect(
+          other.fact.toLowerCase().includes(correct),
+          `fact of "${other.prompt}" reveals the answer to "${q.prompt}"`,
+        ).toBe(false);
       }
     }
   });
