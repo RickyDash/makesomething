@@ -4,14 +4,14 @@ test("completed start drill stays completed when returning via briefing next", a
   await page.addInitScript(() => {
     window.localStorage.setItem(
       "f1-ui-preferences:v1",
-      JSON.stringify({ uiVersion: "v1", v2Mode: "giorno" }),
+      JSON.stringify({ uiVersion: "v1", v2Mode: "giorno", difficulty: "beginner" }),
     );
   });
   await page.goto("/");
 
   await page.getByRole("button", { name: /start formation lap/i }).click();
-  await page.getByRole("button", { name: /next weave/i }).click();
-  await page.getByRole("button", { name: /next weave/i }).click();
+  await page.getByRole("button", { name: /next warm-up/i }).click();
+  await page.getByRole("button", { name: /next warm-up/i }).click();
   await page.getByRole("button", { name: /line up on the grid/i }).click();
 
   const completeStartDrill = async () => {

@@ -6,6 +6,7 @@ import type { CSSProperties, MutableRefObject } from "react";
 
 import type { FlowState } from "../../app/flow/types";
 import type { Question } from "../../app/f1-question-bank";
+import { formationWarmups } from "../../app/formation-warmups";
 import {
   MONZA_MAIN_TRACK_PATH_D,
   MONZA_PIT_LANE_PATH_D,
@@ -30,34 +31,8 @@ type MonzaV2SequenceBridgeProps = MonzaV2SkinProps & {
   onManualRaceAdvance?: () => void;
 };
 
-const WARMUPS = [
-  {
-    prompt: "You tap an answer — what happens?",
-    options: [
-      "I can change it before the lap",
-      "It locks in immediately",
-      "It skips the lap",
-    ],
-    answer: 1,
-    note: "Answers lock the moment you tap — the lap then plays out your call.",
-  },
-  {
-    prompt: "One question equals what out there?",
-    options: ["One lap of the race", "One full season", "One pit stop"],
-    answer: 0,
-    note: "Six questions, six laps. Every answer is a lap of racing.",
-  },
-  {
-    prompt: "What breaks the race at half distance?",
-    options: [
-      "A timed pit stop you perform",
-      "A double-points lap",
-      "A weather lottery",
-    ],
-    answer: 0,
-    note: "After lap 3 you box: four tyres, in order, against the clock.",
-  },
-] as const;
+const WARMUPS = formationWarmups;
+const WARMUP_COUNT = WARMUPS.length;
 
 const TYRES = ["FRONT LEFT", "FRONT RIGHT", "REAR LEFT", "REAR RIGHT"] as const;
 
@@ -457,6 +432,43 @@ function ThemeToggle({
           <path d="M8.2 2.4a4.2 4.2 0 1 0 0 7.2 3.3 3.3 0 1 1 0-7.2Z" fill="currentColor" />
         </svg>
         <span className={styles.nightLabel}>NIGHT</span>
+      </span>
+    </Button>
+  );
+}
+
+function DifficultyToggle({
+  difficulty,
+  onChange,
+}: {
+  difficulty: MonzaV2SkinProps["difficulty"];
+  onChange: MonzaV2SkinProps["onDifficultyChange"];
+}) {
+  const regular = difficulty === "regular";
+  return (
+    <Button
+      type="button"
+      radius="none"
+      variant="light"
+      disableRipple
+      onPress={() => onChange(regular ? "beginner" : "regular")}
+      aria-label={
+        regular ? "Switch to beginner difficulty" : "Switch to regular difficulty"
+      }
+      title={regular ? "Switch to beginner questions" : "Switch to regular questions"}
+      className={styles.difficultyToggle}
+    >
+      <span
+        className={cx(styles.difficultySegment, !regular && styles.difficultySegmentActive)}
+        aria-hidden="true"
+      >
+        BEGINNER
+      </span>
+      <span
+        className={cx(styles.difficultySegment, regular && styles.difficultySegmentActive)}
+        aria-hidden="true"
+      >
+        REGULAR
       </span>
     </Button>
   );
@@ -1120,19 +1132,24 @@ function WarmupOverlay({
   onNext: MonzaV2SkinProps["onWarmupNext"];
   onSkip: MonzaV2SkinProps["onWarmupSkip"];
 }) {
-  const stepIndex = Math.min(state.tutorialStep, 2);
+  const stepIndex = Math.min(state.tutorialStep, WARMUP_COUNT - 1);
   const warmup = WARMUPS[stepIndex];
   const selected = state.tutorialAnswers[stepIndex] ?? null;
   const reveal = selected !== null && !locked;
   const correct = selected === warmup.answer;
 
   return (
-    <section className={styles.lowerOverlay} aria-label={`Formation warmup ${stepIndex + 1} of 3`}>
+    <section
+      className={styles.lowerOverlay}
+      aria-label={`Formation warmup ${stepIndex + 1} of ${WARMUP_COUNT}`}
+    >
       <div className={styles.overlayMeta}>
         <span className={styles.eventChip}>
           <MicroText scale={0.5625}>FORMATION LAP</MicroText>
         </span>
-        <MicroText scale={0.625}>W {stepIndex + 1} / 3</MicroText>
+        <MicroText scale={0.625}>
+          W {stepIndex + 1} / {WARMUP_COUNT}
+        </MicroText>
         <Button
           radius="none"
           variant="light"
@@ -1145,6 +1162,12 @@ function WarmupOverlay({
             SKIP »
           </MicroText>
         </Button>
+      </div>
+      <div className={styles.warmupLesson}>
+        <strong>
+          <MicroText scale={0.5625}>HOW IT WORKS</MicroText>
+        </strong>
+        <p>{warmup.lesson}</p>
       </div>
       <h2>{warmup.prompt}</h2>
       <div className={styles.warmupOptions}>
@@ -1181,7 +1204,7 @@ function WarmupOverlay({
             <strong className={correct ? styles.goodText : styles.badText}>
               {correct ? "RIGHT CALL" : "NOT QUITE"}
             </strong>
-            <p>{warmup.note}</p>
+            <p>{correct ? warmup.note : warmup.noteWrong}</p>
           </div>
           <Button
             radius="none"
@@ -1189,7 +1212,7 @@ function WarmupOverlay({
             onPress={onNext}
             className={styles.primaryButton}
           >
-            {stepIndex < 2 ? "NEXT →" : "TO THE GRID →"}
+            {stepIndex < WARMUP_COUNT - 1 ? "NEXT →" : "TO THE GRID →"}
           </Button>
         </>
       )}
@@ -1314,7 +1337,15 @@ function PitOverlay({
   );
 }
 
-function IntroOverlay({ onStart }: { onStart: MonzaV2SkinProps["onStartFormation"] }) {
+function IntroOverlay({
+  onStart,
+  difficulty,
+  onDifficultyChange,
+}: {
+  onStart: MonzaV2SkinProps["onStartFormation"];
+  difficulty: MonzaV2SkinProps["difficulty"];
+  onDifficultyChange: MonzaV2SkinProps["onDifficultyChange"];
+}) {
   return (
     <section className={styles.introOverlay} aria-labelledby="monza-v2-title">
       <div className={styles.introCard}>
@@ -1350,6 +1381,16 @@ function IntroOverlay({ onStart }: { onStart: MonzaV2SkinProps["onStartFormation
           warm-up questions while the field files round — then five lights and your
           launch reaction.
         </p>
+        <div className={styles.difficultyRow}>
+          <DifficultyToggle difficulty={difficulty} onChange={onDifficultyChange} />
+          <p className={styles.difficultyHint}>
+            <MicroText scale={0.5625} origin="center">
+              {difficulty === "beginner"
+                ? "ROOKIE QUESTIONS — STILL 6 LAPS"
+                : "THE FULL PADDOCK QUIZ — STILL 6 LAPS"}
+            </MicroText>
+          </p>
+        </div>
         <Button radius="none" disableRipple onPress={onStart} className={styles.primaryButton}>
           START FORMATION LAP
         </Button>
@@ -1552,6 +1593,8 @@ export function MonzaV2Skin({
   warmupLocked = false,
   launching = false,
   onModeChange,
+  difficulty,
+  onDifficultyChange,
   onSwitchToV1,
   onStartFormation,
   onWarmupAnswer,
@@ -1652,6 +1695,7 @@ export function MonzaV2Skin({
     <section
       data-mode={mode}
       data-stage={state.stage}
+      data-difficulty={difficulty}
       data-grid-ready={
         showGridReady && typeof onStartLights === "function" ? "true" : undefined
       }
@@ -1757,7 +1801,13 @@ export function MonzaV2Skin({
           onRace={onBeginRace}
         />
       )}
-      {isFormationIntro && <IntroOverlay onStart={onStartFormation} />}
+      {isFormationIntro && (
+        <IntroOverlay
+          onStart={onStartFormation}
+          difficulty={difficulty}
+          onDifficultyChange={onDifficultyChange}
+        />
+      )}
       {state.stage === "finished" && (
         <FinishReport
           state={state}

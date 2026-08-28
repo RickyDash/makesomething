@@ -15,6 +15,10 @@ export const assertFlowInvariants = (state: FlowState) => {
     throw new Error("v2Mode must be giorno or notte");
   }
 
+  if (state.difficulty !== "beginner" && state.difficulty !== "regular") {
+    throw new Error("difficulty must be beginner or regular");
+  }
+
   if (state.raceCurve !== "defend" && state.raceCurve !== "snatch") {
     throw new Error("raceCurve must be defend or snatch");
   }

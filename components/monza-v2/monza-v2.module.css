@@ -266,6 +266,66 @@
   margin-left: 5px;
 }
 
+.difficultyRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.difficultyToggle {
+  display: flex !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  gap: 3px !important;
+  padding: 3px !important;
+  border: var(--border) !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  background: color-mix(in srgb, var(--ink) 7%, transparent) !important;
+  color: var(--ink) !important;
+  font-family: var(--mono) !important;
+}
+
+.root[data-mode="notte"] .difficultyToggle {
+  background: color-mix(in srgb, var(--ink) 9%, transparent) !important;
+}
+
+.difficultySegment {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 2px solid transparent;
+  color: var(--ink);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.difficultySegmentActive {
+  border-color: var(--ink);
+  background: var(--page);
+  box-shadow: 2px 2px 0 var(--red);
+  color: var(--red);
+}
+
+.root[data-mode="notte"] .difficultySegmentActive {
+  background: var(--panel);
+  box-shadow: 2px 2px 0 var(--gold);
+  color: var(--gold);
+}
+
+.difficultyHint {
+  margin: 0;
+  color: var(--dim);
+  font-family: var(--mono);
+}
+
 .positionBadge {
   min-width: 48px;
   padding: 4px 10px;
@@ -1072,6 +1132,31 @@
 .radioCard p {
   color: var(--ink);
   font-style: italic;
+}
+
+.warmupLesson {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 13px;
+  border: var(--border);
+  border-left: 3px solid var(--red);
+  background: var(--panel);
+}
+
+.warmupLesson strong {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--label);
+}
+
+.warmupLesson p {
+  margin: 0;
+  color: var(--body);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .raceFooter {

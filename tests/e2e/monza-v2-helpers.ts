@@ -5,8 +5,7 @@ import { expect, type Page } from "@playwright/test";
 
 type BankQuestion = {
   prompt: string;
-  options: string[];
-  answer: number;
+  correct: string;
 };
 
 const questionBankSource = readFileSync(
@@ -14,7 +13,7 @@ const questionBankSource = readFileSync(
   "utf8",
 );
 const questionBankStart = questionBankSource.indexOf(
-  "const questionBank: Question[] = ",
+  "const questionBank: BankQuestion[] = ",
 );
 const questionBankArrayStart =
   questionBankSource.indexOf("= [", questionBankStart) + 2;
@@ -31,7 +30,7 @@ const canonicalPrompt = (value: string) => value.trim().toLocaleLowerCase();
 export const correctAnswerByPrompt = new Map(
   questionBank.map((question) => [
     canonicalPrompt(question.prompt),
-    question.options[question.answer],
+    question.correct,
   ]),
 );
 
@@ -39,15 +38,16 @@ export const setPreference = async (
   page: Page,
   uiVersion: "v1" | "v2",
   v2Mode: "giorno" | "notte" = "giorno",
+  difficulty: "beginner" | "regular" = "beginner",
 ) => {
   await page.addInitScript(
-    ({ version, mode }) => {
+    ({ version, mode, level }) => {
       window.localStorage.setItem(
         "f1-ui-preferences:v1",
-        JSON.stringify({ uiVersion: version, v2Mode: mode }),
+        JSON.stringify({ uiVersion: version, v2Mode: mode, difficulty: level }),
       );
     },
-    { version: uiVersion, mode: v2Mode },
+    { version: uiVersion, mode: v2Mode, level: difficulty },
   );
 };
 
@@ -88,19 +88,19 @@ export const completeFormationWarmups = async (page: Page) => {
   const warmups = [
     {
       region: "Formation warmup 1 of 3",
-      answer: "I can change it before the lap",
+      answer: "Yes — any time before the lap ends",
       verdict: "NOT QUITE",
       next: "NEXT →",
     },
     {
       region: "Formation warmup 2 of 3",
-      answer: "One lap of the race",
+      answer: "6 laps — one lap per question",
       verdict: "RIGHT CALL",
       next: "NEXT →",
     },
     {
       region: "Formation warmup 3 of 3",
-      answer: "A timed pit stop you perform",
+      answer: "Tap the 4 tyres in order, against the clock",
       verdict: "RIGHT CALL",
       next: "TO THE GRID →",
     },

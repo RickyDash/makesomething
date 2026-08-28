@@ -41,6 +41,18 @@ describe("flow invariants", () => {
     expect(state.finalPosition).toBe(1);
   });
 
+  it("rejects an unknown difficulty value", () => {
+    const state = makeState();
+    const invalid = {
+      ...state,
+      difficulty: "expert",
+    } as unknown as FlowState;
+
+    expect(() => assertFlowInvariants(invalid)).toThrow(
+      "difficulty must be beginner or regular",
+    );
+  });
+
   it("rejects a ledger position outside P1-P10", () => {
     const state = makeState();
     const invalid: FlowState = {

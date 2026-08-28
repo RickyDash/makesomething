@@ -415,6 +415,82 @@ describe("Monza shared race state", () => {
     expect(restarted.finalPosition).toBeNull();
   });
 
+  it("switches difficulty at the intro, swapping questions and rebuilding the ledger", () => {
+    const nextQuestions = makeQuestions().map((question, index) => ({
+      ...question,
+      prompt: `regular question ${index + 1}`,
+    }));
+
+    const switched = flowReducer(makeState(), {
+      type: "SET_DIFFICULTY",
+      difficulty: "regular",
+      weekendQuestions: nextQuestions,
+    });
+
+    expect(switched.difficulty).toBe("regular");
+    expect(switched.weekendQuestions[0].prompt).toBe("regular question 1");
+    expect(switched.currentLap).toBe(0);
+    expect(switched.lapAnswers.every((answer) => answer === null)).toBe(true);
+    expect(switched.raceLedger).toHaveLength(nextQuestions.length);
+    expect(switched.raceLedger.every((entry) => entry.result === null)).toBe(true);
+    expect(switched.finalPosition).toBeNull();
+  });
+
+  it("refuses to switch difficulty from a revisited intro once a lap is answered", () => {
+    const midRace = run(makeState(), [
+      { type: "NAVIGATE", target: { kind: "lap", lapIndex: 0 } },
+      { type: "RACE_PICK", optionIndex: makeQuestions()[0].answer },
+      { type: "NAVIGATE", target: { kind: "formation_intro" } },
+    ]);
+    expect(midRace.stage).toBe("formation");
+    expect(midRace.formationMode).toBe("intro");
+
+    const ignored = flowReducer(midRace, {
+      type: "SET_DIFFICULTY",
+      difficulty: "regular",
+      weekendQuestions: makeQuestions(),
+    });
+
+    expect(ignored).toBe(midRace);
+    expect(ignored.lapAnswers[0]).not.toBeNull();
+  });
+
+  it("ignores a same-value difficulty dispatch and any dispatch after leaving the intro", () => {
+    const initial = makeState();
+    const sameValue = flowReducer(initial, {
+      type: "SET_DIFFICULTY",
+      difficulty: "beginner",
+      weekendQuestions: makeQuestions(),
+    });
+    expect(sameValue).toBe(initial);
+
+    const midGame = run(makeState(), [
+      { type: "START_FORMATION_TUTORIAL" },
+    ]);
+    const ignored = flowReducer(midGame, {
+      type: "SET_DIFFICULTY",
+      difficulty: "regular",
+      weekendQuestions: makeQuestions(),
+    });
+    expect(ignored).toBe(midGame);
+    expect(ignored.difficulty).toBe("beginner");
+  });
+
+  it("preserves difficulty across a weekend restart", () => {
+    const regular = flowReducer(makeState(), {
+      type: "SET_DIFFICULTY",
+      difficulty: "regular",
+      weekendQuestions: makeQuestions(),
+    });
+
+    const restarted = flowReducer(regular, {
+      type: "RESTART_WEEKEND",
+      weekendQuestions: makeQuestions(),
+    });
+
+    expect(restarted.difficulty).toBe("regular");
+  });
+
   it("chooses a fresh 50/50 curve when restart does not force one", () => {
     const random = vi.spyOn(Math, "random");
     random.mockReturnValueOnce(0.1);

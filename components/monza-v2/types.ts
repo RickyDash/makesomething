@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 
-import type { FlowState } from "../../app/flow/types";
+import type { Difficulty, FlowState } from "../../app/flow/types";
 import type {
   RaceSim,
   RaceSimCarFrame,
@@ -58,6 +58,8 @@ export type MonzaV2SkinProps = Omit<
   warmupLocked?: boolean;
   launching?: boolean;
   onModeChange: (mode: MonzaV2Mode) => void;
+  difficulty: Difficulty;
+  onDifficultyChange: (difficulty: Difficulty) => void;
   onSwitchToV1: () => void;
   onStartFormation: () => void;
   onWarmupAnswer: (optionIndex: number) => void;

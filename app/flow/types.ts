@@ -1,4 +1,6 @@
-import type { Question } from "../f1-question-bank";
+import type { Difficulty, Question } from "../f1-question-bank";
+
+export type { Difficulty } from "../f1-question-bank";
 
 export type Stage = "formation" | "race" | "pitstop" | "finish_intro" | "finished";
 export type FormationMode = "intro" | "briefing" | "drill";
@@ -66,6 +68,7 @@ export type FlowState = {
   formationMode: FormationMode;
   uiVersion: UiVersion;
   v2Mode: V2Mode;
+  difficulty: Difficulty;
   tutorialStep: number;
   tutorialAnswers: (number | null)[];
   weekendQuestions: Question[];

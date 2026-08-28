@@ -28,7 +28,7 @@ import {
   scheduleReactionTimeline,
   scheduleV2LapTimeline,
 } from "./flow/timing";
-import type { FormationMode, Stage, TrackTarget, UiVersion } from "./flow/types";
+import type { Difficulty, FormationMode, Stage, TrackTarget, UiVersion } from "./flow/types";
 import {
   createRaceSim,
   createSvgPathGeometrySampler,
@@ -39,43 +39,18 @@ import {
   type RaceSimPhase,
 } from "./race-sim/raceSim";
 import { loadUiPreferences, saveUiPreferences } from "./ui-preferences";
+import { formationWarmupsV1 } from "./formation-warmups";
 import { MonzaV2Skin } from "../components/monza-v2";
 
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
 type MarkerState = "unanswered" | "correct" | "incorrect";
-
-type TutorialStep = {
-  prompt: string;
-  options: string[];
-  answer: number;
-  note: string;
-};
 
 type PitBands = {
   greenUpper: number;
   yellowUpper: number;
 };
 
-const tutorialSteps: TutorialStep[] = [
-  {
-    prompt: "once you tap an answer, what happens next?",
-    options: ["you can keep changing it", "it locks immediately as final", "it auto-skips"],
-    answer: 1,
-    note: "answers lock immediately, then the race note appears for that lap.",
-  },
-  {
-    prompt: "in this game, each quiz question represents what?",
-    options: ["one race lap", "one full season", "one pit stop"],
-    answer: 0,
-    note: "each quiz question represents one lap in your grand prix run.",
-  },
-  {
-    prompt: "what happens around mid-race?",
-    options: ["timed pit stop challenge", "double points lap", "weather lottery"],
-    answer: 0,
-    note: "mid-race, the pit stop mini challenge appears before you continue laps.",
-  },
-];
+const tutorialSteps = formationWarmupsV1;
 
 const tyreLabels = ["front left", "front right", "rear left", "rear right"] as const;
 const pitOrder = [0, 1, 2, 3] as const;
@@ -359,6 +334,7 @@ export default function Home() {
   const formationMode = flowState.formationMode;
   const uiVersion = flowState.uiVersion;
   const v2Mode = flowState.v2Mode;
+  const difficulty = flowState.difficulty;
   const weekendQuestions = flowState.weekendQuestions;
   const currentLap = flowState.currentLap;
   const lapAnswers = flowState.lapAnswers;
@@ -632,19 +608,25 @@ export default function Home() {
     const storedPreferences = loadUiPreferences();
     dispatch({ type: "SET_UI_VERSION", uiVersion: storedPreferences.uiVersion });
     dispatch({ type: "SET_V2_MODE", mode: storedPreferences.v2Mode });
+    dispatch({
+      type: "SET_DIFFICULTY",
+      difficulty: storedPreferences.difficulty,
+      weekendQuestions: getRandomWeekendQuestions(storedPreferences.difficulty),
+    });
     saveUiPreferences(storedPreferences);
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.uiVersion = uiVersion;
     document.documentElement.dataset.v2Mode = v2Mode;
+    document.documentElement.dataset.difficulty = difficulty;
 
     if (skipInitialPreferenceSaveRef.current) {
       skipInitialPreferenceSaveRef.current = false;
       return;
     }
-    saveUiPreferences({ uiVersion, v2Mode });
-  }, [uiVersion, v2Mode]);
+    saveUiPreferences({ uiVersion, v2Mode, difficulty });
+  }, [uiVersion, v2Mode, difficulty]);
 
   useEffect(() => {
     flowStateRef.current = flowState;
@@ -1535,13 +1517,22 @@ export default function Home() {
     setFormationTravelPending(false);
     raceSim?.publish({ type: "reset" });
 
-    const nextWeekendQuestions = getRandomWeekendQuestions();
+    const nextWeekendQuestions = getRandomWeekendQuestions(flowState.difficulty);
     dispatch({ type: "RESTART_WEEKEND", weekendQuestions: nextWeekendQuestions });
     pitStartRef.current = null;
   };
 
   const switchUiVersion = (nextVersion: UiVersion) => {
     dispatch({ type: "SET_UI_VERSION", uiVersion: nextVersion });
+  };
+
+  const setDifficulty = (nextDifficulty: Difficulty) => {
+    if (nextDifficulty === flowState.difficulty) return;
+    dispatch({
+      type: "SET_DIFFICULTY",
+      difficulty: nextDifficulty,
+      weekendQuestions: getRandomWeekendQuestions(nextDifficulty),
+    });
   };
 
   const versionMarkHidden =
@@ -1588,6 +1579,8 @@ export default function Home() {
             warmupLocked={v2WarmupLocked}
             launching={v2Launching}
             onModeChange={(mode) => dispatch({ type: "SET_V2_MODE", mode })}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficulty}
             onSwitchToV1={() => switchUiVersion("v1")}
             onStartFormation={startFormationLapTutorial}
             onWarmupAnswer={handleV2WarmupAnswer}
@@ -1977,6 +1970,42 @@ export default function Home() {
                       let&apos;s get some heat in your tyres.
                     </p>
 
+                    {lapAnswers.every((answer) => answer === null) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
+                        difficulty
+                      </span>
+                      <Button
+                        size="sm"
+                        variant={difficulty === "beginner" ? "solid" : "flat"}
+                        color={difficulty === "beginner" ? "danger" : "default"}
+                        aria-pressed={difficulty === "beginner"}
+                        onPress={() => setDifficulty("beginner")}
+                        className={
+                          difficulty === "beginner"
+                            ? "w-fit font-semibold"
+                            : "w-fit bg-zinc-800 text-zinc-100"
+                        }
+                      >
+                        beginner
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={difficulty === "regular" ? "solid" : "flat"}
+                        color={difficulty === "regular" ? "danger" : "default"}
+                        aria-pressed={difficulty === "regular"}
+                        onPress={() => setDifficulty("regular")}
+                        className={
+                          difficulty === "regular"
+                            ? "w-fit font-semibold"
+                            : "w-fit bg-zinc-800 text-zinc-100"
+                        }
+                      >
+                        regular
+                      </Button>
+                    </div>
+                    )}
+
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         variant="flat"
@@ -2010,6 +2039,12 @@ export default function Home() {
                 {stage === "formation" && formationMode === "briefing" && (
                   <div className="flex flex-col gap-3.5">
                     <p className="font-mono text-[11px] uppercase tracking-widest text-red-100">formation lap (practice)</p>
+                    <div className="rounded-xl border border-zinc-700/60 bg-zinc-900/45 p-3">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">how it works</p>
+                      <p className="mt-1 font-[family-name:var(--font-manrope)] text-sm text-zinc-200">
+                        {tutorialCurrent.lesson}
+                      </p>
+                    </div>
                     <p className="font-[family-name:var(--font-space-grotesk)] text-xl font-semibold text-white">
                       {tutorialCurrent.prompt}
                     </p>
@@ -2066,10 +2101,10 @@ export default function Home() {
                           >
                             {isCurrentTutorialCorrect ? "Correct:" : "Incorrect:"}
                           </span>{" "}
-                          {tutorialCurrent.note}
+                          {isCurrentTutorialCorrect ? tutorialCurrent.note : tutorialCurrent.noteWrong}
                         </p>
                       ) : (
-                        <p>race note: lock an answer and this panel shows the note for that step.</p>
+                        <p>pick an answer above — this panel confirms the rule.</p>
                       )}
                     </div>
 
@@ -2090,7 +2125,7 @@ export default function Home() {
                       >
                         {tutorialStep === tutorialSteps.length - 1
                           ? "line up on the grid ->"
-                          : "next weave ->"}
+                          : "next warm-up ->"}
                       </Button>
                     </div>
 

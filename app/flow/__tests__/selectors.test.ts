@@ -20,6 +20,7 @@ const baseState: FlowState = {
   formationMode: "drill",
   uiVersion: "v2",
   v2Mode: "giorno",
+  difficulty: "beginner",
   tutorialStep: 0,
   tutorialAnswers: [null, null, null],
   weekendQuestions: [

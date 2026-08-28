@@ -1,9 +1,10 @@
-import type { Question } from "../f1-question-bank";
+import type { Difficulty, Question } from "../f1-question-bank";
 import type { RaceCurve, TrackTarget, UiVersion, V2Mode } from "./types";
 
 export type FlowEvent =
   | { type: "SET_UI_VERSION"; uiVersion: UiVersion }
   | { type: "SET_V2_MODE"; mode: V2Mode }
+  | { type: "SET_DIFFICULTY"; difficulty: Difficulty; weekendQuestions: Question[] }
   | { type: "NAVIGATE"; target: TrackTarget }
   | { type: "START_FORMATION_TUTORIAL" }
   | { type: "FORMATION_SKIP_TO_DRILL" }
