@@ -1341,10 +1341,12 @@ function IntroOverlay({
   onStart,
   difficulty,
   onDifficultyChange,
+  showDifficultyToggle,
 }: {
   onStart: MonzaV2SkinProps["onStartFormation"];
   difficulty: MonzaV2SkinProps["difficulty"];
   onDifficultyChange: MonzaV2SkinProps["onDifficultyChange"];
+  showDifficultyToggle: boolean;
 }) {
   return (
     <section className={styles.introOverlay} aria-labelledby="monza-v2-title">
@@ -1381,16 +1383,18 @@ function IntroOverlay({
           warm-up questions while the field files round — then five lights and your
           launch reaction.
         </p>
-        <div className={styles.difficultyRow}>
-          <DifficultyToggle difficulty={difficulty} onChange={onDifficultyChange} />
-          <p className={styles.difficultyHint}>
-            <MicroText scale={0.5625} origin="center">
-              {difficulty === "beginner"
-                ? "ROOKIE QUESTIONS — STILL 6 LAPS"
-                : "THE FULL PADDOCK QUIZ — STILL 6 LAPS"}
-            </MicroText>
-          </p>
-        </div>
+        {showDifficultyToggle && (
+          <div className={styles.difficultyRow}>
+            <DifficultyToggle difficulty={difficulty} onChange={onDifficultyChange} />
+            <p className={styles.difficultyHint}>
+              <MicroText scale={0.5625} origin="center">
+                {difficulty === "beginner"
+                  ? "ROOKIE QUESTIONS — STILL 6 LAPS"
+                  : "THE FULL PADDOCK QUIZ — STILL 6 LAPS"}
+              </MicroText>
+            </p>
+          </div>
+        )}
         <Button radius="none" disableRipple onPress={onStart} className={styles.primaryButton}>
           START FORMATION LAP
         </Button>
@@ -1655,6 +1659,7 @@ export function MonzaV2Skin({
     defaultBanner(state, warmupLocked, formationHolding);
   const isFormationIntro =
     state.stage === "formation" && state.formationMode === "intro";
+  const canChangeDifficulty = state.lapAnswers.every((answer) => answer === null);
   const isWarmup =
     state.stage === "formation" && state.formationMode === "briefing";
   const isDrill = state.stage === "formation" && state.formationMode === "drill";
@@ -1806,6 +1811,7 @@ export function MonzaV2Skin({
           onStart={onStartFormation}
           difficulty={difficulty}
           onDifficultyChange={onDifficultyChange}
+          showDifficultyToggle={canChangeDifficulty}
         />
       )}
       {state.stage === "finished" && (
