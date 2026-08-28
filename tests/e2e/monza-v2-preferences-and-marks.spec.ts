@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  answerCurrentLap,
+  completeLaunchWithJumpRetry,
   setPreference,
   skipFormationWarmup,
   switchToV1,
@@ -75,6 +77,38 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     ).toHaveAttribute("aria-pressed", "true");
     await switchToV2(page);
     await expect(v2Root(page)).toHaveAttribute("data-difficulty", "beginner");
+  });
+
+  test("hides both skins' difficulty pickers once the weekend is in progress", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await page.goto("/");
+    await completeLaunchWithJumpRetry(page, "skip");
+    await answerCurrentLap(page, "correct", { skipPlayback: true });
+
+    await switchToV1(page);
+    await page.getByRole("button", { name: "Go to formation intro" }).click();
+    await expect(page.getByText("formation lap (practice)").first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "beginner", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "regular", exact: true }),
+    ).toHaveCount(0);
+
+    await switchToV2(page);
+    await expect(
+      page.getByRole("button", { name: "START FORMATION LAP" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /switch to (regular|beginner) difficulty/i }),
+    ).toHaveCount(0);
+
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: /switch to regular difficulty/i }),
+    ).toBeVisible();
   });
 
   test("both marks use the specified offsets, opacity, padding, fade, and lights rule", async ({
