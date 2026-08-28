@@ -1659,7 +1659,7 @@ export function MonzaV2Skin({
     defaultBanner(state, warmupLocked, formationHolding);
   const isFormationIntro =
     state.stage === "formation" && state.formationMode === "intro";
-  const weekendUntouched = state.lapAnswers.every((answer) => answer === null);
+  const canChangeDifficulty = state.lapAnswers.every((answer) => answer === null);
   const isWarmup =
     state.stage === "formation" && state.formationMode === "briefing";
   const isDrill = state.stage === "formation" && state.formationMode === "drill";
@@ -1811,7 +1811,7 @@ export function MonzaV2Skin({
           onStart={onStartFormation}
           difficulty={difficulty}
           onDifficultyChange={onDifficultyChange}
-          showDifficultyToggle={weekendUntouched}
+          showDifficultyToggle={canChangeDifficulty}
         />
       )}
       {state.stage === "finished" && (

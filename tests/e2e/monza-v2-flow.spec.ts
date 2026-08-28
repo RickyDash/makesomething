@@ -16,6 +16,10 @@ test.describe("Monza V2 shared race flow", () => {
     page,
   }) => {
     await page.goto("/");
+    await page
+      .getByRole("button", { name: /switch to regular difficulty/i })
+      .click();
+    await expect(v2Root(page)).toHaveAttribute("data-difficulty", "regular");
     const reactionMs = await completeLaunchWithJumpRetry(page, "warmups");
     let pitTime = "";
 
@@ -50,9 +54,33 @@ test.describe("Monza V2 shared race flow", () => {
     const chart = page.getByText("LAP CHART — SIX LAPS, SIX CALLS").locator("..");
     await expect(chart.getByText("✓")).toHaveCount(3);
     await expect(chart.getByText("✕")).toHaveCount(3);
+    await page.getByRole("button", { name: "RUN ANOTHER GRAND PRIX" }).click();
+
+    await expect(v2Root(page)).toHaveAttribute("data-stage", "formation");
+    await expect(v2Root(page)).toHaveAttribute("data-difficulty", "regular");
     await expect(
-      page.getByRole("button", { name: "RUN ANOTHER GRAND PRIX" }),
+      page.getByRole("button", { name: "START FORMATION LAP" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /switch to beginner difficulty/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("THE FULL PADDOCK QUIZ — STILL 6 LAPS", { exact: true }),
+    ).toBeVisible();
+
+    await switchToV1(page);
+    const beginnerDifficulty = page.getByRole("button", {
+      name: "beginner",
+      exact: true,
+    });
+    const regularDifficulty = page.getByRole("button", {
+      name: "regular",
+      exact: true,
+    });
+    await expect(beginnerDifficulty).toBeVisible();
+    await expect(beginnerDifficulty).toHaveAttribute("aria-pressed", "false");
+    await expect(regularDifficulty).toBeVisible();
+    await expect(regularDifficulty).toHaveAttribute("aria-pressed", "true");
   });
 
   test("mid-race and mid-pit skin swaps preserve progress and elapsed stop time", async ({

@@ -203,6 +203,22 @@ export const answerCurrentLap = async (
   ).toBeVisible({ timeout: 7_000 });
 };
 
+export const answerV1LapCorrectly = async (page: Page) => {
+  const raceCard = page
+    .locator('main[data-skin="v1"]')
+    .getByText(/lap \d\/6/i)
+    .last()
+    .locator("..")
+    .locator("..");
+  const prompt = canonicalPrompt(await raceCard.getByRole("heading").innerText());
+  const answer = correctAnswerByPrompt.get(prompt);
+  if (!answer) throw new Error(`No answer found for V1 prompt: ${prompt}`);
+  await raceCard
+    .getByRole("button", { name: new RegExp(`^${answer}$`, "i") })
+    .click();
+  await expect(raceCard.getByText(/^Correct:/)).toBeVisible();
+};
+
 export const completePitWithWrongCorner = async (page: Page) => {
   const pit = page.getByRole("region", { name: "Pit stop challenge" });
   await expect(pit).toBeVisible({ timeout: 5_000 });

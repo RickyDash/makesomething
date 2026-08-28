@@ -1,22 +1,11 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
-  correctAnswerByPrompt,
+  answerV1LapCorrectly,
   setPreference,
   switchToV2,
   v2Root,
 } from "./monza-v2-helpers";
-
-const normalize = (value: string) => value.trim().toLocaleLowerCase();
-
-const answerV1LapCorrectly = async (page: Page) => {
-  const raceCard = page.locator('main[data-skin="v1"]').getByText(/lap \d\/6/i).last().locator("..").locator("..");
-  const prompt = normalize(await raceCard.getByRole("heading").innerText());
-  const answer = correctAnswerByPrompt.get(prompt);
-  if (!answer) throw new Error(`No answer found for V1 prompt: ${prompt}`);
-  await raceCard.getByRole("button", { name: new RegExp(`^${answer}$`, "i") }).click();
-  await expect(raceCard.getByText(/^Correct:/)).toBeVisible();
-};
 
 test("V1 completes its unchanged flow and shares best records with V2", async ({
   page,

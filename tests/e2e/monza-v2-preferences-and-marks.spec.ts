@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  answerCurrentLap,
+  answerV1LapCorrectly,
   completeLaunchWithJumpRetry,
   setPreference,
   skipFormationWarmup,
@@ -79,15 +79,29 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     await expect(v2Root(page)).toHaveAttribute("data-difficulty", "beginner");
   });
 
-  test("hides both skins' difficulty pickers once the weekend is in progress", async ({
+  test("hides both skins' difficulty pickers after the first race answer", async ({
     page,
   }) => {
     test.setTimeout(90_000);
     await page.goto("/");
     await completeLaunchWithJumpRetry(page, "skip");
-    await answerCurrentLap(page, "correct", { skipPlayback: true });
-
     await switchToV1(page);
+
+    await page.getByRole("button", { name: "Go to formation intro" }).click();
+    await expect(page.getByText("formation lap (practice)").first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "beginner", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "regular", exact: true }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Go to lap 1" }).click();
+    await expect(
+      page.getByText("grand prix live · lap 1/6", { exact: true }),
+    ).toBeVisible();
+    await answerV1LapCorrectly(page);
+
     await page.getByRole("button", { name: "Go to formation intro" }).click();
     await expect(page.getByText("formation lap (practice)").first()).toBeVisible();
     await expect(
@@ -104,11 +118,9 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     await expect(
       page.getByRole("button", { name: /switch to (regular|beginner) difficulty/i }),
     ).toHaveCount(0);
-
-    await page.reload();
     await expect(
-      page.getByRole("button", { name: /switch to regular difficulty/i }),
-    ).toBeVisible();
+      page.getByText(/rookie questions|the full paddock quiz/i),
+    ).toHaveCount(0);
   });
 
   test("both marks use the specified offsets, opacity, padding, fade, and lights rule", async ({
