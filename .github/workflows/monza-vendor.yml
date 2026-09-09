@@ -1,0 +1,30 @@
+name: Monza tabletop vendor bundle
+on:
+  push:
+    branches: [monza-tabletop-build]
+    paths: [.github/workflows/monza-vendor.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch pinned Three.js dependency
+        run: |
+          mkdir -p "$RUNNER_TEMP/monza-vendor"
+          cd "$RUNNER_TEMP/monza-vendor"
+          npm pack three@0.180.0 --ignore-scripts
+          tar -xzf three-0.180.0.tgz
+          mkdir -p output/vendor
+          cp -r package/build output/vendor/build
+          cp -r package/examples/jsm output/vendor/addons
+          cp package/LICENSE output/vendor/THREE-LICENSE.txt
+          printf 'Three.js 0.180.0, unmodified upstream build and addons.\n' > output/VERSION.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: monza-three-vendor
+          path: ${{ runner.temp }}/monza-vendor/output
+          retention-days: 2
+          compression-level: 9
