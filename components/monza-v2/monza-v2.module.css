@@ -1617,10 +1617,17 @@
   letter-spacing: 0.2em;
 }
 
-.finishOverlay > header span:last-child {
+.finishOverlay > header > span {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+.finishOverlay > header > span:last-child {
   color: var(--label);
   font-size: 9px;
   letter-spacing: 0.14em;
+  text-align: right;
 }
 
 .root[data-mode="notte"] .finishOverlay > header {
@@ -1630,6 +1637,7 @@
 .finishArt {
   height: 200px;
   flex: none;
+  overflow: hidden;
   border-bottom: var(--border-heavy);
 }
 

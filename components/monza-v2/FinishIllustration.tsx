@@ -1640,7 +1640,6 @@ export function FinishIllustration({
         background: palette.bg,
         display: "block",
         height: "100%",
-        minHeight: "200px",
         overflow: "hidden",
         position: "relative",
         width: "100%",
