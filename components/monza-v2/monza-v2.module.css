@@ -46,6 +46,12 @@
   color: var(--ink);
   font-family: var(--sans);
   isolation: isolate;
+  /* Game surface, not a document: a long press on an answered option was
+     raising the iOS text-selection loupe and Copy/Look Up bar
+     (design-qa-ios.md IOS-07). */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .root[data-mode="notte"] {
