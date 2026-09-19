@@ -2069,4 +2069,16 @@
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
+
+  /* These two are opacity-only feedback that ends invisible ("forwards").
+     Collapsing them to 1ms made the wrong-corner penalty and the position
+     delta vanish before they could be read (design-qa-ios.md IOS-18). Keep
+     their fade, which is not motion. */
+  .pitPenaltyFlash {
+    animation-duration: 1350ms !important;
+  }
+
+  .chipDelta > span {
+    animation-duration: 900ms !important;
+  }
 }
