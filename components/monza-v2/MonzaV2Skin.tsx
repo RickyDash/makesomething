@@ -1775,7 +1775,7 @@ export function MonzaV2Skin({
           radius="none"
           variant="light"
           disableRipple
-          onPress={onLaunchTap}
+          onPressStart={onLaunchTap}
           aria-label="Launch — tap at lights out"
           className={styles.launchTap}
         />

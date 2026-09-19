@@ -1195,10 +1195,14 @@ export default function Home() {
     startReactionSequence("v2", false);
   };
 
+  // Wired to onPressStart (pointer-down), not onPress (pointer-up), so a
+  // touch reaction time does not include the finger-lift latency and a hold
+  // that begins before lights-out counts as the jump start it is.
   const handleReactionTap = () => {
     dispatch({ type: "START_DRILL_LAUNCH" });
+    const phase = flowStateRef.current.startDrill.phase;
 
-    if (reactionPhase === "countdown") {
+    if (phase === "countdown") {
       setJumpStartCount((count) => count + 1);
       clearReactionTimers();
       dispatch({ type: "START_DRILL_EARLY" });
@@ -1206,7 +1210,7 @@ export default function Home() {
       return;
     }
 
-    if (reactionPhase === "go" && goTimeRef.current !== null) {
+    if (phase === "go" && goTimeRef.current !== null) {
       const time = Math.round(getNowMs() - goTimeRef.current);
       dispatch({ type: "START_DRILL_COMPLETE", timeMs: time });
       clearReactionTimers();
@@ -2146,7 +2150,7 @@ export default function Home() {
                         >
                           &lt;- previous
                         </Button>
-                        <Button color="warning" onPress={handleReactionTap} className="font-semibold">
+                        <Button color="warning" onPressStart={handleReactionTap} className="font-semibold">
                           LAUNCH
                         </Button>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-red-100">
@@ -2164,7 +2168,7 @@ export default function Home() {
                         >
                           &lt;- previous
                         </Button>
-                        <Button color="warning" onPress={handleReactionTap} className="font-semibold">
+                        <Button color="warning" onPressStart={handleReactionTap} className="font-semibold">
                           LAUNCH
                         </Button>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-emerald-100">
