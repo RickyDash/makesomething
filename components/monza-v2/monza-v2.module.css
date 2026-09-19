@@ -778,6 +778,12 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   text-align: center;
 }
 
+/* Behind the intro card the strip's chips showed as stray boxes at the
+   card's sides (design-qa-ios.md IOS-35). */
+.root[data-intro="true"] .classificationList {
+  visibility: hidden;
+}
+
 .classificationList {
   display: grid;
   width: calc(100% - 18px);

@@ -1708,6 +1708,7 @@ export function MonzaV2Skin({
     <section
       data-mode={mode}
       data-hydrated={hydrated ? "true" : undefined}
+      data-intro={isFormationIntro ? "true" : undefined}
       data-stage={state.stage}
       data-grid-ready={
         showGridReady && typeof onStartLights === "function" ? "true" : undefined
