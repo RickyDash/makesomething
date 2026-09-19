@@ -56,7 +56,6 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
           return {
             opacity: style.opacity,
             right: style.right,
-            bottom: style.bottom,
             paddingTop: style.paddingTop,
             paddingRight: style.paddingRight,
             paddingBottom: style.paddingBottom,
@@ -68,7 +67,6 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
       .toEqual({
         opacity: "0.4",
         right: "4px",
-        bottom: "0px",
         paddingTop: "0px",
         paddingRight: "6px",
         paddingBottom: "2px",

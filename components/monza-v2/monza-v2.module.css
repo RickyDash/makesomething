@@ -1863,15 +1863,19 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   background: transparent !important;
 }
 
-/* Hidden version mark. It lives in the header's bottom-right corner, tucked
-   under the (non-interactive) position badge, so its 44px hit box never
-   overlaps a pinned CTA the way the old page-corner placement did
-   (design-qa-ios.md IOS-02). Visual: 7px mono at 0.4 opacity, unchanged. */
+/* Hidden version mark. It is the last child of .root (so it stays the last
+   Tab stop) but is drawn in the header's bottom-right corner, tucked under
+   the non-interactive position badge, so its 44px hit box never overlaps a
+   pinned CTA the way the old page-corner placement did (design-qa-ios.md
+   IOS-02). z-index sits above the finish overlay (50) so the mark stays
+   reachable on the race report, over its non-interactive header label;
+   during lights/go .skinMarkHidden removes it from hit-testing.
+   Visual: 7px mono at 0.4 opacity, unchanged. */
 .skinMark {
   position: absolute !important;
-  z-index: 2;
+  z-index: 60;
+  top: calc(var(--header-height) - 44px);
   right: 4px;
-  bottom: 0;
   display: flex !important;
   width: 44px !important;
   min-width: 44px !important;

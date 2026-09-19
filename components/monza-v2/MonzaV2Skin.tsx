@@ -1742,20 +1742,6 @@ export function MonzaV2Skin({
             {dnf ? "DNF" : `P${playerPosition}`}
           </strong>
         </div>
-        <Button
-          type="button"
-          radius="none"
-          variant="light"
-          disableRipple
-          isDisabled={isLightCapture}
-          onPress={onSwitchToV1}
-          aria-label="Switch to the original V1 skin"
-          aria-hidden={isLightCapture}
-          tabIndex={isLightCapture ? -1 : undefined}
-          className={cx(styles.skinMark, isLightCapture && styles.skinMarkHidden)}
-        >
-          V2
-        </Button>
       </header>
 
       <CircuitMap
@@ -1846,7 +1832,22 @@ export function MonzaV2Skin({
         />
       )}
 
-      <p className={styles.rotateNotice} role="status">
+      <Button
+        type="button"
+        radius="none"
+        variant="light"
+        disableRipple
+        isDisabled={isLightCapture}
+        onPress={onSwitchToV1}
+        aria-label="Switch to the original V1 skin"
+        aria-hidden={isLightCapture}
+        tabIndex={isLightCapture ? -1 : undefined}
+        className={cx(styles.skinMark, isLightCapture && styles.skinMarkHidden)}
+      >
+        V2
+      </Button>
+
+      <p className={styles.rotateNotice} aria-hidden="true">
         TURN YOUR PHONE — MONZA RUNS IN PORTRAIT
       </p>
     </section>
