@@ -985,14 +985,19 @@
   transition: border-color 200ms, background 200ms, opacity 300ms !important;
 }
 
-.option:hover {
-  border-color: var(--red) !important;
-  background: color-mix(in srgb, var(--gold) 25%, var(--panel)) !important;
-}
+/* Hover styles only on hover-capable pointers: iOS Safari keeps :hover on the
+   last-touched element, which otherwise paints a phantom "selected" option on
+   every screen change (design-qa-ios.md IOS-01). */
+@media (hover: hover) {
+  .option:hover {
+    border-color: var(--red) !important;
+    background: color-mix(in srgb, var(--gold) 25%, var(--panel)) !important;
+  }
 
-.root[data-mode="notte"] .option:hover {
-  border-color: var(--gold) !important;
-  background: var(--panel) !important;
+  .root[data-mode="notte"] .option:hover {
+    border-color: var(--gold) !important;
+    background: var(--panel) !important;
+  }
 }
 
 .root[data-mode="notte"] .option {
@@ -1176,12 +1181,14 @@
   font-weight: 700 !important;
 }
 
-.primaryButton:hover {
-  background: var(--red-dark) !important;
-}
+@media (hover: hover) {
+  .primaryButton:hover {
+    background: var(--red-dark) !important;
+  }
 
-.root[data-mode="notte"] .primaryButton:hover {
-  background: #ffe14d !important;
+  .root[data-mode="notte"] .primaryButton:hover {
+    background: #ffe14d !important;
+  }
 }
 
 .secondaryButton {
