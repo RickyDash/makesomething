@@ -1514,14 +1514,8 @@ function FinishReport({
   return (
     <section className={styles.finishOverlay} aria-labelledby="monza-finish-title">
       <header>
-        <span>
-          <MicroText scale={0.59375}>CHEQUERED FLAG</MicroText>
-        </span>
-        <span>
-          <MicroText scale={0.5625} origin="right center">
-            MONZA {mode === "notte" ? "/" : "·"} RACE REPORT
-          </MicroText>
-        </span>
+        <span>CHEQUERED FLAG</span>
+        <span>MONZA {mode === "notte" ? "/" : "·"} RACE REPORT</span>
       </header>
       <div className={styles.finishArt}>
         <FinishIllustration mode={mode} scene={scene} position={position} />

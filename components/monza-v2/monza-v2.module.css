@@ -1694,10 +1694,11 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 }
 
 .finishOverlay > header > span:last-child {
+  display: flex;
+  justify-content: flex-end;
   color: var(--label);
   font-size: 9px;
   letter-spacing: 0.14em;
-  text-align: right;
 }
 
 .root[data-mode="notte"] .finishOverlay > header {
