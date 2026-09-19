@@ -1848,6 +1848,10 @@ export function MonzaV2Skin({
           className={styles.launchTap}
         />
       )}
+
+      <p className={styles.rotateNotice} role="status">
+        TURN YOUR PHONE — MONZA RUNS IN PORTRAIT
+      </p>
     </section>
   );
 }

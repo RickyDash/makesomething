@@ -2135,6 +2135,33 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   }
 }
 
+/* The upper stack floors at ~300px, so a phone in landscape has no room
+   left for the question or the tyre grid (design-qa-ios.md IOS-08). A
+   proper landscape layout is a Phase 3 design task; until then say so. */
+.rotateNotice {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .rotateNotice {
+    position: absolute;
+    z-index: 70;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 24px;
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-align: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .root *,
   .root *::before,
