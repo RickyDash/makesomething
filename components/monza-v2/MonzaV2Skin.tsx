@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@heroui/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { CSSProperties, MutableRefObject } from "react";
 
 import type { FlowState } from "../../app/flow/types";
@@ -135,6 +141,16 @@ function MicroText({
     </span>
   );
 }
+
+const subscribeToNothing = () => () => {};
+// false during server render and hydration, true once the client has taken
+// over; no state, no effect, no cascading render.
+const useHydrated = () =>
+  useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
 
 const sentenceCase = (value: string) =>
   value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
@@ -1643,6 +1659,9 @@ export function MonzaV2Skin({
         ? "question"
         : "result");
   const formationHolding = useFormationHolding(raceSim);
+  // Until this flips, the stylesheet may honour the pre-hydration
+  // html[data-v2-mode] attribute in place of the (not yet loaded) mode state.
+  const hydrated = useHydrated();
   const banner =
     controlledBanner ??
     state.racePresentation.banner ??
@@ -1688,6 +1707,7 @@ export function MonzaV2Skin({
   return (
     <section
       data-mode={mode}
+      data-hydrated={hydrated ? "true" : undefined}
       data-stage={state.stage}
       data-grid-ready={
         showGridReady && typeof onStartLights === "function" ? "true" : undefined

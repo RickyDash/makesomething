@@ -54,7 +54,13 @@
   -webkit-touch-callout: none;
 }
 
-.root[data-mode="notte"] {
+/* The stored notte preference is applied to React state after mount, so
+   the first paint used giorno tokens for over a second on every reload.
+   The inline script in app/layout.tsx stamps html[data-v2-mode] before
+   paint; match it until the skin reports itself hydrated
+   (design-qa-ios.md IOS-09). */
+.root[data-mode="notte"],
+html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   --page: #0e0e0e;
   --card: #0e0e0e;
   --panel: #1a1a1a;
@@ -131,7 +137,7 @@
   line-height: 1;
 }
 
-.root[data-mode="notte"] .masthead strong {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .masthead strong {
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
@@ -159,7 +165,7 @@
   white-space: nowrap;
 }
 
-.root[data-mode="notte"] .masthead em {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .masthead em {
   height: 12px;
   color: var(--gold);
   font-size: 10.5px;
@@ -296,7 +302,7 @@
   text-align: center;
 }
 
-.root[data-mode="notte"] .positionBadge {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .positionBadge {
   padding: 5px 10px;
   background: var(--gold);
   color: #0e0e0e;
@@ -310,7 +316,7 @@
   color: var(--page);
 }
 
-.root[data-mode="notte"] .positionBadge.positionDnf {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .positionBadge.positionDnf {
   background: var(--red);
   color: #fff;
 }
@@ -793,7 +799,7 @@
   transition: background 300ms;
 }
 
-.root[data-mode="notte"] .classificationChip {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .classificationChip {
   height: 40px;
   border: 2px solid var(--ink);
   background: var(--page);
@@ -801,7 +807,7 @@
 
 /* Two MicroText line boxes plus the swatch need 35px; keep them inside
    the 36px box the border leaves (design-qa-ios.md IOS-36). */
-.root[data-mode="notte"] .classificationChipInner {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .classificationChipInner {
   gap: 0;
 }
 
@@ -825,7 +831,7 @@
   color: var(--gold);
 }
 
-.root[data-mode="notte"] .playerChip {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .playerChip {
   background: var(--page);
 }
 
@@ -1213,7 +1219,7 @@
   letter-spacing: 0.12em;
 }
 
-.root[data-mode="notte"] .primaryButton {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .primaryButton {
   background: var(--gold) !important;
   color: var(--page) !important;
   font-weight: 700 !important;
@@ -1403,7 +1409,7 @@
   background: color-mix(in srgb, var(--ink) 50%, transparent);
 }
 
-.root[data-mode="notte"] .introOverlay {
+:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .introOverlay {
   background: rgb(0 0 0 / 70%);
 }
 

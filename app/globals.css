@@ -15,6 +15,21 @@ html[data-ui-version="v2"] body {
   overscroll-behavior: none;
 }
 
+/* Page ground painted from the pre-hydration attributes so a stored notte
+   preference never flashes cream on reload (design-qa-ios.md IOS-09). */
+html[data-ui-version="v2"],
+html[data-ui-version="v2"] body,
+main[data-skin="v2"] {
+  background: #f3edde;
+}
+
+html[data-ui-version="v2"][data-v2-mode="notte"],
+html[data-ui-version="v2"][data-v2-mode="notte"] body,
+html[data-v2-mode="notte"] main[data-skin="v2"] {
+  background: #0e0e0e;
+  color-scheme: dark;
+}
+
 @theme {
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;

@@ -646,6 +646,12 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.dataset.uiVersion = uiVersion;
     document.documentElement.dataset.v2Mode = v2Mode;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        "content",
+        uiVersion === "v2" ? (v2Mode === "notte" ? "#0e0e0e" : "#f3edde") : "#fff7ed",
+      );
 
     if (skipInitialPreferenceSaveRef.current) {
       skipInitialPreferenceSaveRef.current = false;
@@ -1637,9 +1643,7 @@ export default function Home() {
         data-skin="v2"
         data-mode={v2Mode}
         data-phase={v2RacePhase}
-        className={`fixed inset-0 flex w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${
-          v2Mode === "notte" ? "bg-[#0e0e0e]" : "bg-[#f3edde]"
-        }`}
+        className="fixed inset-0 flex w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       >
         <motion.div
           className="flex h-full w-full justify-center"
