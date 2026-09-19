@@ -987,6 +987,14 @@ function QuizPanel({
   const quizScrollRef = useRef<HTMLDivElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
 
+  // The panel is mounted once for the whole race, so the verdict auto-scroll
+  // would otherwise carry over and open the next lap with its heading
+  // scrolled out of view (design-qa-ios.md IOS-06).
+  useEffect(() => {
+    const scroller = quizScrollRef.current;
+    if (scroller) scroller.scrollTop = 0;
+  }, [state.currentLap]);
+
   useEffect(() => {
     if (!verdict) return;
 
@@ -1125,9 +1133,38 @@ function WarmupOverlay({
   const selected = state.tutorialAnswers[stepIndex] ?? null;
   const reveal = selected !== null && !locked;
   const correct = selected === warmup.answer;
+  const overlayRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (overlay) overlay.scrollTop = 0;
+  }, [stepIndex]);
+
+  // On phones the verdict and the NEXT button land below the fold with no
+  // cue that the overlay scrolls; bring them into view once they appear
+  // (design-qa-ios.md IOS-05).
+  useEffect(() => {
+    if (!reveal) return;
+    const frame = requestAnimationFrame(() => {
+      const overlay = overlayRef.current;
+      if (!overlay) return;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      overlay.scrollTo({
+        top: overlay.scrollHeight,
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [reveal]);
 
   return (
-    <section className={styles.lowerOverlay} aria-label={`Formation warmup ${stepIndex + 1} of 3`}>
+    <section
+      ref={overlayRef}
+      className={styles.lowerOverlay}
+      aria-label={`Formation warmup ${stepIndex + 1} of 3`}
+    >
       <div className={styles.overlayMeta}>
         <span className={styles.eventChip}>
           <MicroText scale={0.5625}>FORMATION LAP</MicroText>
