@@ -2356,7 +2356,7 @@ export default function Home() {
                     </div>
 
                     <h2 className="font-[family-name:var(--font-space-grotesk)] text-[19.5px] font-semibold leading-tight text-white sm:text-[1.325rem]">
-                      {question.prompt}
+                      {question.prompt.toLowerCase()}
                     </h2>
 
                     <div className="grid gap-2">
@@ -2390,7 +2390,7 @@ export default function Home() {
                             className={className}
                             onPress={() => handlePick(index)}
                           >
-                            {option}
+                            {option.toLowerCase()}
                           </Button>
                         );
                       })}
@@ -2408,7 +2408,7 @@ export default function Home() {
                           >
                             {isCurrentLapCorrect ? "Correct:" : "Incorrect:"}
                           </span>{" "}
-                          {question.fact}
+                          {question.fact.toLowerCase()}
                         </p>
                       </motion.div>
                     ) : (

@@ -152,9 +152,6 @@ const useHydrated = () =>
     () => false,
   );
 
-const sentenceCase = (value: string) =>
-  value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
-
 const scoreFor = (state: FlowState) =>
   state.lapAnswers.reduce<number>((total, answer, index) => {
     if (answer === null) return total;
@@ -1054,7 +1051,7 @@ function QuizPanel({
             Q {Math.min(state.currentLap + 1, 6)} / 6
           </MicroText>
         </div>
-        <h2>{sentenceCase(question.prompt)}</h2>
+        <h2>{question.prompt}</h2>
         <div className={styles.options}>
           {question.options.map((option, index) => {
             const chosen = selected === index;
@@ -1079,7 +1076,7 @@ function QuizPanel({
                   dimmed && styles.optionDimmed,
                 )}
               >
-                {sentenceCase(option)}
+                {option}
               </Button>
             );
           })}
@@ -1102,7 +1099,7 @@ function QuizPanel({
               <strong className={verdict === "correct" ? styles.goodText : styles.badText}>
                 {verdict === "correct" ? "CORRECT" : "INCORRECT"}
               </strong>
-              <p>{sentenceCase(question.fact)}</p>
+              <p>{question.fact}</p>
               {manualRaceAdvance && onManualRaceAdvance && (
                 <Button
                   radius="none"

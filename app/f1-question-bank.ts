@@ -8,1275 +8,1275 @@ export type Question = {
 
 const questionBank: Question[] = [
   {
-    "prompt": "what does drs stand for in formula 1?",
+    "prompt": "What does DRS stand for in Formula 1?",
     "options": [
-      "drag reduction system",
-      "driver response strategy",
-      "downforce recovery setup",
-      "dynamic racing sequence"
+      "Drag reduction system",
+      "Driver response strategy",
+      "Downforce recovery setup",
+      "Dynamic racing sequence"
     ],
     "answer": 0,
-    "fact": "drs opens a flap in the rear wing to reduce drag and boost straight-line speed.",
+    "fact": "DRS opens a flap in the rear wing to reduce drag and boost straight-line speed.",
     "event": "lap briefing"
   },
   {
-    "prompt": "what color flag signals immediate race stoppage?",
+    "prompt": "What color flag signals immediate race stoppage?",
     "options": [
-      "red",
-      "blue",
-      "yellow",
-      "black"
+      "Red",
+      "Blue",
+      "Yellow",
+      "Black"
     ],
     "answer": 0,
-    "fact": "a red flag stops the session and sends everyone back to pit lane.",
+    "fact": "A red flag stops the session and sends everyone back to pit lane.",
     "event": "track control"
   },
   {
-    "prompt": "what does the chequered flag mean?",
+    "prompt": "What does the chequered flag mean?",
     "options": [
-      "race finished",
-      "session suspended",
-      "safety car deployed",
-      "mandatory pit stop"
+      "Race finished",
+      "Session suspended",
+      "Safety car deployed",
+      "Mandatory pit stop"
     ],
     "answer": 0,
-    "fact": "the chequered flag marks the end of the race session.",
+    "fact": "The chequered flag marks the end of the race session.",
     "event": "final lap"
   },
   {
-    "prompt": "in qualifying, who starts p1 on race day?",
+    "prompt": "In qualifying, who starts P1 on race day?",
     "options": [
-      "fastest q3 driver",
-      "last year champion",
-      "fastest pit crew",
-      "sprint winner"
+      "Fastest Q3 driver",
+      "Last year champion",
+      "Fastest pit crew",
+      "Sprint winner"
     ],
     "answer": 0,
-    "fact": "pole position goes to the fastest driver in q3.",
+    "fact": "Pole position goes to the fastest driver in Q3.",
     "event": "grid battle"
   },
   {
-    "prompt": "what does parc ferme limit after qualifying?",
+    "prompt": "What does parc ferme limit after qualifying?",
     "options": [
-      "major car setup changes",
-      "radio messages",
-      "pit stop practice",
-      "tyre blankets"
+      "Major car setup changes",
+      "Radio messages",
+      "Pit stop practice",
+      "Tyre blankets"
     ],
     "answer": 0,
-    "fact": "parc ferme rules lock most setup changes between qualifying and race start.",
+    "fact": "Parc ferme rules lock most setup changes between qualifying and race start.",
     "event": "regulation check"
   },
   {
-    "prompt": "what is the main purpose of the safety car?",
+    "prompt": "What is the main purpose of the safety car?",
     "options": [
-      "neutralize race pace for safety",
-      "increase race speed",
-      "start rain procedures",
-      "award half points"
+      "Neutralize race pace for safety",
+      "Increase race speed",
+      "Start rain procedures",
+      "Award half points"
     ],
     "answer": 0,
-    "fact": "the safety car slows and bunches the field so marshals can work safely.",
+    "fact": "The safety car slows and bunches the field so marshals can work safely.",
     "event": "track control"
   },
   {
-    "prompt": "under a virtual safety car, what must drivers do?",
+    "prompt": "Under a virtual safety car, what must drivers do?",
     "options": [
-      "follow a reduced delta pace",
-      "pit immediately",
-      "switch to wet tyres",
-      "line up on the grid"
+      "Follow a reduced delta pace",
+      "Pit immediately",
+      "Switch to wet tyres",
+      "Line up on the grid"
     ],
     "answer": 0,
-    "fact": "under vsc, drivers follow a minimum delta time instead of racing flat out.",
+    "fact": "Under VSC, drivers follow a minimum delta time instead of racing flat out.",
     "event": "track control"
   },
   {
-    "prompt": "what does a blue flag usually indicate?",
+    "prompt": "What does a blue flag usually indicate?",
     "options": [
-      "faster car is lapping you",
-      "rain expected",
-      "session suspended",
-      "pit lane closed"
+      "Faster car is lapping you",
+      "Rain expected",
+      "Session suspended",
+      "Pit lane closed"
     ],
     "answer": 0,
-    "fact": "blue flags warn a slower car that a faster one is approaching to lap.",
+    "fact": "Blue flags warn a slower car that a faster one is approaching to lap.",
     "event": "flag signal"
   },
   {
-    "prompt": "what does a black flag mean?",
+    "prompt": "What does a black flag mean?",
     "options": [
-      "car is disqualified and must return",
-      "race canceled",
-      "safety car ending",
-      "driver wins pole"
+      "Car is disqualified and must return",
+      "Race canceled",
+      "Safety car ending",
+      "Driver wins pole"
     ],
     "answer": 0,
-    "fact": "a black flag means disqualification from the session.",
+    "fact": "A black flag means disqualification from the session.",
     "event": "flag signal"
   },
   {
-    "prompt": "what does a yellow flag mean for drivers?",
+    "prompt": "What does a yellow flag mean for drivers?",
     "options": [
-      "danger ahead, no overtaking",
-      "full speed racing",
-      "mandatory pit stop",
-      "race finished"
+      "Danger ahead, no overtaking",
+      "Full speed racing",
+      "Mandatory pit stop",
+      "Race finished"
     ],
     "answer": 0,
-    "fact": "yellow flag means caution and no overtaking in that zone.",
+    "fact": "Yellow flag means caution and no overtaking in that zone.",
     "event": "flag signal"
   },
   {
-    "prompt": "which tyre is designed for damp conditions without standing water?",
+    "prompt": "Which tyre is designed for damp conditions without standing water?",
     "options": [
-      "intermediate",
-      "soft",
-      "full wet",
-      "hard"
+      "Intermediate",
+      "Soft",
+      "Full wet",
+      "Hard"
     ],
     "answer": 0,
-    "fact": "intermediates are made for a damp track and light spray conditions.",
+    "fact": "Intermediates are made for a damp track and light spray conditions.",
     "event": "tyre strategy"
   },
   {
-    "prompt": "which tyre is designed for heavy rain and standing water?",
+    "prompt": "Which tyre is designed for heavy rain and standing water?",
     "options": [
-      "full wet",
-      "intermediate",
-      "hard",
-      "medium"
+      "Full wet",
+      "Intermediate",
+      "Hard",
+      "Medium"
     ],
     "answer": 0,
-    "fact": "full wet tyres clear much more water than intermediates.",
+    "fact": "Full wet tyres clear much more water than intermediates.",
     "event": "tyre strategy"
   },
   {
-    "prompt": "what is a chicane?",
+    "prompt": "What is a chicane?",
     "options": [
-      "a quick left-right or right-left sequence",
-      "a long straight",
-      "a pit lane tool",
-      "a wet tyre type"
+      "A quick left-right or right-left sequence",
+      "A long straight",
+      "A pit lane tool",
+      "A wet tyre type"
     ],
     "answer": 0,
-    "fact": "a chicane is a rapid change of direction added to slow cars down.",
+    "fact": "A chicane is a rapid change of direction added to slow cars down.",
     "event": "track layout"
   },
   {
-    "prompt": "what is slipstreaming in f1?",
+    "prompt": "What is slipstreaming in F1?",
     "options": [
-      "using reduced drag behind another car",
-      "driving through pit lane",
-      "locking brakes into a corner",
-      "saving fuel under safety car"
+      "Using reduced drag behind another car",
+      "Driving through pit lane",
+      "Locking brakes into a corner",
+      "Saving fuel under safety car"
     ],
     "answer": 0,
-    "fact": "a car behind can gain speed by sitting in lower-pressure air.",
+    "fact": "A car behind can gain speed by sitting in lower-pressure air.",
     "event": "overtake setup"
   },
   {
-    "prompt": "what is a delta time under safety procedures?",
+    "prompt": "What is a delta time under safety procedures?",
     "options": [
-      "minimum reference pace drivers must respect",
-      "pit stop target",
-      "gap to championship leader",
-      "time of day for sunset"
+      "Minimum reference pace drivers must respect",
+      "Pit stop target",
+      "Gap to championship leader",
+      "Time of day for sunset"
     ],
     "answer": 0,
-    "fact": "the delta is a target lap pace used to keep speeds controlled.",
+    "fact": "The delta is a target lap pace used to keep speeds controlled.",
     "event": "track control"
   },
   {
-    "prompt": "what is an out lap?",
+    "prompt": "What is an out lap?",
     "options": [
-      "lap leaving pits to start a run",
-      "lap returning to pits",
-      "final race lap",
-      "lap under red flag"
+      "Lap leaving pits to start a run",
+      "Lap returning to pits",
+      "Final race lap",
+      "Lap under red flag"
     ],
     "answer": 0,
-    "fact": "an out lap starts when a car exits the pit lane before a timed push lap.",
+    "fact": "An out lap starts when a car exits the pit lane before a timed push lap.",
     "event": "qualifying run"
   },
   {
-    "prompt": "what is an in lap?",
+    "prompt": "What is an in lap?",
     "options": [
-      "lap returning to the pit lane",
-      "lap before lights out",
-      "lap under drs",
-      "formation lap"
+      "Lap returning to the pit lane",
+      "Lap before lights out",
+      "Lap under DRS",
+      "Formation lap"
     ],
     "answer": 0,
-    "fact": "an in lap is the lap where the driver comes back to pits.",
+    "fact": "An in lap is the lap where the driver comes back to pits.",
     "event": "qualifying run"
   },
   {
-    "prompt": "what does downforce mainly help with?",
+    "prompt": "What does downforce mainly help with?",
     "options": [
-      "cornering grip",
-      "top speed on straights",
-      "radio quality",
-      "fuel flow"
+      "Cornering grip",
+      "Top speed on straights",
+      "Radio quality",
+      "Fuel flow"
     ],
     "answer": 0,
-    "fact": "more downforce improves corner speed but usually increases drag.",
+    "fact": "More downforce improves corner speed but usually increases drag.",
     "event": "car setup"
   },
   {
-    "prompt": "when is drs typically enabled in a race?",
+    "prompt": "When is DRS typically enabled in a race?",
     "options": [
-      "when a driver is within one second at detection",
-      "anytime in sector 1",
-      "only on the final lap",
-      "only in wet races"
+      "When a driver is within one second at detection",
+      "Anytime in sector 1",
+      "Only on the final lap",
+      "Only in wet races"
     ],
     "answer": 0,
-    "fact": "drs is usually available if the chasing car is within one second at the detection point.",
+    "fact": "DRS is usually available if the chasing car is within one second at the detection point.",
     "event": "overtake setup"
   },
   {
-    "prompt": "roughly how long is a full grand prix race distance (except monaco)?",
+    "prompt": "Roughly how long is a full grand prix race distance (except Monaco)?",
     "options": [
-      "about 305 km",
-      "about 220 km",
-      "about 150 km",
-      "about 500 km"
+      "About 305 km",
+      "About 220 km",
+      "About 150 km",
+      "About 500 km"
     ],
     "answer": 0,
-    "fact": "f1 races are set to about 305 km, with monaco as the classic exception.",
+    "fact": "F1 races are set to about 305 km, with Monaco as the classic exception.",
     "event": "race format"
   },
   {
-    "prompt": "which race is the classic exception to the ~305 km distance rule?",
+    "prompt": "Which race is the classic exception to the ~305 km distance rule?",
     "options": [
-      "monaco grand prix",
-      "british grand prix",
-      "italian grand prix",
-      "japanese grand prix"
+      "Monaco Grand Prix",
+      "British Grand Prix",
+      "Italian Grand Prix",
+      "Japanese Grand Prix"
     ],
     "answer": 0,
-    "fact": "monaco is run at a shorter total distance than most f1 races.",
+    "fact": "Monaco is run at a shorter total distance than most F1 races.",
     "event": "race format"
   },
   {
-    "prompt": "which company supplies f1 tyres in the current era?",
+    "prompt": "Which company supplies F1 tyres in the current era?",
     "options": [
-      "pirelli",
-      "michelin",
-      "bridgestone",
-      "goodyear"
+      "Pirelli",
+      "Michelin",
+      "Bridgestone",
+      "Goodyear"
     ],
     "answer": 0,
-    "fact": "pirelli is the current official tyre supplier in formula 1.",
+    "fact": "Pirelli is the current official tyre supplier in Formula 1.",
     "event": "paddock tech"
   },
   {
-    "prompt": "which era began in 2014 in formula 1?",
+    "prompt": "Which era began in 2014 in Formula 1?",
     "options": [
-      "turbo-hybrid power unit era",
-      "v10 return era",
-      "ground effect ban era",
-      "manual gearbox era"
+      "Turbo-hybrid power unit era",
+      "V10 return era",
+      "Ground effect ban era",
+      "Manual gearbox era"
     ],
     "answer": 0,
     "fact": "2014 introduced the current turbo-hybrid power unit regulations.",
     "event": "regulation era"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2002?",
+    "prompt": "Who won the F1 Drivers' Championship in 2002?",
     "options": [
-      "michael schumacher",
-      "lewis hamilton",
-      "nico rosberg",
-      "fernando alonso"
+      "Michael Schumacher",
+      "Lewis Hamilton",
+      "Nico Rosberg",
+      "Fernando Alonso"
     ],
     "answer": 0,
-    "fact": "michael schumacher won the drivers' title in 2002.",
+    "fact": "Michael Schumacher won the drivers' title in 2002.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2004?",
+    "prompt": "Who won the F1 Drivers' Championship in 2004?",
     "options": [
-      "michael schumacher",
-      "sebastian vettel",
-      "fernando alonso",
-      "lewis hamilton"
+      "Michael Schumacher",
+      "Sebastian Vettel",
+      "Fernando Alonso",
+      "Lewis Hamilton"
     ],
     "answer": 0,
-    "fact": "michael schumacher won the drivers' title in 2004.",
+    "fact": "Michael Schumacher won the drivers' title in 2004.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2005?",
+    "prompt": "Who won the F1 Drivers' Championship in 2005?",
     "options": [
-      "fernando alonso",
-      "nico rosberg",
-      "kimi raikkonen",
-      "jenson button"
+      "Fernando Alonso",
+      "Nico Rosberg",
+      "Kimi Raikkonen",
+      "Jenson Button"
     ],
     "answer": 0,
-    "fact": "fernando alonso won the drivers' title in 2005.",
+    "fact": "Fernando Alonso won the drivers' title in 2005.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2006?",
+    "prompt": "Who won the F1 Drivers' Championship in 2006?",
     "options": [
-      "fernando alonso",
-      "max verstappen",
-      "lewis hamilton",
-      "sebastian vettel"
+      "Fernando Alonso",
+      "Max Verstappen",
+      "Lewis Hamilton",
+      "Sebastian Vettel"
     ],
     "answer": 0,
-    "fact": "fernando alonso won the drivers' title in 2006.",
+    "fact": "Fernando Alonso won the drivers' title in 2006.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2007?",
+    "prompt": "Who won the F1 Drivers' Championship in 2007?",
     "options": [
-      "kimi raikkonen",
-      "michael schumacher",
-      "jenson button",
-      "nico rosberg"
+      "Kimi Raikkonen",
+      "Michael Schumacher",
+      "Jenson Button",
+      "Nico Rosberg"
     ],
     "answer": 0,
-    "fact": "kimi raikkonen won the drivers' title in 2007.",
+    "fact": "Kimi Raikkonen won the drivers' title in 2007.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2008?",
+    "prompt": "Who won the F1 Drivers' Championship in 2008?",
     "options": [
-      "lewis hamilton",
-      "fernando alonso",
-      "sebastian vettel",
-      "max verstappen"
+      "Lewis Hamilton",
+      "Fernando Alonso",
+      "Sebastian Vettel",
+      "Max Verstappen"
     ],
     "answer": 0,
-    "fact": "lewis hamilton won the drivers' title in 2008.",
+    "fact": "Lewis Hamilton won the drivers' title in 2008.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2009?",
+    "prompt": "Who won the F1 Drivers' Championship in 2009?",
     "options": [
-      "jenson button",
-      "kimi raikkonen",
-      "nico rosberg",
-      "michael schumacher"
+      "Jenson Button",
+      "Kimi Raikkonen",
+      "Nico Rosberg",
+      "Michael Schumacher"
     ],
     "answer": 0,
-    "fact": "jenson button won the drivers' title in 2009.",
+    "fact": "Jenson Button won the drivers' title in 2009.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2010?",
+    "prompt": "Who won the F1 Drivers' Championship in 2010?",
     "options": [
-      "sebastian vettel",
-      "lewis hamilton",
-      "max verstappen",
-      "fernando alonso"
+      "Sebastian Vettel",
+      "Lewis Hamilton",
+      "Max Verstappen",
+      "Fernando Alonso"
     ],
     "answer": 0,
-    "fact": "sebastian vettel won the drivers' title in 2010.",
+    "fact": "Sebastian Vettel won the drivers' title in 2010.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2011?",
+    "prompt": "Who won the F1 Drivers' Championship in 2011?",
     "options": [
-      "sebastian vettel",
-      "jenson button",
-      "michael schumacher",
-      "kimi raikkonen"
+      "Sebastian Vettel",
+      "Jenson Button",
+      "Michael Schumacher",
+      "Kimi Raikkonen"
     ],
     "answer": 0,
-    "fact": "sebastian vettel won the drivers' title in 2011.",
+    "fact": "Sebastian Vettel won the drivers' title in 2011.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2014?",
+    "prompt": "Who won the F1 Drivers' Championship in 2014?",
     "options": [
-      "lewis hamilton",
-      "michael schumacher",
-      "jenson button",
-      "nico rosberg"
+      "Lewis Hamilton",
+      "Michael Schumacher",
+      "Jenson Button",
+      "Nico Rosberg"
     ],
     "answer": 0,
-    "fact": "lewis hamilton won the drivers' title in 2014.",
+    "fact": "Lewis Hamilton won the drivers' title in 2014.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2015?",
+    "prompt": "Who won the F1 Drivers' Championship in 2015?",
     "options": [
-      "lewis hamilton",
-      "fernando alonso",
-      "sebastian vettel",
-      "max verstappen"
+      "Lewis Hamilton",
+      "Fernando Alonso",
+      "Sebastian Vettel",
+      "Max Verstappen"
     ],
     "answer": 0,
-    "fact": "lewis hamilton won the drivers' title in 2015.",
+    "fact": "Lewis Hamilton won the drivers' title in 2015.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2016?",
+    "prompt": "Who won the F1 Drivers' Championship in 2016?",
     "options": [
-      "nico rosberg",
-      "kimi raikkonen",
-      "sebastian vettel",
-      "michael schumacher"
+      "Nico Rosberg",
+      "Kimi Raikkonen",
+      "Sebastian Vettel",
+      "Michael Schumacher"
     ],
     "answer": 0,
-    "fact": "nico rosberg won the drivers' title in 2016.",
+    "fact": "Nico Rosberg won the drivers' title in 2016.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2022?",
+    "prompt": "Who won the F1 Drivers' Championship in 2022?",
     "options": [
-      "max verstappen",
-      "fernando alonso",
-      "jenson button",
-      "nico rosberg"
+      "Max Verstappen",
+      "Fernando Alonso",
+      "Jenson Button",
+      "Nico Rosberg"
     ],
     "answer": 0,
-    "fact": "max verstappen won the drivers' title in 2022.",
+    "fact": "Max Verstappen won the drivers' title in 2022.",
     "event": "title fight"
   },
   {
-    "prompt": "who won the f1 drivers' championship in 2024?",
+    "prompt": "Who won the F1 Drivers' Championship in 2024?",
     "options": [
-      "max verstappen",
-      "lewis hamilton",
-      "nico rosberg",
-      "fernando alonso"
+      "Max Verstappen",
+      "Lewis Hamilton",
+      "Nico Rosberg",
+      "Fernando Alonso"
     ],
     "answer": 0,
-    "fact": "max verstappen won the drivers' title in 2024.",
+    "fact": "Max Verstappen won the drivers' title in 2024.",
     "event": "title fight"
   },
   {
-    "prompt": "which country hosts the monza grand prix circuit?",
+    "prompt": "Which country hosts the Monza Grand Prix circuit?",
     "options": [
-      "italy",
-      "belgium",
-      "united arab emirates",
-      "saudi arabia"
+      "Italy",
+      "Belgium",
+      "United Arab Emirates",
+      "Saudi Arabia"
     ],
     "answer": 0,
-    "fact": "monza is located in italy.",
+    "fact": "Monza is located in Italy.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the spa-francorchamps grand prix circuit?",
+    "prompt": "Which country hosts the Spa-Francorchamps Grand Prix circuit?",
     "options": [
-      "belgium",
-      "united kingdom",
-      "united states",
-      "bahrain"
+      "Belgium",
+      "United Kingdom",
+      "United States",
+      "Bahrain"
     ],
     "answer": 0,
-    "fact": "spa-francorchamps is located in belgium.",
+    "fact": "Spa-Francorchamps is located in Belgium.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the suzuka grand prix circuit?",
+    "prompt": "Which country hosts the Suzuka Grand Prix circuit?",
     "options": [
-      "japan",
-      "brazil",
-      "saudi arabia",
-      "spain"
+      "Japan",
+      "Brazil",
+      "Saudi Arabia",
+      "Spain"
     ],
     "answer": 0,
-    "fact": "suzuka is located in japan.",
+    "fact": "Suzuka is located in Japan.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the interlagos grand prix circuit?",
+    "prompt": "Which country hosts the Interlagos Grand Prix circuit?",
     "options": [
-      "brazil",
-      "united arab emirates",
-      "bahrain",
-      "monaco"
+      "Brazil",
+      "United Arab Emirates",
+      "Bahrain",
+      "Monaco"
     ],
     "answer": 0,
-    "fact": "interlagos is located in brazil.",
+    "fact": "Interlagos is located in Brazil.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the yas marina grand prix circuit?",
+    "prompt": "Which country hosts the Yas Marina Grand Prix circuit?",
     "options": [
-      "united arab emirates",
-      "united states",
-      "canada",
-      "netherlands"
+      "United Arab Emirates",
+      "United States",
+      "Canada",
+      "Netherlands"
     ],
     "answer": 0,
-    "fact": "yas marina is located in united arab emirates.",
+    "fact": "Yas Marina is located in United Arab Emirates.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the albert park grand prix circuit?",
+    "prompt": "Which country hosts the Albert Park Grand Prix circuit?",
     "options": [
-      "australia",
-      "saudi arabia",
-      "monaco",
-      "austria"
+      "Australia",
+      "Saudi Arabia",
+      "Monaco",
+      "Austria"
     ],
     "answer": 0,
-    "fact": "albert park is located in australia.",
+    "fact": "Albert Park is located in Australia.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the circuit gilles villeneuve grand prix circuit?",
+    "prompt": "Which country hosts the Circuit Gilles Villeneuve Grand Prix circuit?",
     "options": [
-      "canada",
-      "spain",
-      "austria",
-      "mexico"
+      "Canada",
+      "Spain",
+      "Austria",
+      "Mexico"
     ],
     "answer": 0,
-    "fact": "circuit gilles villeneuve is located in canada.",
+    "fact": "Circuit Gilles Villeneuve is located in Canada.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the zandvoort grand prix circuit?",
+    "prompt": "Which country hosts the Zandvoort Grand Prix circuit?",
     "options": [
-      "netherlands",
-      "hungary",
-      "mexico",
-      "germany"
+      "Netherlands",
+      "Hungary",
+      "Mexico",
+      "Germany"
     ],
     "answer": 0,
-    "fact": "zandvoort is located in netherlands.",
+    "fact": "Zandvoort is located in Netherlands.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the red bull ring grand prix circuit?",
+    "prompt": "Which country hosts the Red Bull Ring Grand Prix circuit?",
     "options": [
-      "austria",
-      "singapore",
-      "china",
-      "belgium"
+      "Austria",
+      "Singapore",
+      "China",
+      "Belgium"
     ],
     "answer": 0,
-    "fact": "red bull ring is located in austria.",
+    "fact": "Red Bull Ring is located in Austria.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the marina bay grand prix circuit?",
+    "prompt": "Which country hosts the Marina Bay Grand Prix circuit?",
     "options": [
-      "singapore",
-      "azerbaijan",
-      "germany",
-      "united kingdom"
+      "Singapore",
+      "Azerbaijan",
+      "Germany",
+      "United Kingdom"
     ],
     "answer": 0,
-    "fact": "marina bay is located in singapore.",
+    "fact": "Marina Bay is located in Singapore.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the imola grand prix circuit?",
+    "prompt": "Which country hosts the Imola Grand Prix circuit?",
     "options": [
-      "italy",
-      "mexico",
-      "belgium",
-      "brazil"
+      "Italy",
+      "Mexico",
+      "Belgium",
+      "Brazil"
     ],
     "answer": 0,
-    "fact": "imola is located in italy.",
+    "fact": "Imola is located in Italy.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the baku city circuit grand prix circuit?",
+    "prompt": "Which country hosts the Baku City Circuit Grand Prix circuit?",
     "options": [
-      "azerbaijan",
-      "qatar",
-      "belgium",
-      "brazil"
+      "Azerbaijan",
+      "Qatar",
+      "Belgium",
+      "Brazil"
     ],
     "answer": 0,
-    "fact": "baku city circuit is located in azerbaijan.",
+    "fact": "Baku City Circuit is located in Azerbaijan.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the autodromo hermanos rodriguez grand prix circuit?",
+    "prompt": "Which country hosts the Autodromo Hermanos Rodriguez Grand Prix circuit?",
     "options": [
-      "mexico",
-      "china",
-      "united kingdom",
-      "united arab emirates"
+      "Mexico",
+      "China",
+      "United Kingdom",
+      "United Arab Emirates"
     ],
     "answer": 0,
-    "fact": "autodromo hermanos rodriguez is located in mexico.",
+    "fact": "Autodromo Hermanos Rodriguez is located in Mexico.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the losail international circuit grand prix circuit?",
+    "prompt": "Which country hosts the Losail International Circuit Grand Prix circuit?",
     "options": [
-      "qatar",
-      "germany",
-      "japan",
-      "united states"
+      "Qatar",
+      "Germany",
+      "Japan",
+      "United States"
     ],
     "answer": 0,
-    "fact": "losail international circuit is located in qatar.",
+    "fact": "Losail International Circuit is located in Qatar.",
     "event": "track map"
   },
   {
-    "prompt": "which country hosts the nurburgring grand prix circuit?",
+    "prompt": "Which country hosts the Nurburgring Grand Prix circuit?",
     "options": [
-      "germany",
-      "japan",
-      "australia",
-      "canada"
+      "Germany",
+      "Japan",
+      "Australia",
+      "Canada"
     ],
     "answer": 0,
-    "fact": "nurburgring is located in germany.",
+    "fact": "Nurburgring is located in Germany.",
     "event": "track map"
   },
   {
-    "prompt": "which f1 team is nicknamed the prancing horse?",
+    "prompt": "Which F1 team is nicknamed the Prancing Horse?",
     "options": [
-      "ferrari",
-      "mclaren",
-      "williams",
-      "sauber"
+      "Ferrari",
+      "McLaren",
+      "Williams",
+      "Sauber"
     ],
     "answer": 0,
-    "fact": "the prancing horse is ferrari's iconic symbol.",
+    "fact": "The Prancing Horse is Ferrari's iconic symbol.",
     "event": "team identity"
   },
   {
-    "prompt": "which team is often called the silver arrows in modern f1?",
+    "prompt": "Which team is often called the Silver Arrows in modern F1?",
     "options": [
-      "mercedes",
-      "red bull",
-      "aston martin",
-      "alpine"
+      "Mercedes",
+      "Red Bull",
+      "Aston Martin",
+      "Alpine"
     ],
     "answer": 0,
-    "fact": "silver arrows is the classic nickname for mercedes motorsport.",
+    "fact": "Silver Arrows is the classic nickname for Mercedes motorsport.",
     "event": "team identity"
   },
   {
-    "prompt": "which team is strongly associated with papaya orange?",
+    "prompt": "Which team is strongly associated with papaya orange?",
     "options": [
-      "mclaren",
-      "ferrari",
-      "williams",
-      "haas"
+      "McLaren",
+      "Ferrari",
+      "Williams",
+      "Haas"
     ],
     "answer": 0,
-    "fact": "papaya orange is mclaren's signature modern race color.",
+    "fact": "Papaya orange is McLaren's signature modern race color.",
     "event": "team identity"
   },
   {
-    "prompt": "the tifosi are famously passionate fans of which team?",
+    "prompt": "The tifosi are famously passionate fans of which team?",
     "options": [
-      "ferrari",
-      "mercedes",
-      "red bull",
-      "alpine"
+      "Ferrari",
+      "Mercedes",
+      "Red Bull",
+      "Alpine"
     ],
     "answer": 0,
-    "fact": "tifosi is the traditional name for ferrari's fan base.",
+    "fact": "Tifosi is the traditional name for Ferrari's fan base.",
     "event": "fan zone"
   },
   {
-    "prompt": "in 2021, what controversial event decided the championship on the final lap at abu dhabi?",
+    "prompt": "In 2021, what controversial event decided the championship on the final lap at Abu Dhabi?",
     "options": [
-      "a late safety car restart",
-      "a red flag restart",
-      "a penalty for max verstappen",
-      "a mechanical failure for hamilton"
+      "A late safety car restart",
+      "A red flag restart",
+      "A penalty for Max Verstappen",
+      "A mechanical failure for Hamilton"
     ],
     "answer": 0,
-    "fact": "a controversial late safety car and restart allowed verstappen to overtake hamilton on the final lap to win the 2021 title.",
+    "fact": "A controversial late safety car and restart allowed Verstappen to overtake Hamilton on the final lap to win the 2021 title.",
     "event": "iconic moment"
   },
   {
-    "prompt": "what did lando norris famously lose in russia 2021 by staying out in worsening rain?",
+    "prompt": "What did Lando Norris famously lose in Russia 2021 by staying out in worsening rain?",
     "options": [
-      "his first f1 win",
-      "his front wing",
-      "a podium finish",
-      "his grid penalty appeal"
+      "His first F1 win",
+      "His front wing",
+      "A podium finish",
+      "His grid penalty appeal"
     ],
     "answer": 0,
-    "fact": "norris led the race but stayed out on slicks as rain intensified, dropping him down the order and handing the win to hamilton.",
+    "fact": "Norris led the race but stayed out on slicks as rain intensified, dropping him down the order and handing the win to Hamilton.",
     "event": "iconic moment"
   },
   {
-    "prompt": "what did sebastian vettel do after winning the 2013 indian gp to celebrate his 4th title?",
+    "prompt": "What did Sebastian Vettel do after winning the 2013 Indian GP to celebrate his 4th title?",
     "options": [
-      "did doughnuts on the straight",
-      "sprinted to the crowd",
-      "threw his steering wheel",
-      "climbed a fence"
+      "Did doughnuts on the straight",
+      "Sprinted to the crowd",
+      "Threw his steering wheel",
+      "Climbed a fence"
     ],
     "answer": 0,
-    "fact": "vettel's iconic donuts on the main straight became one of f1's most memorable celebrations.",
+    "fact": "Vettel's iconic donuts on the main straight became one of F1's most memorable celebrations.",
     "event": "iconic moment"
   },
   {
-    "prompt": "at canada 2019, which driver was given a controversial 5-second penalty while leading, costing them the win?",
+    "prompt": "At Canada 2019, which driver was given a controversial 5-second penalty while leading, costing them the win?",
     "options": [
-      "vettel",
-      "leclerc",
-      "bottas",
-      "ricciardo"
+      "Vettel",
+      "Leclerc",
+      "Bottas",
+      "Ricciardo"
     ],
     "answer": 0,
-    "fact": "vettel crossed the line first but a 5-second penalty for an unsafe rejoin gave hamilton the win, sparking huge controversy.",
+    "fact": "Vettel crossed the line first but a 5-second penalty for an unsafe rejoin gave Hamilton the win, sparking huge controversy.",
     "event": "iconic moment"
   },
   {
-    "prompt": "which team principal is famous for shouting 'no michael no no that is so not right' on team radio?",
+    "prompt": "Which team principal is famous for shouting 'No Michael no no that is so not right' on team radio?",
     "options": [
-      "toto wolff",
-      "christian horner",
-      "guenther steiner",
-      "helmut marko"
+      "Toto Wolff",
+      "Christian Horner",
+      "Guenther Steiner",
+      "Helmut Marko"
     ],
     "answer": 0,
-    "fact": "mercedes principal toto wolff's radio outburst to race director michael masi during abu dhabi 2021 became an iconic f1 meme.",
+    "fact": "Mercedes principal Toto Wolff's radio outburst to race director Michael Masi during Abu Dhabi 2021 became an iconic F1 meme.",
     "event": "iconic moment"
   },
   {
-    "prompt": "which circuit is known as the 'temple of speed'?",
+    "prompt": "Which circuit is known as the 'Temple of Speed'?",
     "options": [
-      "monza",
-      "silverstone",
-      "spa",
-      "baku"
+      "Monza",
+      "Silverstone",
+      "Spa",
+      "Baku"
     ],
     "answer": 0,
-    "fact": "monza's low-downforce, high-speed layout earned it the legendary nickname.",
+    "fact": "Monza's low-downforce, high-speed layout earned it the legendary nickname.",
     "event": "track lore"
   },
   {
-    "prompt": "what is 'porpoising' that plagued teams in 2022?",
+    "prompt": "What is 'porpoising' that plagued teams in 2022?",
     "options": [
-      "car bouncing violently at high speed",
-      "excessive tyre wear",
-      "engine overheating",
-      "gearbox vibrations"
+      "Car bouncing violently at high speed",
+      "Excessive tyre wear",
+      "Engine overheating",
+      "Gearbox vibrations"
     ],
     "answer": 0,
-    "fact": "the 2022 ground effect cars caused violent vertical oscillations on straights as downforce rapidly stalled and reattached.",
+    "fact": "The 2022 ground effect cars caused violent vertical oscillations on straights as downforce rapidly stalled and reattached.",
     "event": "tech drama"
   },
   {
-    "prompt": "which driver famously said 'leave me alone, i know what i'm doing' during a race?",
+    "prompt": "Which driver famously said 'Leave me alone, I know what I'm doing' during a race?",
     "options": [
-      "kimi raikkonen",
-      "fernando alonso",
-      "lewis hamilton",
-      "max verstappen"
+      "Kimi Raikkonen",
+      "Fernando Alonso",
+      "Lewis Hamilton",
+      "Max Verstappen"
     ],
     "answer": 0,
-    "fact": "raikkonen's ice-cold radio message during abu dhabi 2012 became one of f1's most quoted lines.",
+    "fact": "Raikkonen's ice-cold radio message during Abu Dhabi 2012 became one of F1's most quoted lines.",
     "event": "iconic moment"
   },
   {
-    "prompt": "what is a 'megapixel' in f1 slang?",
+    "prompt": "What is a 'megapixel' in F1 slang?",
     "options": [
-      "nothing — it's not real f1 slang",
-      "a really clean qualifying lap",
-      "a high-res onboard camera",
-      "a sponsor deal worth millions"
+      "Nothing — it's not real F1 slang",
+      "A really clean qualifying lap",
+      "A high-res onboard camera",
+      "A sponsor deal worth millions"
     ],
     "answer": 0,
-    "fact": "there's no such thing as a megapixel in f1 jargon — don't let fake terms trip you up.",
+    "fact": "There's no such thing as a megapixel in F1 jargon — don't let fake terms trip you up.",
     "event": "bluff call"
   },
   {
-    "prompt": "'multi 21, seb' was a famous team order controversy involving which team?",
+    "prompt": "'Multi 21, Seb' was a famous team order controversy involving which team?",
     "options": [
-      "red bull",
-      "ferrari",
-      "mercedes",
-      "mclaren"
+      "Red Bull",
+      "Ferrari",
+      "Mercedes",
+      "McLaren"
     ],
     "answer": 0,
-    "fact": "vettel ignored the 'multi 21' team order and overtook webber to win the 2013 malaysian gp, causing a massive rift.",
+    "fact": "Vettel ignored the 'Multi 21' team order and overtook Webber to win the 2013 Malaysian GP, causing a massive rift.",
     "event": "iconic moment"
   },
   {
-    "prompt": "what is the 'halo' device on modern f1 cars designed to protect against?",
+    "prompt": "What is the 'Halo' device on modern F1 cars designed to protect against?",
     "options": [
-      "head impacts from debris",
-      "rain spray",
-      "engine fires",
-      "tyre blowouts"
+      "Head impacts from debris",
+      "Rain spray",
+      "Engine fires",
+      "Tyre blowouts"
     ],
     "answer": 0,
-    "fact": "the halo has been credited with saving multiple lives since its introduction in 2018, including romain grosjean's fiery 2020 crash.",
+    "fact": "The Halo has been credited with saving multiple lives since its introduction in 2018, including Romain Grosjean's fiery 2020 crash.",
     "event": "safety tech"
   },
   {
-    "prompt": "which driver survived a 137mph crash and fireball at bahrain 2020?",
+    "prompt": "Which driver survived a 137mph crash and fireball at Bahrain 2020?",
     "options": [
-      "romain grosjean",
-      "pierre gasly",
-      "lance stroll",
-      "carlos sainz"
+      "Romain Grosjean",
+      "Pierre Gasly",
+      "Lance Stroll",
+      "Carlos Sainz"
     ],
     "answer": 0,
-    "fact": "grosjean's haas split the barrier and burst into flames, but the halo and his own escape saved his life.",
+    "fact": "Grosjean's Haas split the barrier and burst into flames, but the Halo and his own escape saved his life.",
     "event": "iconic moment"
   },
   {
-    "prompt": "if it starts raining mid-race, who makes the call to switch to wet tyres?",
+    "prompt": "If it starts raining mid-race, who makes the call to switch to wet tyres?",
     "options": [
-      "the driver and their team",
-      "the fia race director",
-      "the safety car driver",
-      "the tyre supplier pirelli"
+      "The driver and their team",
+      "The FIA race director",
+      "The safety car driver",
+      "The tyre supplier Pirelli"
     ],
     "answer": 0,
-    "fact": "tyre strategy including weather calls is entirely the team's decision — getting the timing right can make or break a race.",
+    "fact": "Tyre strategy including weather calls is entirely the team's decision — getting the timing right can make or break a race.",
     "event": "strategy call"
   },
   {
-    "prompt": "what does 'box box box' mean on f1 team radio?",
+    "prompt": "What does 'Box box box' mean on F1 team radio?",
     "options": [
-      "come into the pits this lap",
-      "retire the car",
-      "penalty incoming",
-      "push for fastest lap"
+      "Come into the pits this lap",
+      "Retire the car",
+      "Penalty incoming",
+      "Push for fastest lap"
     ],
     "answer": 0,
-    "fact": "'box' comes from the german word for pit stop area and is repeated three times for clarity over radio.",
+    "fact": "'Box' comes from the German word for pit stop area and is repeated three times for clarity over radio.",
     "event": "radio call"
   },
   {
-    "prompt": "which driver held the record for most race wins before hamilton broke it?",
+    "prompt": "Which driver held the record for most race wins before Hamilton broke it?",
     "options": [
-      "michael schumacher",
-      "ayrton senna",
-      "alain prost",
-      "sebastian vettel"
+      "Michael Schumacher",
+      "Ayrton Senna",
+      "Alain Prost",
+      "Sebastian Vettel"
     ],
     "answer": 0,
-    "fact": "schumacher's record of 91 wins stood for nearly 15 years before hamilton surpassed it in 2020.",
+    "fact": "Schumacher's record of 91 wins stood for nearly 15 years before Hamilton surpassed it in 2020.",
     "event": "record book"
   },
   {
-    "prompt": "which corner at spa-francorchamps is one of the most famous in all of motorsport?",
+    "prompt": "Which corner at Spa-Francorchamps is one of the most famous in all of motorsport?",
     "options": [
-      "eau rouge / raidillon",
-      "la source",
-      "bus stop chicane",
-      "pouhon"
+      "Eau Rouge / Raidillon",
+      "La Source",
+      "Bus Stop chicane",
+      "Pouhon"
     ],
     "answer": 0,
-    "fact": "the high-speed uphill left-right-left through eau rouge and raidillon is a legendary test of commitment.",
+    "fact": "The high-speed uphill left-right-left through Eau Rouge and Raidillon is a legendary test of commitment.",
     "event": "track lore"
   },
   {
-    "prompt": "which team did fernando alonso return to in 2021 after two years away from f1?",
+    "prompt": "Which team did Fernando Alonso return to in 2021 after two years away from F1?",
     "options": [
-      "alpine",
-      "ferrari",
-      "mclaren",
-      "aston martin"
+      "Alpine",
+      "Ferrari",
+      "McLaren",
+      "Aston Martin"
     ],
     "answer": 0,
-    "fact": "alonso returned to the renamed alpine team (formerly renault) in 2021, continuing his remarkable f1 longevity.",
+    "fact": "Alonso returned to the renamed Alpine team (formerly Renault) in 2021, continuing his remarkable F1 longevity.",
     "event": "driver move"
   },
   {
-    "prompt": "what is 'the undercut' referring to when commentators say 'they've pulled off the undercut'?",
+    "prompt": "What is 'the undercut' referring to when commentators say 'they've pulled off the undercut'?",
     "options": [
-      "overtaking by pitting earlier and using fresh tyre pace",
-      "diving up the inside at a chicane",
-      "blocking a car on a straight",
-      "running wide to gain an advantage"
+      "Overtaking by pitting earlier and using fresh tyre pace",
+      "Diving up the inside at a chicane",
+      "Blocking a car on a straight",
+      "Running wide to gain an advantage"
     ],
     "answer": 0,
-    "fact": "a successful undercut means your out-lap on fresh tyres was fast enough to jump ahead of someone who stayed out.",
+    "fact": "A successful undercut means your out-lap on fresh tyres was fast enough to jump ahead of someone who stayed out.",
     "event": "strategy call"
   },
   {
-    "prompt": "which f1 track features a tunnel that drivers blast through at over 150mph?",
+    "prompt": "Which F1 track features a tunnel that drivers blast through at over 150mph?",
     "options": [
-      "monaco",
-      "singapore",
-      "baku",
-      "jeddah"
+      "Monaco",
+      "Singapore",
+      "Baku",
+      "Jeddah"
     ],
     "answer": 0,
-    "fact": "the famous monaco tunnel creates a sudden light-to-dark-to-light transition at extreme speed, one of f1's most unique challenges.",
+    "fact": "The famous Monaco tunnel creates a sudden light-to-dark-to-light transition at extreme speed, one of F1's most unique challenges.",
     "event": "track lore"
   },
   {
-    "prompt": "what nickname did daniel ricciardo earn for his celebrations on the podium?",
+    "prompt": "What nickname did Daniel Ricciardo earn for his celebrations on the podium?",
     "options": [
-      "the honey badger",
-      "the shoey king",
-      "the smiling assassin",
-      "danny ric"
+      "The Honey Badger",
+      "The Shoey King",
+      "The Smiling Assassin",
+      "Danny Ric"
     ],
     "answer": 0,
-    "fact": "ricciardo adopted the honey badger nickname early in his career, known for his fearless overtaking and trademark grin.",
+    "fact": "Ricciardo adopted the Honey Badger nickname early in his career, known for his fearless overtaking and trademark grin.",
     "event": "driver profile"
   },
   {
-    "prompt": "what does ers stand for in a modern f1 power unit?",
+    "prompt": "What does ERS stand for in a modern F1 power unit?",
     "options": [
-      "energy recovery system",
-      "electronic race stabilizer",
-      "engine rev sync",
-      "exhaust recirculation setup"
+      "Energy recovery system",
+      "Electronic race stabilizer",
+      "Engine rev sync",
+      "Exhaust recirculation setup"
     ],
     "answer": 0,
-    "fact": "ers harvests energy from braking and exhaust heat, providing a significant power boost to the hybrid power unit.",
+    "fact": "ERS harvests energy from braking and exhaust heat, providing a significant power boost to the hybrid power unit.",
     "event": "tech specs"
   },
   {
-    "prompt": "which legendary commentator was known for the catchphrase 'and it's go go go!'?",
+    "prompt": "Which legendary commentator was known for the catchphrase 'And it's go go go!'?",
     "options": [
-      "murray walker",
-      "martin brundle",
-      "david croft",
-      "james hunt"
+      "Murray Walker",
+      "Martin Brundle",
+      "David Croft",
+      "James Hunt"
     ],
     "answer": 0,
-    "fact": "murray walker's breathless, excitable commentary defined f1 broadcasting for decades.",
+    "fact": "Murray Walker's breathless, excitable commentary defined F1 broadcasting for decades.",
     "event": "f1 culture"
   },
   {
-    "prompt": "what happened when mclaren's pit crew released the car with a wheel gun issue at bahrain 2021?",
+    "prompt": "What happened when McLaren's pit crew released the car with a wheel gun issue at Bahrain 2021?",
     "options": [
-      "the car was released with a loose wheel",
-      "nothing unusual",
-      "the mechanic was dragged along",
-      "the pit stop took over 40 seconds"
+      "The car was released with a loose wheel",
+      "Nothing unusual",
+      "The mechanic was dragged along",
+      "The pit stop took over 40 seconds"
     ],
     "answer": 0,
-    "fact": "unsafe releases remain one of the most dangerous pit stop failures and carry heavy penalties.",
+    "fact": "Unsafe releases remain one of the most dangerous pit stop failures and carry heavy penalties.",
     "event": "pit drama"
   },
   {
-    "prompt": "which driver is known for the radio message 'honestly, what are we doing here, racing or ping pong?'?",
+    "prompt": "Which driver is known for the radio message 'Honestly, what are we doing here, racing or ping pong?'?",
     "options": [
-      "fernando alonso",
-      "sebastian vettel",
-      "kimi raikkonen",
-      "lewis hamilton"
+      "Fernando Alonso",
+      "Sebastian Vettel",
+      "Kimi Raikkonen",
+      "Lewis Hamilton"
     ],
     "answer": 0,
-    "fact": "alonso's frustrated radios became legendary during his struggles at mclaren-honda.",
+    "fact": "Alonso's frustrated radios became legendary during his struggles at McLaren-Honda.",
     "event": "radio call"
   },
   {
-    "prompt": "what does a driver mean when they report 'understeer' to their engineer?",
+    "prompt": "What does a driver mean when they report 'understeer' to their engineer?",
     "options": [
-      "the front doesn't turn enough into the corner",
-      "the car turns more than expected",
-      "the rear slides out",
-      "the brakes are locking up"
+      "The front doesn't turn enough into the corner",
+      "The car turns more than expected",
+      "The rear slides out",
+      "The brakes are locking up"
     ],
     "answer": 0,
-    "fact": "understeer means the car pushes wide — the front tyres lose grip before the rears.",
+    "fact": "Understeer means the car pushes wide — the front tyres lose grip before the rears.",
     "event": "driving feel"
   },
   {
-    "prompt": "what is 'dirty air' and why do drivers hate following closely in it?",
+    "prompt": "What is 'dirty air' and why do drivers hate following closely in it?",
     "options": [
-      "turbulence that reduces the following car's downforce",
-      "exhaust fumes that smell bad",
-      "oil spray from the car ahead",
-      "brake dust clouding visibility"
+      "Turbulence that reduces the following car's downforce",
+      "Exhaust fumes that smell bad",
+      "Oil spray from the car ahead",
+      "Brake dust clouding visibility"
     ],
     "answer": 0,
-    "fact": "dirty air causes the following car to lose grip in corners, which is why the 2022 rules aimed to reduce this effect.",
+    "fact": "Dirty air causes the following car to lose grip in corners, which is why the 2022 rules aimed to reduce this effect.",
     "event": "aero battle"
   },
   {
-    "prompt": "what is a 'shoey' that ricciardo made famous on f1 podiums?",
+    "prompt": "What is a 'shoey' that Ricciardo made famous on F1 podiums?",
     "options": [
-      "drinking champagne from a racing boot",
-      "a victory dance",
-      "throwing shoes into the crowd",
-      "signing a shoe for a fan"
+      "Drinking champagne from a racing boot",
+      "A victory dance",
+      "Throwing shoes into the crowd",
+      "Signing a shoe for a fan"
     ],
     "answer": 0,
-    "fact": "ricciardo's shoey became one of the most iconic podium traditions, with even other drivers and celebrities joining in.",
+    "fact": "Ricciardo's shoey became one of the most iconic podium traditions, with even other drivers and celebrities joining in.",
     "event": "f1 culture"
   },
   {
-    "prompt": "what does 'graining' look like on an f1 tyre?",
+    "prompt": "What does 'graining' look like on an F1 tyre?",
     "options": [
-      "small rubber pellets rolling across the surface",
-      "visible cracks in the sidewall",
-      "the tyre turning white",
-      "smoke pouring from the contact patch"
+      "Small rubber pellets rolling across the surface",
+      "Visible cracks in the sidewall",
+      "The tyre turning white",
+      "Smoke pouring from the contact patch"
     ],
     "answer": 0,
-    "fact": "graining occurs when the tyre surface tears into tiny rolls of rubber, usually when the tyre is too cold or sliding too much.",
+    "fact": "Graining occurs when the tyre surface tears into tiny rolls of rubber, usually when the tyre is too cold or sliding too much.",
     "event": "tyre management"
   },
   {
-    "prompt": "what is the 'parc ferme' period in an f1 weekend?",
+    "prompt": "What is the 'parc ferme' period in an F1 weekend?",
     "options": [
-      "a lockdown on car changes between qualifying and race",
-      "the cooldown window after the race ends",
-      "the mandatory rest period for drivers overnight",
-      "the pre-race media obligations window"
+      "A lockdown on car changes between qualifying and race",
+      "The cooldown window after the race ends",
+      "The mandatory rest period for drivers overnight",
+      "The pre-race media obligations window"
     ],
     "answer": 0,
-    "fact": "parc ferme prevents teams from making major setup changes once qualifying ends, ensuring the car you qualified is the car you race.",
+    "fact": "Parc ferme prevents teams from making major setup changes once qualifying ends, ensuring the car you qualified is the car you race.",
     "event": "regulation check"
   },
   {
-    "prompt": "what happens if a driver exceeds track limits three times during a race?",
+    "prompt": "What happens if a driver exceeds track limits three times during a race?",
     "options": [
-      "they receive a black and white flag warning",
-      "nothing until a fourth offense",
-      "immediate 5-second penalty",
-      "they must give back any positions gained"
+      "They receive a black and white flag warning",
+      "Nothing until a fourth offense",
+      "Immediate 5-second penalty",
+      "They must give back any positions gained"
     ],
     "answer": 0,
-    "fact": "the black and white flag serves as an official warning — further violations lead to time penalties.",
+    "fact": "The black and white flag serves as an official warning — further violations lead to time penalties.",
     "event": "regulation check"
   },
   {
-    "prompt": "which driver was nicknamed 'the iceman'?",
+    "prompt": "Which driver was nicknamed 'The Iceman'?",
     "options": [
-      "kimi raikkonen",
-      "mika hakkinen",
-      "nico rosberg",
-      "valtteri bottas"
+      "Kimi Raikkonen",
+      "Mika Hakkinen",
+      "Nico Rosberg",
+      "Valtteri Bottas"
     ],
     "answer": 0,
-    "fact": "raikkonen earned the nickname for his famously emotionless demeanor and ice-cold composure under pressure.",
+    "fact": "Raikkonen earned the nickname for his famously emotionless demeanor and ice-cold composure under pressure.",
     "event": "driver profile"
   },
   {
-    "prompt": "what was special about the 2021 spa-francorchamps grand prix?",
+    "prompt": "What was special about the 2021 Spa-Francorchamps Grand Prix?",
     "options": [
-      "it lasted only a few laps behind the safety car due to rain",
-      "it was the longest race in f1 history",
-      "three drivers were disqualified",
-      "it was canceled entirely"
+      "It lasted only a few laps behind the safety car due to rain",
+      "It was the longest race in F1 history",
+      "Three drivers were disqualified",
+      "It was canceled entirely"
     ],
     "answer": 0,
-    "fact": "the 2021 belgian gp was widely criticized as a farce — half points were awarded for what was essentially no racing.",
+    "fact": "The 2021 Belgian GP was widely criticized as a farce — half points were awarded for what was essentially no racing.",
     "event": "race drama"
   },
   {
-    "prompt": "what does 'oversteer' feel like to a driver?",
+    "prompt": "What does 'oversteer' feel like to a driver?",
     "options": [
-      "the rear steps out and the car wants to spin",
-      "the front washes wide",
-      "the brakes lock under pressure",
-      "the steering goes heavy"
+      "The rear steps out and the car wants to spin",
+      "The front washes wide",
+      "The brakes lock under pressure",
+      "The steering goes heavy"
     ],
     "answer": 0,
-    "fact": "oversteer happens when the rear tyres lose grip before the fronts, rotating the car more than the driver intended.",
+    "fact": "Oversteer happens when the rear tyres lose grip before the fronts, rotating the car more than the driver intended.",
     "event": "driving feel"
   },
   {
-    "prompt": "which team has won the most constructors' championships in f1 history?",
+    "prompt": "Which team has won the most Constructors' Championships in F1 history?",
     "options": [
-      "ferrari",
-      "mclaren",
-      "mercedes",
-      "red bull"
+      "Ferrari",
+      "McLaren",
+      "Mercedes",
+      "Red Bull"
     ],
     "answer": 0,
-    "fact": "ferrari holds the record for the most constructors' titles, cementing their status as f1's most storied team.",
+    "fact": "Ferrari holds the record for the most constructors' titles, cementing their status as F1's most storied team.",
     "event": "record book"
   },
   {
-    "prompt": "who is the youngest ever f1 race winner?",
+    "prompt": "Who is the youngest ever F1 race winner?",
     "options": [
-      "max verstappen",
-      "sebastian vettel",
-      "charles leclerc",
-      "lando norris"
+      "Max Verstappen",
+      "Sebastian Vettel",
+      "Charles Leclerc",
+      "Lando Norris"
     ],
     "answer": 0,
-    "fact": "verstappen won the 2016 spanish gp aged 18 years and 228 days on his debut race for red bull.",
+    "fact": "Verstappen won the 2016 Spanish GP aged 18 years and 228 days on his debut race for Red Bull.",
     "event": "record book"
   },
   {
-    "prompt": "what does a driver mean when they say the car feels 'on rails'?",
+    "prompt": "What does a driver mean when they say the car feels 'on rails'?",
     "options": [
-      "it has perfect grip and balance",
-      "it's stuck behind the safety car",
-      "the steering is locked",
-      "it's running out of fuel"
+      "It has perfect grip and balance",
+      "It's stuck behind the safety car",
+      "The steering is locked",
+      "It's running out of fuel"
     ],
     "answer": 0,
-    "fact": "when a car feels 'on rails', the driver has total confidence in the grip level through every corner.",
+    "fact": "When a car feels 'on rails', the driver has total confidence in the grip level through every corner.",
     "event": "driving feel"
   },
   {
-    "prompt": "why do f1 drivers weave side to side on the formation lap?",
+    "prompt": "Why do F1 drivers weave side to side on the formation lap?",
     "options": [
-      "to warm up their tyres",
-      "to test their steering",
-      "to wave to fans",
-      "to check mirrors"
+      "To warm up their tyres",
+      "To test their steering",
+      "To wave to fans",
+      "To check mirrors"
     ],
     "answer": 0,
-    "fact": "weaving generates lateral friction that heats the tyre surface, crucial for grip at the standing start.",
+    "fact": "Weaving generates lateral friction that heats the tyre surface, crucial for grip at the standing start.",
     "event": "race craft"
   },
   {
-    "prompt": "what is a 'power unit' in modern f1?",
+    "prompt": "What is a 'power unit' in modern F1?",
     "options": [
-      "the complete hybrid system including engine, turbo, and electrical motors",
-      "just the engine",
-      "the gearbox assembly",
-      "the battery pack only"
+      "The complete hybrid system including engine, turbo, and electrical motors",
+      "Just the engine",
+      "The gearbox assembly",
+      "The battery pack only"
     ],
     "answer": 0,
-    "fact": "a modern f1 power unit combines a v6 turbo engine with mgu-k and mgu-h energy recovery systems producing over 1000hp.",
+    "fact": "A modern F1 power unit combines a V6 turbo engine with MGU-K and MGU-H energy recovery systems producing over 1000hp.",
     "event": "tech specs"
   },
   {
-    "prompt": "what did lewis hamilton do immediately after crossing the line to win his 7th title in turkey 2020?",
+    "prompt": "What did Lewis Hamilton do immediately after crossing the line to win his 7th title in Turkey 2020?",
     "options": [
-      "screamed on the radio and cried in the car",
-      "did donuts",
-      "jumped out of the car",
-      "sprayed his team with champagne"
+      "Screamed on the radio and cried in the car",
+      "Did donuts",
+      "Jumped out of the car",
+      "Sprayed his team with champagne"
     ],
     "answer": 0,
-    "fact": "hamilton broke down in tears on the radio after equalling schumacher's record of 7 world titles in a dominant wet-weather drive.",
+    "fact": "Hamilton broke down in tears on the radio after equalling Schumacher's record of 7 world titles in a dominant wet-weather drive.",
     "event": "iconic moment"
   },
   {
-    "prompt": "what is the 'drs train' that commentators complain about?",
+    "prompt": "What is the 'DRS train' that commentators complain about?",
     "options": [
-      "a line of cars all within one second, each canceling out the other's drs advantage",
-      "a freight train carrying spare drs parts",
-      "when drs fails for every car simultaneously",
-      "cars drafting in qualifying"
+      "A line of cars all within one second, each canceling out the other's DRS advantage",
+      "A freight train carrying spare DRS parts",
+      "When DRS fails for every car simultaneously",
+      "Cars drafting in qualifying"
     ],
     "answer": 0,
-    "fact": "in a drs train nobody can overtake because the car ahead also has drs from the car in front of them.",
+    "fact": "In a DRS train nobody can overtake because the car ahead also has DRS from the car in front of them.",
     "event": "race craft"
   },
   {
-    "prompt": "what is 'sandbagging' in the context of f1 practice sessions?",
+    "prompt": "What is 'sandbagging' in the context of F1 practice sessions?",
     "options": [
-      "deliberately hiding true pace to mislead rivals",
-      "running with extra weight for tyre testing",
-      "a penalty for blocking in the pit lane",
-      "using sandbags for ballast"
+      "Deliberately hiding true pace to mislead rivals",
+      "Running with extra weight for tyre testing",
+      "A penalty for blocking in the pit lane",
+      "Using sandbags for ballast"
     ],
     "answer": 0,
-    "fact": "teams often sandbag in practice to avoid showing their real performance until qualifying or the race.",
+    "fact": "Teams often sandbag in practice to avoid showing their real performance until qualifying or the race.",
     "event": "paddock mind games"
   },
   {
-    "prompt": "what famously happens to the championship leader's car number board?",
+    "prompt": "What famously happens to the championship leader's car number board?",
     "options": [
-      "it gets a number 1 option for the next season",
-      "it turns gold",
-      "it glows on the halo",
-      "nothing special"
+      "It gets a number 1 option for the next season",
+      "It turns gold",
+      "It glows on the Halo",
+      "Nothing special"
     ],
     "answer": 0,
-    "fact": "the reigning world champion can choose to race with number 1 instead of their permanent number — verstappen has taken it, hamilton never did.",
+    "fact": "The reigning world champion can choose to race with number 1 instead of their permanent number — Verstappen has taken it, Hamilton never did.",
     "event": "f1 culture"
   },
   {
-    "prompt": "what is a safety car restart often called by fans?",
+    "prompt": "What is a safety car restart often called by fans?",
     "options": [
-      "a rolling restart",
-      "a standing start",
-      "a red flag restart",
-      "a formation restart"
+      "A rolling restart",
+      "A standing start",
+      "A red flag restart",
+      "A formation restart"
     ],
     "answer": 0,
-    "fact": "after a safety car period, the leader controls the restart pace and the field goes green at racing speed — no standing start.",
+    "fact": "After a safety car period, the leader controls the restart pace and the field goes green at racing speed — no standing start.",
     "event": "race format"
   },
   {
-    "prompt": "what does 'flat out' mean in f1 driver language?",
+    "prompt": "What does 'flat out' mean in F1 driver language?",
     "options": [
-      "driving at maximum speed without lifting",
-      "the tyres are completely worn",
-      "the car is bottoming out on the track",
-      "running on fumes"
+      "Driving at maximum speed without lifting",
+      "The tyres are completely worn",
+      "The car is bottoming out on the track",
+      "Running on fumes"
     ],
     "answer": 0,
-    "fact": "taking a corner 'flat out' means the driver keeps full throttle through it — a sign of extreme downforce and bravery.",
+    "fact": "Taking a corner 'flat out' means the driver keeps full throttle through it — a sign of extreme downforce and bravery.",
     "event": "driving feel"
   },
   {
-    "prompt": "what does it mean when a driver is told 'you are on the delta' by their engineer?",
+    "prompt": "What does it mean when a driver is told 'You are on the delta' by their engineer?",
     "options": [
-      "they're matching the required target lap time",
-      "they need to speed up immediately",
-      "they've been given a penalty",
-      "they're running low on fuel"
+      "They're matching the required target lap time",
+      "They need to speed up immediately",
+      "They've been given a penalty",
+      "They're running low on fuel"
     ],
     "answer": 0,
-    "fact": "the delta is a reference pace — staying 'on the delta' means the driver is hitting their time targets, crucial under safety car or vsc.",
+    "fact": "The delta is a reference pace — staying 'on the delta' means the driver is hitting their time targets, crucial under safety car or VSC.",
     "event": "radio call"
   },
   {
-    "prompt": "why do teams put tyre blankets on the wheels before a pit stop?",
+    "prompt": "Why do teams put tyre blankets on the wheels before a pit stop?",
     "options": [
-      "to keep the tyres at optimal temperature",
-      "to hide the tyre compound from rivals",
-      "to protect them from debris",
-      "to prevent sun damage to the rubber"
+      "To keep the tyres at optimal temperature",
+      "To hide the tyre compound from rivals",
+      "To protect them from debris",
+      "To prevent sun damage to the rubber"
     ],
     "answer": 0,
-    "fact": "heated tyre blankets keep rubber at around 70-80°c so drivers have immediate grip when they rejoin the track.",
+    "fact": "Heated tyre blankets keep rubber at around 70-80°C so drivers have immediate grip when they rejoin the track.",
     "event": "pit strategy"
   },
   {
-    "prompt": "what are the 'marbles' that drivers try to avoid on track?",
+    "prompt": "What are the 'marbles' that drivers try to avoid on track?",
     "options": [
-      "small balls of rubber shed from tyres that litter the track surface",
-      "loose gravel from the run-off",
-      "rain droplets on the racing line",
-      "debris from broken front wings"
+      "Small balls of rubber shed from tyres that litter the track surface",
+      "Loose gravel from the run-off",
+      "Rain droplets on the racing line",
+      "Debris from broken front wings"
     ],
     "answer": 0,
-    "fact": "marbles collect off the racing line and are extremely slippery — running over them can cause a car to snap sideways.",
+    "fact": "Marbles collect off the racing line and are extremely slippery — running over them can cause a car to snap sideways.",
     "event": "tyre management"
   },
   {
-    "prompt": "what does 'lights out and away we go' signal?",
+    "prompt": "What does 'Lights out and away we go' signal?",
     "options": [
-      "the race start",
-      "the end of a safety car period",
-      "qualifying has begun",
-      "pit lane is open"
+      "The race start",
+      "The end of a safety car period",
+      "Qualifying has begun",
+      "Pit lane is open"
     ],
     "answer": 0,
-    "fact": "five red lights illuminate one by one, then all go out simultaneously — that's the signal to race.",
+    "fact": "Five red lights illuminate one by one, then all go out simultaneously — that's the signal to race.",
     "event": "race format"
   },
   {
-    "prompt": "why is overtaking considered nearly impossible at monaco?",
+    "prompt": "Why is overtaking considered nearly impossible at Monaco?",
     "options": [
-      "the street circuit is too narrow for side-by-side racing",
-      "drs is banned there",
-      "the cars run too much downforce",
-      "there's no straight long enough"
+      "The street circuit is too narrow for side-by-side racing",
+      "DRS is banned there",
+      "The cars run too much downforce",
+      "There's no straight long enough"
     ],
     "answer": 0,
-    "fact": "monaco's tight barriers and narrow streets mean qualifying position is often more important than race pace.",
+    "fact": "Monaco's tight barriers and narrow streets mean qualifying position is often more important than race pace.",
     "event": "track lore"
   },
   {
-    "prompt": "what is the 'racing line' and why do drivers follow it?",
+    "prompt": "What is the 'racing line' and why do drivers follow it?",
     "options": [
-      "the fastest path through a corner, using the full width of the track",
-      "the white line marking the edge of the track",
-      "the pit lane entry line",
-      "a painted guide on the asphalt"
+      "The fastest path through a corner, using the full width of the track",
+      "The white line marking the edge of the track",
+      "The pit lane entry line",
+      "A painted guide on the asphalt"
     ],
     "answer": 0,
-    "fact": "the racing line maximizes corner speed by taking the widest arc possible, which is why the track surface is most rubbered-in on that line.",
+    "fact": "The racing line maximizes corner speed by taking the widest arc possible, which is why the track surface is most rubbered-in on that line.",
     "event": "driving feel"
   }
 ];
