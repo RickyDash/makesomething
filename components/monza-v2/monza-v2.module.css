@@ -200,6 +200,9 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 
 .themeToggle {
   position: relative !important;
+  /* HeroUI's base classes clip the button; the hit-area extension below
+     must be allowed to paint (and hit-test) outside the box. */
+  overflow: visible !important;
   display: flex !important;
   width: auto !important;
   min-width: 0 !important;
@@ -219,12 +222,13 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   background: color-mix(in srgb, var(--ink) 9%, transparent) !important;
 }
 
-/* The toggle draws at 34px tall; extend its hit area to 44px without
-   changing the visual (design-qa-ios.md IOS-11). */
+/* The toggle draws at 34px tall (30px padding box + 2px borders); extend
+   its hit area to 44px without changing the visual (design-qa-ios.md
+   IOS-11). inset resolves against the padding box, hence 7px. */
 .themeToggle::after {
   content: "";
   position: absolute;
-  inset: -5px 0;
+  inset: -7px 0;
 }
 
 .themeSegment {
@@ -2149,7 +2153,9 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   display: none;
 }
 
-@media (orientation: landscape) and (max-height: 500px) {
+/* Touch devices only: a short desktop window is landscape too, and has no
+   phone to turn. */
+@media (orientation: landscape) and (max-height: 500px) and (hover: none) {
   .rotateNotice {
     position: absolute;
     z-index: 70;
