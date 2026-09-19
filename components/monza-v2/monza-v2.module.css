@@ -657,6 +657,17 @@
   color: #fff;
 }
 
+/* Notte flips --ink to near-white, so the gold pit/formation banner was
+   white-on-yellow at 1.3:1 (design-qa-ios.md IOS-24). */
+.root[data-mode="notte"] .banner_pit {
+  border-color: var(--page);
+  color: var(--page);
+}
+
+.root[data-mode="notte"] .banner_pit span {
+  opacity: 1;
+}
+
 .lightsLayer {
   position: absolute;
   z-index: 8;
@@ -783,10 +794,15 @@
 }
 
 .root[data-mode="notte"] .classificationChip {
-  height: 36px;
-  margin-top: 2px;
+  height: 40px;
   border: 2px solid var(--ink);
   background: var(--page);
+}
+
+/* Two MicroText line boxes plus the swatch need 35px; keep them inside
+   the 36px box the border leaves (design-qa-ios.md IOS-36). */
+.root[data-mode="notte"] .classificationChipInner {
+  gap: 0;
 }
 
 .classificationChipInner {
@@ -851,6 +867,10 @@
   align-items: center;
   gap: 1px;
   color: var(--dim);
+}
+
+.root[data-mode="notte"] .chipPosition {
+  color: var(--label);
 }
 
 .playerChip .chipPosition {
@@ -1250,6 +1270,10 @@
   background: var(--red);
   color: #f3edde;
   padding: 5px 9px;
+}
+
+.root[data-mode="notte"] .pitChip {
+  color: var(--page);
 }
 
 .pitClock {
