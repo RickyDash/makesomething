@@ -38,7 +38,12 @@ import {
   type RaceSimGameSnapshot,
   type RaceSimPhase,
 } from "./race-sim/raceSim";
-import { loadUiPreferences, saveUiPreferences } from "./ui-preferences";
+import {
+  loadUiPreferences,
+  readStorage,
+  saveUiPreferences,
+  writeStorage,
+} from "./ui-preferences";
 import { MonzaV2Skin } from "../components/monza-v2";
 
 type ReactionPhase = "idle" | "countdown" | "go" | "early" | "success";
@@ -263,16 +268,19 @@ const chequeredMarkerFillStyle = {
 
 const getNowMs = () => performance.now();
 
+const BEST_REACTION_KEY = "f1-best-reaction-ms";
+const BEST_SCORE_KEY = "f1-best-score";
+
 const getStoredBestReaction = () => {
-  if (typeof window === "undefined") return null;
-  const stored = window.localStorage.getItem("f1-best-reaction-ms");
-  return stored ? Number(stored) : null;
+  const stored = readStorage(BEST_REACTION_KEY);
+  const value = stored ? Number(stored) : NaN;
+  return Number.isFinite(value) ? value : null;
 };
 
 const getStoredBestScore = () => {
-  if (typeof window === "undefined") return 0;
-  const stored = window.localStorage.getItem("f1-best-score");
-  return stored ? Number(stored) : 0;
+  const stored = readStorage(BEST_SCORE_KEY);
+  const value = stored ? Number(stored) : NaN;
+  return Number.isFinite(value) ? value : 0;
 };
 
 const getStageTitle = (opts: {
@@ -824,14 +832,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (bestReactionMs === null) return;
-    window.localStorage.setItem("f1-best-reaction-ms", String(bestReactionMs));
+    writeStorage(BEST_REACTION_KEY, String(bestReactionMs));
   }, [bestReactionMs]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("f1-best-score", String(bestScore));
+    writeStorage(BEST_SCORE_KEY, String(bestScore));
   }, [bestScore]);
 
   useEffect(() => {
