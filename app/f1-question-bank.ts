@@ -1281,6 +1281,9 @@ const questionBank: Question[] = [
   }
 ];
 
+/** The full, unshuffled bank (read-only); tests iterate it deterministically. */
+export const allQuestions: readonly Question[] = questionBank;
+
 export const LAPS_PER_WEEKEND = 6;
 
 const getRandomIndex = (max: number) => Math.floor(Math.random() * max);

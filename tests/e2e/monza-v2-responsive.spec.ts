@@ -182,15 +182,17 @@ test("long verdicts scroll inside the race panel without colliding with the foot
     node.scrollTop = 0;
   });
   if (testInfo.project.use.hasTouch) {
-    // Mobile WebKit has no mouse wheel; scroll the panel directly and keep
-    // checking that the document itself never moves.
+    // Mobile WebKit has no mouse wheel and Playwright has no touch-drag API.
+    // The document lock is asserted by the per-viewport sweep above; this
+    // branch only checks that the panel itself scrolls.
     await scroller.evaluate((node) => node.scrollBy(0, 180));
+    await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
   } else {
     await scroller.hover();
     await page.mouse.wheel(0, 180);
+    await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   }
-  await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
-  expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await page
     .getByRole("button", { name: /switch to notte dark mode/i })

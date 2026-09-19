@@ -1,16 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getRandomWeekendQuestions } from "../f1-question-bank";
+import { allQuestions } from "../f1-question-bank";
 
 // The bank is display-cased (V2 renders it verbatim; V1 lowercases at
 // render). These checks stop a new lowercase entry from reintroducing
 // "Nico rosberg" / "in f1" on the Monza skin (design-qa-ios.md IOS-23).
-const bank = Array.from({ length: 40 }, () => getRandomWeekendQuestions())
-  .flat()
-  .filter(
-    (question, index, all) =>
-      all.findIndex((other) => other.prompt === question.prompt) === index,
-  );
+const bank = allQuestions;
 
 const lowercaseProperNouns = [
   "monza",
@@ -45,8 +40,8 @@ const startsAsASentence = (value: string) => {
 };
 
 describe("question bank casing", () => {
-  it("covers a meaningful sample of the bank", () => {
-    expect(bank.length).toBeGreaterThan(60);
+  it("iterates the whole bank", () => {
+    expect(bank.length).toBeGreaterThan(100);
   });
 
   it("starts every prompt, option and fact with a capital", () => {

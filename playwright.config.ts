@@ -29,6 +29,7 @@ export default defineConfig({
         /monza-v2-preferences-and-marks\.spec\.ts/,
         /monza-v2-flow\.spec\.ts/,
         /launch-press-start\.spec\.ts/,
+        /ios-regressions\.spec\.ts/,
       ],
     },
   ],

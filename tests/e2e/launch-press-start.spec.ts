@@ -20,7 +20,8 @@ test.describe("V2 launch registers on pointer-down", () => {
   }) => {
     await page.goto("/");
     await skipFormationWarmup(page);
-    await expect(launchSurface(page)).toBeVisible();
+    // Precondition: the lights are still on when the press lands.
+    await expect(page.getByText(/tap anywhere at lights out/i)).toBeVisible();
 
     await pressDown(page);
     await expect(page.getByRole("heading", { name: "Jump start" })).toBeVisible();
@@ -36,10 +37,11 @@ test.describe("V2 launch registers on pointer-down", () => {
       timeout: 8_000,
     });
 
-    await pressDown(page);
     const reactionCard = v2Root(page).getByText("REACTION TIME", { exact: true });
+    await expect(reactionCard).toHaveCount(0);
+    await pressDown(page);
     await expect(reactionCard).toBeVisible();
-    await expect(page.getByText(/1 jump start/i)).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Jump start" })).toHaveCount(0);
     await page.mouse.up();
     await expect(reactionCard).toBeVisible();
   });
