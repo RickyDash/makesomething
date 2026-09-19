@@ -361,15 +361,19 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 
 .pitLaneLabel,
 .cornerLabels {
-  fill: var(--dim);
+  fill: var(--label);
   font-family: var(--mono);
-  font-size: 21px;
+  font-size: 24px;
   letter-spacing: 2.5px;
+  paint-order: stroke;
+  stroke: var(--page);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 
 .pitLaneLabel {
-  fill: color-mix(in srgb, var(--dim) 75%, transparent);
-  font-size: 17px;
+  fill: color-mix(in srgb, var(--label) 80%, transparent);
+  font-size: 20px;
   letter-spacing: 3px;
 }
 
@@ -1000,7 +1004,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   font-weight: 900;
   line-height: 1.2;
   text-transform: var(--display-transform);
-  text-wrap: pretty;
+  text-wrap: balance;
 }
 
 .root[data-mode="notte"] .quizPanel h2,
@@ -1138,7 +1142,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   flex: none;
   margin: 6px 38px 0 0;
   overflow: hidden;
-  color: var(--faint);
+  color: var(--label);
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.02em;
@@ -1583,10 +1587,11 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   margin: 0;
   padding-top: 8px;
   border-top: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
-  color: var(--dim);
+  color: var(--label);
   font-family: var(--mono);
-  font-size: 7.5px;
+  font-size: 9px;
   letter-spacing: 0.14em;
+  text-wrap: balance;
 }
 
 .mapModal {
@@ -1838,9 +1843,9 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 
 .finishActions > p {
   margin: 0;
-  color: var(--faint);
+  color: var(--label);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.08em;
 }
 
@@ -1988,7 +1993,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 
   .introFoot {
     padding-top: 6px;
-    font-size: 7px;
+    font-size: 8.5px;
   }
 
   .content,
@@ -2095,7 +2100,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 
   .introFoot {
     padding-top: 4px;
-    font-size: 6.25px;
+    font-size: 8px;
   }
 
   .introCard .primaryButton {

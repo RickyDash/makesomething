@@ -1419,11 +1419,7 @@ function JumpCard({ onRetry }: { onRetry: MonzaV2SkinProps["onRetryStart"] }) {
     <div className={styles.mapModal}>
       <div className={cx(styles.compactCard, styles.jumpCard)} role="alert">
         <h2>Jump start</h2>
-        <p>
-          <MicroText scale={0.5625} origin="center">
-            LIGHTS WERE STILL ON — BACK TO THE GRID
-          </MicroText>
-        </p>
+        <p>LIGHTS WERE STILL ON — BACK TO THE GRID</p>
         <Button radius="none" disableRipple onPress={onRetry} className={styles.dangerButton}>
           RETRY THE START
         </Button>
