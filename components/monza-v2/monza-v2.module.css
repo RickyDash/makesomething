@@ -726,7 +726,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 .startHint {
   padding: 6px 10px;
   border: var(--border);
-  background: color-mix(in srgb, var(--page) 92%, transparent);
+  background: var(--page);
   color: var(--ink);
   font-family: var(--mono);
   font-size: 9px;
@@ -750,7 +750,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   padding: 10px 16px !important;
   border: var(--border) !important;
   border-radius: 0 !important;
-  background: color-mix(in srgb, var(--page) 92%, transparent) !important;
+  background: var(--page) !important;
   color: var(--ink) !important;
   font-family: var(--mono) !important;
   font-size: 10.5px !important;
