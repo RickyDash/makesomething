@@ -1637,7 +1637,7 @@ export default function Home() {
         data-skin="v2"
         data-mode={v2Mode}
         data-phase={v2RacePhase}
-        className={`fixed inset-0 flex h-[100svh] w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${
+        className={`fixed inset-0 flex w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${
           v2Mode === "notte" ? "bg-[#0e0e0e]" : "bg-[#f3edde]"
         }`}
       >
