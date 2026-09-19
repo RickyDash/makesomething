@@ -41,6 +41,7 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
   test("both marks use the specified offsets, opacity, padding, fade, and lights rule", async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     const v2Mark = page.locator(
       'button[aria-label="Switch to the original V1 skin"]',
@@ -66,14 +67,55 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
       )
       .toEqual({
         opacity: "0.4",
-        right: "9px",
-        bottom: "5px",
-        paddingTop: "4px",
+        right: "4px",
+        bottom: "0px",
+        paddingTop: "0px",
         paddingRight: "6px",
-        paddingBottom: "4px",
-        paddingLeft: "6px",
+        paddingBottom: "2px",
+        paddingLeft: "0px",
         transitionDuration: "0.4s",
       });
+
+    // The mark lives inside the header with a 44px hit box that only
+    // overlaps the static position badge, never a pinned CTA.
+    const markBox = await v2Mark.boundingBox();
+    const headerBox = await v2Root(page).locator("header").first().boundingBox();
+    const toggleBox = await page
+      .getByRole("button", { name: /switch to notte dark mode/i })
+      .boundingBox();
+    expect(markBox).not.toBeNull();
+    expect(headerBox).not.toBeNull();
+    expect(toggleBox).not.toBeNull();
+    expect(markBox!.width).toBeGreaterThanOrEqual(44);
+    expect(markBox!.height).toBeGreaterThanOrEqual(44);
+    expect(markBox!.x).toBeGreaterThanOrEqual(headerBox!.x);
+    expect(markBox!.x + markBox!.width).toBeLessThanOrEqual(
+      headerBox!.x + headerBox!.width + 0.5,
+    );
+    expect(markBox!.y + markBox!.height).toBeLessThanOrEqual(
+      headerBox!.y + headerBox!.height + 0.5,
+    );
+    expect(markBox!.x).toBeGreaterThanOrEqual(toggleBox!.x + toggleBox!.width);
+    expect(toggleBox!.height).toBeGreaterThanOrEqual(34);
+
+    // Tapping the bottom-right corner of a pinned CTA must press the CTA.
+    await page.getByRole("button", { name: "START FORMATION LAP" }).click();
+    const warmup = page.getByRole("region", { name: "Formation warmup 1 of 3" });
+    await warmup
+      .getByRole("button", { name: "It locks in immediately", exact: true })
+      .click();
+    const next = warmup.getByRole("button", { name: "NEXT →", exact: true });
+    await expect(next).toBeVisible();
+    const nextBox = await next.boundingBox();
+    expect(nextBox).not.toBeNull();
+    await page.mouse.click(
+      nextBox!.x + nextBox!.width - 6,
+      nextBox!.y + nextBox!.height - 6,
+    );
+    await expect(
+      page.getByRole("region", { name: "Formation warmup 2 of 3" }),
+    ).toBeVisible();
+    await expect(page.locator('main[data-skin="v1"]')).toHaveCount(0);
 
     await switchToV1(page);
     const v1Mark = page.getByRole("button", {
