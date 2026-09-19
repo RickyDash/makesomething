@@ -452,7 +452,7 @@ const questionBank: Question[] = [
     "event": "title fight"
   },
   {
-    "prompt": "Which country hosts the Monza Grand Prix circuit?",
+    "prompt": "In which country is the Monza circuit?",
     "options": [
       "Italy",
       "Belgium",
@@ -956,7 +956,7 @@ const questionBank: Question[] = [
     "event": "pit drama"
   },
   {
-    "prompt": "Which driver is known for the radio message 'Honestly, what are we doing here, racing or ping pong?'?",
+    "prompt": "Which driver asked on the radio: ‘Honestly, what are we doing here, racing or ping pong?’",
     "options": [
       "Fernando Alonso",
       "Sebastian Vettel",
@@ -980,7 +980,7 @@ const questionBank: Question[] = [
     "event": "driving feel"
   },
   {
-    "prompt": "What is 'dirty air' and why do drivers hate following closely in it?",
+    "prompt": "What is ‘dirty air’?",
     "options": [
       "Turbulence that reduces the following car's downforce",
       "Exhaust fumes that smell bad",
@@ -988,7 +988,7 @@ const questionBank: Question[] = [
       "Brake dust clouding visibility"
     ],
     "answer": 0,
-    "fact": "Dirty air causes the following car to lose grip in corners, which is why the 2022 rules aimed to reduce this effect.",
+    "fact": "It is the turbulent wake off the car ahead. It strips downforce from the car behind, which is why drivers hate following closely and why the 2022 rules set out to reduce it.",
     "event": "aero battle"
   },
   {
