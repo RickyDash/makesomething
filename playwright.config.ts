@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 const remoteBaseURL = process.env.PLAYWRIGHT_BASE_URL;
 
@@ -12,6 +12,26 @@ export default defineConfig({
     baseURL: remoteBaseURL ?? "http://127.0.0.1:3005",
     trace: "on-first-retry",
   },
+  projects: [
+    {
+      name: "desktop-chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      // Real WebKit with a phone user agent, touch and the iPhone
+      // viewport: the class of bug the iOS simulator pass found
+      // (design-qa-ios.md) is invisible to Chromium viewport emulation.
+      // The performance spec drives CDP and stays Chromium-only.
+      name: "iphone-webkit",
+      use: { ...devices["iPhone 15"] },
+      testMatch: [
+        /monza-v2-responsive\.spec\.ts/,
+        /monza-v2-preferences-and-marks\.spec\.ts/,
+        /monza-v2-flow\.spec\.ts/,
+        /launch-press-start\.spec\.ts/,
+      ],
+    },
+  ],
   webServer: remoteBaseURL
     ? undefined
     : {

@@ -12,7 +12,9 @@ import {
 const viewports = [
   { width: 320, height: 568 },
   { width: 360, height: 800 },
+  { width: 375, height: 667 }, // iPhone SE 3
   { width: 390, height: 844 },
+  { width: 402, height: 874 }, // iPhone 17 Pro
   { width: 430, height: 932 },
 ] as const;
 
