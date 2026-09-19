@@ -840,6 +840,68 @@ export default function Home() {
     writeStorage(BEST_SCORE_KEY, String(bestScore));
   }, [bestScore]);
 
+  // Background handling. iOS suspends the page on Home/lock: pending
+  // setTimeouts fire back-to-back on resume and performance.now() keeps
+  // ticking, so a countdown that was hidden produced a bogus reaction time
+  // (persisted as the all-time best) and a hidden pit stop counted the
+  // absence. Abort a live start-drill on hide and re-arm it on return;
+  // shift the pit clock by the hidden interval (design-qa-ios.md IOS-04).
+  useEffect(() => {
+    let hiddenAt: number | null = null;
+    let drillInterrupted = false;
+    let rearmTimer: number | null = null;
+
+    const onHidden = () => {
+      if (hiddenAt !== null) return;
+      hiddenAt = getNowMs();
+      const current = flowStateRef.current;
+      const liveDrill =
+        current.stage === "formation" &&
+        current.formationMode === "drill" &&
+        (current.startDrill.phase === "countdown" ||
+          current.startDrill.phase === "go");
+      if (liveDrill) {
+        clearTimerList(timersRef);
+        goTimeRef.current = null;
+        dispatch({ type: "START_DRILL_RETRY" });
+        drillInterrupted = true;
+      }
+    };
+
+    const onVisible = () => {
+      if (hiddenAt === null) return;
+      const hiddenForMs = Math.max(0, getNowMs() - hiddenAt);
+      hiddenAt = null;
+      if (pitStartRef.current !== null) {
+        pitStartRef.current += hiddenForMs;
+      }
+      if (drillInterrupted) {
+        drillInterrupted = false;
+        // Give Safari a moment to repaint before the lights restart so the
+        // first light is not lost behind the blank restore frame.
+        rearmTimer = window.setTimeout(() => {
+          rearmTimer = null;
+          formationAutoStartedRef.current = false;
+        }, 600);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") onHidden();
+      else onVisible();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onHidden);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onHidden);
+      window.removeEventListener("pageshow", onVisible);
+      if (rearmTimer !== null) window.clearTimeout(rearmTimer);
+    };
+  }, []);
+
   useEffect(() => {
     if (!pitStarted || pitStartRef.current === null || uiVersion !== "v2") return;
 
