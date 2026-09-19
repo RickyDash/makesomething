@@ -186,7 +186,9 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 }
 
 .headerTools > span {
-  min-width: 18px;
+  /* Fixed slot so the toggle does not shift when the delta appears. */
+  width: 26px;
+  min-width: 26px;
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
@@ -289,7 +291,9 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 }
 
 .positionBadge {
-  min-width: 48px;
+  /* Wide enough for P10 / DNF so the header stops twitching when the
+     position changes width (design-qa-ios.md IOS-32). */
+  min-width: 58px;
   padding: 4px 10px;
   background: var(--red);
   color: #f3edde;
@@ -2032,8 +2036,13 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
     padding-inline: 5px;
   }
 
+  .headerTools > span {
+    width: 22px;
+    min-width: 22px;
+  }
+
   .positionBadge {
-    min-width: 43px;
+    min-width: 50px;
     padding-inline: 7px;
   }
 
