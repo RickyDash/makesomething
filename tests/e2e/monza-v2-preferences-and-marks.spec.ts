@@ -98,25 +98,6 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     expect(markBox!.x).toBeGreaterThanOrEqual(toggleBox!.x + toggleBox!.width);
     expect(toggleBox!.height).toBeGreaterThanOrEqual(34);
 
-    // Tapping the bottom-right corner of a pinned CTA must press the CTA.
-    await page.getByRole("button", { name: "START FORMATION LAP" }).click();
-    const warmup = page.getByRole("region", { name: "Formation warmup 1 of 3" });
-    await warmup
-      .getByRole("button", { name: "It locks in immediately", exact: true })
-      .click();
-    const next = warmup.getByRole("button", { name: "NEXT →", exact: true });
-    await expect(next).toBeVisible();
-    const nextBox = await next.boundingBox();
-    expect(nextBox).not.toBeNull();
-    await page.mouse.click(
-      nextBox!.x + nextBox!.width - 6,
-      nextBox!.y + nextBox!.height - 6,
-    );
-    await expect(
-      page.getByRole("region", { name: "Formation warmup 2 of 3" }),
-    ).toBeVisible();
-    await expect(page.locator('main[data-skin="v1"]')).toHaveCount(0);
-
     await switchToV1(page);
     const v1Mark = page.getByRole("button", {
       name: "Switch to the Monza V2 design",
@@ -166,6 +147,30 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     });
     await expect(v2Mark).toHaveAttribute("aria-hidden", "true");
     await expect(v2Mark).toHaveCSS("pointer-events", "none");
+  });
+
+  test("tapping the corner of a pinned CTA presses the CTA, not the mark", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "START FORMATION LAP" }).click();
+    const warmup = page.getByRole("region", { name: "Formation warmup 1 of 3" });
+    await warmup
+      .getByRole("button", { name: "It locks in immediately", exact: true })
+      .click();
+    const next = warmup.getByRole("button", { name: "NEXT →", exact: true });
+    await expect(next).toBeVisible();
+    const nextBox = await next.boundingBox();
+    expect(nextBox).not.toBeNull();
+    await page.mouse.click(
+      nextBox!.x + nextBox!.width - 6,
+      nextBox!.y + nextBox!.height - 6,
+    );
+    await expect(
+      page.getByRole("region", { name: "Formation warmup 2 of 3" }),
+    ).toBeVisible();
+    await expect(page.locator('main[data-skin="v1"]')).toHaveCount(0);
   });
 
   test("explicit V1 preference opens the original skin without copy changes", async ({

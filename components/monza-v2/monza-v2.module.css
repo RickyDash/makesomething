@@ -1140,7 +1140,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 .raceFooter {
   min-height: 16px;
   flex: none;
-  margin: 6px 38px 0 0;
+  margin: 6px 0 0;
   overflow: hidden;
   color: var(--label);
   font-family: var(--mono);

@@ -123,7 +123,7 @@ for (const viewport of viewports) {
 
 test("long verdicts scroll inside the race panel without colliding with the footer", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 390, height: 700 });
   await page.goto("/");
   await completeLaunchWithJumpRetry(page);
@@ -159,22 +159,16 @@ test("long verdicts scroll inside the race panel without colliding with the foot
     const scrollArea = panel.querySelector<HTMLElement>('[class*="quizScroller"]');
     const verdict = panel.querySelector<HTMLElement>('[class*="verdictCard"]');
     const telemetry = panel.querySelector<HTMLElement>('[class*="raceFooter"]');
-    const cornerMark = document.querySelector<HTMLElement>(
-      'button[aria-label*="original V1 skin"]',
-    );
-    if (!scrollArea || !verdict || !telemetry || !cornerMark) return null;
+    if (!scrollArea || !verdict || !telemetry) return null;
     const scrollerRect = scrollArea.getBoundingClientRect();
     const verdictRect = verdict.getBoundingClientRect();
     const footerRect = telemetry.getBoundingClientRect();
-    const markRect = cornerMark.getBoundingClientRect();
     return {
       clientHeight: scrollArea.clientHeight,
       scrollHeight: scrollArea.scrollHeight,
       scrollerBottom: scrollerRect.bottom,
       verdictBottom: verdictRect.bottom,
       footerTop: footerRect.top,
-      footerRight: footerRect.right,
-      markLeft: markRect.left,
     };
   });
 
@@ -182,14 +176,19 @@ test("long verdicts scroll inside the race panel without colliding with the foot
   expect(layout!.scrollHeight).toBeGreaterThan(layout!.clientHeight);
   expect(layout!.verdictBottom).toBeLessThanOrEqual(layout!.scrollerBottom - 1);
   expect(layout!.footerTop).toBeGreaterThanOrEqual(layout!.scrollerBottom - 1);
-  expect(layout!.footerRight).toBeLessThanOrEqual(layout!.markLeft + 1);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await scroller.evaluate((node) => {
     node.scrollTop = 0;
   });
-  await scroller.hover();
-  await page.mouse.wheel(0, 180);
+  if (testInfo.project.use.hasTouch) {
+    // Mobile WebKit has no mouse wheel; scroll the panel directly and keep
+    // checking that the document itself never moves.
+    await scroller.evaluate((node) => node.scrollBy(0, 180));
+  } else {
+    await scroller.hover();
+    await page.mouse.wheel(0, 180);
+  }
   await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
