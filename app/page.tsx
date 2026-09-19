@@ -646,12 +646,13 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.dataset.uiVersion = uiVersion;
     document.documentElement.dataset.v2Mode = v2Mode;
+    // React hoists a second copy of the viewport meta on hydration, so
+    // update every theme-color tag rather than the first.
+    const themeColor =
+      uiVersion === "v2" ? (v2Mode === "notte" ? "#0e0e0e" : "#f3edde") : "#fff7ed";
     document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute(
-        "content",
-        uiVersion === "v2" ? (v2Mode === "notte" ? "#0e0e0e" : "#f3edde") : "#fff7ed",
-      );
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((meta) => meta.setAttribute("content", themeColor));
 
     if (skipInitialPreferenceSaveRef.current) {
       skipInitialPreferenceSaveRef.current = false;

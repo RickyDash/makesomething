@@ -105,7 +105,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var raw=localStorage.getItem("f1-ui-preferences:v1");var value=raw?JSON.parse(raw):null;var root=document.documentElement;var v1=value&&value.uiVersion==="v1";var notte=value&&value.v2Mode==="notte";root.dataset.uiVersion=v1?"v1":"v2";root.dataset.v2Mode=notte?"notte":"giorno";var meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",v1?"#fff7ed":notte?"#0e0e0e":"#f3edde")}catch(e){}})();`,
+            __html: `(function(){try{var raw=localStorage.getItem("f1-ui-preferences:v1");var value=raw?JSON.parse(raw):null;var root=document.documentElement;var v1=value&&value.uiVersion==="v1";var notte=value&&value.v2Mode==="notte";root.dataset.uiVersion=v1?"v1":"v2";root.dataset.v2Mode=notte?"notte":"giorno";var color=v1?"#fff7ed":notte?"#0e0e0e":"#f3edde";document.querySelectorAll('meta[name="theme-color"]').forEach(function(meta){meta.setAttribute("content",color)})}catch(e){}})();`,
           }}
         />
       </head>

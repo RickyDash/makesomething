@@ -42,11 +42,17 @@ test.describe("iOS pass regressions", () => {
       bodyBackground: "rgb(14, 14, 14)",
       hydrated: false,
     });
-    expect(
-      await page.evaluate(
-        () => document.querySelectorAll('meta[name="theme-color"]').length,
-      ),
-    ).toBe(1);
+    // Every theme-color tag (React hoists a second copy on hydration)
+    // carries the mode colour, and the toggle keeps them in step.
+    const themeColors = () =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll('meta[name="theme-color"]')).map((meta) =>
+          meta.getAttribute("content"),
+        ),
+      );
+    expect(new Set(await themeColors())).toEqual(new Set(["#0e0e0e"]));
+    await page.getByRole("button", { name: /switch to giorno light mode/i }).click();
+    await expect.poll(async () => new Set(await themeColors())).toEqual(new Set(["#f3edde"]));
   });
 
   test("a countdown hidden by the OS restarts in place on return (IOS-04)", async ({
@@ -93,6 +99,11 @@ test.describe("iOS pass regressions", () => {
     await completeLaunchWithJumpRetry(page);
     for (let lap = 0; lap < 3; lap += 1) {
       await answerCurrentLap(page, "correct", { skipPlayback: true });
+      if (lap < 2) {
+        await expect(
+          v2Root(page).getByText(`Q ${lap + 2} / 6`, { exact: true }),
+        ).toBeVisible({ timeout: 5_000 });
+      }
     }
     const pit = page.getByRole("region", { name: "Pit stop challenge" });
     await expect(pit).toBeVisible({ timeout: 5_000 });

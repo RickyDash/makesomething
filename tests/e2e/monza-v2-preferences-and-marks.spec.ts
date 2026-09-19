@@ -66,13 +66,21 @@ test.describe("Monza V2 preferences and hidden corner marks", () => {
     await completeLaunchWithJumpRetry(page);
     for (let lap = 0; lap < 6; lap += 1) {
       await answerCurrentLap(page, "correct", { skipPlayback: true });
-      if (lap === 2) await completePitWithWrongCorner(page);
+      if (lap === 2) {
+        await completePitWithWrongCorner(page);
+      } else if (lap < 5) {
+        await expect(
+          v2Root(page).getByText(`Q ${lap + 2} / 6`, { exact: true }),
+        ).toBeVisible({ timeout: 5_000 });
+      }
     }
     await expect(page.getByRole("heading", { name: "Race Winner" })).toBeVisible({
       timeout: 8_000,
     });
     await switchToV1(page);
-    await expect(page.getByText(/chequered flag/i).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /run another grand prix/i }),
+    ).toBeVisible();
   });
 
   test("clean storage defaults to V2 giorno and persists notte across reload and V1", async ({
