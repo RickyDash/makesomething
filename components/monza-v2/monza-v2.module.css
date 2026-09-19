@@ -30,6 +30,8 @@
   --border: 2px solid var(--ink);
   --border-heavy: 3px solid var(--ink);
   --focus: var(--red);
+  /* Multiplier applied to every MicroText scale; >1 on wide layouts. */
+  --micro-boost: 1;
 
   position: relative;
   display: flex;
@@ -98,6 +100,15 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   outline-offset: 2px;
 }
 
+/* Phone layout: the panes are transparent to layout, so the root's flex
+   column and every overlay's containing block are exactly as before. The
+   desktop grid (min-width breakpoints at the end of this file) turns them
+   into real columns. */
+.mapPane,
+.printPane {
+  display: contents;
+}
+
 .header {
   position: relative;
   z-index: 41;
@@ -115,7 +126,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   display: inline-block;
   font-size: 16px !important;
   line-height: 1;
-  transform: scale(var(--micro-scale));
+  transform: scale(calc(var(--micro-scale) * var(--micro-boost, 1)));
   transform-origin: var(--micro-origin);
   white-space: nowrap;
 }

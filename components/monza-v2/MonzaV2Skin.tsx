@@ -3,6 +3,7 @@
 import { Button } from "@heroui/react";
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -590,7 +591,9 @@ function CircuitMap({
     lossTagDirectionRefs,
   );
 
-  useEffect(() => {
+  // Layout effect so the first paint already carries the measured scale; the
+  // CSS fallback assumes a 390px map, which is wrong on wide layouts.
+  useLayoutEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
@@ -600,6 +603,7 @@ function CircuitMap({
         "--map-scale",
         String(Math.min(width / 945, height / 510)),
       );
+      map.dataset.mapMeasured = "true";
     };
 
     updateMapScale();
@@ -1738,21 +1742,26 @@ export function MonzaV2Skin({
         </div>
       </header>
 
-      <CircuitMap
-        classification={classification}
-        playerPosition={playerPosition}
-        tagsVisible={tagsVisible}
-        banner={banner}
-        showLights={showLights}
-        lightsOnCount={state.startDrill.lightsOnCount}
-        isGo={isGo}
-        racePhase={state.stage === "race" ? racePhase : undefined}
-        onSkipLap={onSkipLap}
-        raceSim={raceSim}
-      />
+      {/* Pane wrappers are display: contents on phones (layout unchanged) and
+          become the map / print columns of the desktop grid. */}
+      <div className={styles.mapPane}>
+        <CircuitMap
+          classification={classification}
+          playerPosition={playerPosition}
+          tagsVisible={tagsVisible}
+          banner={banner}
+          showLights={showLights}
+          lightsOnCount={state.startDrill.lightsOnCount}
+          isGo={isGo}
+          racePhase={state.stage === "race" ? racePhase : undefined}
+          onSkipLap={onSkipLap}
+          raceSim={raceSim}
+        />
 
-      <ClassificationStrip entries={classification} />
+        <ClassificationStrip entries={classification} />
+      </div>
 
+      <div className={styles.printPane}>
       <div
         className={cx(styles.content, contentInactive && styles.contentMuted)}
         aria-hidden={contentInactive}
@@ -1802,6 +1811,7 @@ export function MonzaV2Skin({
           onRace={onBeginRace}
         />
       )}
+      </div>
       {isFormationIntro && <IntroOverlay onStart={onStartFormation} />}
       {state.stage === "finished" && (
         <FinishReport
