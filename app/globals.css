@@ -6,6 +6,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Neither skin is a scrolling document; a drag on the V1 card triggered
+   Safari's pull-to-refresh and reset the game (design-qa-ios.md IOS-16). */
+html,
+body {
+  overscroll-behavior: none;
+}
+
 html[data-ui-version="v2"],
 html[data-ui-version="v2"] body {
   width: 100%;

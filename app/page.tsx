@@ -1698,7 +1698,7 @@ export default function Home() {
     <main
       data-skin="v1"
       data-phase={flowState.racePresentation.phase}
-      className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] px-3 py-1.5 sm:px-5 sm:py-2"
+      className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] pt-[max(0.375rem,env(safe-area-inset-top))] pb-[max(0.375rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:pt-[max(0.5rem,env(safe-area-inset-top))] sm:pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pl-[max(1.25rem,env(safe-area-inset-left))] sm:pr-[max(1.25rem,env(safe-area-inset-right))]"
     >
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-1.5 sm:gap-2">
         <motion.div
