@@ -137,7 +137,10 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   line-height: 1;
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .masthead strong {
+/* The pre-hydration alias is wrapped in :where() so it adds no specificity:
+   :is() takes the specificity of its most specific argument, which would
+   otherwise lift every converted rule above its own :hover override. */
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .masthead strong {
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
@@ -165,7 +168,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   white-space: nowrap;
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .masthead em {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .masthead em {
   height: 12px;
   color: var(--gold);
   font-size: 10.5px;
@@ -306,7 +309,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   text-align: center;
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .positionBadge {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .positionBadge {
   padding: 5px 10px;
   background: var(--gold);
   color: #0e0e0e;
@@ -320,7 +323,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   color: var(--page);
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .positionBadge.positionDnf {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .positionBadge.positionDnf {
   background: var(--red);
   color: #fff;
 }
@@ -813,7 +816,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   transition: background 300ms;
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .classificationChip {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .classificationChip {
   height: 40px;
   border: 2px solid var(--ink);
   background: var(--page);
@@ -821,7 +824,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
 
 /* Two MicroText line boxes plus the swatch need 35px; keep them inside
    the 36px box the border leaves (design-qa-ios.md IOS-36). */
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .classificationChipInner {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .classificationChipInner {
   gap: 0;
 }
 
@@ -845,7 +848,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   color: var(--gold);
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .playerChip {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .playerChip {
   background: var(--page);
 }
 
@@ -1233,7 +1236,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   letter-spacing: 0.12em;
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .primaryButton {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .primaryButton {
   background: var(--gold) !important;
   color: var(--page) !important;
   font-weight: 700 !important;
@@ -1423,7 +1426,7 @@ html[data-v2-mode="notte"] .root:not([data-hydrated="true"]) {
   background: color-mix(in srgb, var(--ink) 50%, transparent);
 }
 
-:is(.root[data-mode="notte"], html[data-v2-mode="notte"] .root:not([data-hydrated="true"])) .introOverlay {
+:is(.root[data-mode="notte"], :where(html[data-v2-mode="notte"] .root:not([data-hydrated="true"]))) .introOverlay {
   background: rgb(0 0 0 / 70%);
 }
 
