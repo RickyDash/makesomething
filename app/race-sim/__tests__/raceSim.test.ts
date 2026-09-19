@@ -318,6 +318,25 @@ describe("race simulator", () => {
     expect(player.progress).toBeLessThan(frame.cars[firstReleasedDriver].progress);
   });
 
+  it("keeps the field parked when an interrupted countdown resyncs to forming", () => {
+    const { raf, sim } = createHarnessedSim();
+    sim.start();
+    sim.sync({ phase: "forming", lap: 0, ledgerPosition: 10 });
+    for (let index = 0; index < 240; index += 1) raf.step(50);
+    expect(sim.getFrame().formation.arrived).toBe(true);
+
+    sim.sync({ phase: "lights", lap: 0, ledgerPosition: 10 });
+    raf.step(50);
+    const parkedAt = sim.getFrame().absoluteProgress;
+
+    sim.sync({ phase: "forming", lap: 0, ledgerPosition: 10 });
+    raf.step(16);
+    expect(sim.getFrame().formation.arrived).toBe(true);
+    for (let index = 0; index < 60; index += 1) raf.step(50);
+    expect(sim.getFrame().absoluteProgress).toBeCloseTo(parkedAt, 6);
+    expect(sim.getFrame().formation.arrived).toBe(true);
+  });
+
   it("falls behind and fades the player on a DNF without moving game state", () => {
     const { raf, sim } = createHarnessedSim();
     sim.sync({

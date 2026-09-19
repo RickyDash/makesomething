@@ -869,7 +869,7 @@ export default function Home() {
       if (liveDrill) {
         clearTimerList(timersRef);
         goTimeRef.current = null;
-        dispatch({ type: "START_DRILL_RETRY" });
+        dispatch({ type: "START_DRILL_ABORT" });
         drillInterrupted = true;
       }
     };

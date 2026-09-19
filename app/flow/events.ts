@@ -17,6 +17,7 @@ export type FlowEvent =
   | { type: "START_DRILL_EARLY" }
   | { type: "START_DRILL_COMPLETE"; timeMs: number }
   | { type: "START_DRILL_RETRY" }
+  | { type: "START_DRILL_ABORT" }
   | { type: "START_DRILL_SKIP" }
   | { type: "RACE_PICK"; optionIndex: number }
   | { type: "RACE_REVEAL" }

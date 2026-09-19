@@ -513,6 +513,26 @@ const reduceFlowState = (state: FlowState, event: FlowEvent): FlowState => {
       };
     }
 
+    // The page was hidden mid-countdown (Home, lock, tab switch). Unlike
+    // RETRY this also drops a result from an earlier attempt, so the skin
+    // returns to the ready state instead of re-showing a stale card; the
+    // persisted best is untouched.
+    case "START_DRILL_ABORT": {
+      if (state.stage !== "formation" || state.formationMode !== "drill") return state;
+
+      return {
+        ...state,
+        startDrill: {
+          ...state.startDrill,
+          resultMs: null,
+          attemptStarted: true,
+          needsAttention: false,
+          phase: "idle",
+          lightsOnCount: 0,
+        },
+      };
+    }
+
     case "START_DRILL_SKIP":
       return state;
 

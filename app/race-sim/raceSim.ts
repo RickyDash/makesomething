@@ -1123,7 +1123,21 @@ export const createRaceSim = (dependencies: RaceSimDependencies = {}): RaceSim =
         advanceFormation(game.formationSector as 1 | 2 | 3);
       }
     } else if (game.phase === "forming") {
-      finishFormation();
+      if (
+        !formation &&
+        (previous.phase === "lights" || previous.phase === "go")
+      ) {
+        // An interrupted countdown (page hidden mid-lights) resyncs to
+        // "forming" with the field already parked on the grid. Mark the
+        // formation arrived in place instead of replaying a whole lap.
+        formation = createFormationAnimation(now(), absoluteProgress);
+        formation.limit = absoluteProgress;
+        formation.arrived = true;
+        formation.collapseStartedAt = now();
+        visualPhase = "forming";
+      } else {
+        finishFormation();
+      }
     } else if (game.phase !== "lights" && game.phase !== "go") {
       if (game.phase !== "grid") formation = null;
     } else {
