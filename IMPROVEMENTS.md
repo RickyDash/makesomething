@@ -58,7 +58,9 @@ Decided and kept as-is: the "Temple of Speed" question stays even though the int
 | IOS-40 | Header position and classification jump before the lap animation reveals the verdict | `open` |
 | IOS-21 | iPhone SE shows two of four options with no scroll cue | `open` |
 | IOS-08 | Landscape layout to replace the rotate-your-phone notice | `open` |
-| Desktop V2 | Two-pane layout from 960 px, widened column 640–959 px | `in progress` (Phase 3b) |
+| Desktop V2 | Two-pane layout from 960 px, widened column 640–959 px | `done` (Phase 3b, verified locally 2026-10-10) |
+
+Phase 3b keeps the phone rules and all game copy unchanged. Wide layouts now contain the warm-up, pit and reaction cards in the correct pane, use a two-column race report, and keep questions usable in short tablet-width desktop windows. Regression coverage lives in `tests/e2e/monza-v2-wide-layout.spec.ts` and runs in Chromium and touch WebKit alongside the existing phone and full-flow checks. No deployment is part of this completion.
 
 ## Second iOS pass (not yet covered)
 

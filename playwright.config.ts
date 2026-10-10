@@ -26,6 +26,7 @@ export default defineConfig({
       use: { ...devices["iPhone 15"] },
       testMatch: [
         /monza-v2-responsive\.spec\.ts/,
+        /monza-v2-wide-layout\.spec\.ts/,
         /monza-v2-preferences-and-marks\.spec\.ts/,
         /monza-v2-flow\.spec\.ts/,
         /launch-press-start\.spec\.ts/,
