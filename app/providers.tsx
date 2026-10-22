@@ -5,7 +5,7 @@ import FloatingProgressOverlay from "@/components/FloatingProgressOverlay";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <HeroUIProvider>
+    <HeroUIProvider reducedMotion="user">
       {children}
       <FloatingProgressOverlay />
     </HeroUIProvider>

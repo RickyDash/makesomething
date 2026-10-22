@@ -1,7 +1,14 @@
 "use client";
 
 import { Button } from "@heroui/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { CSSProperties, MutableRefObject } from "react";
 
 import type { FlowState } from "../../app/flow/types";
@@ -111,8 +118,15 @@ function MicroText({
   );
 }
 
-const sentenceCase = (value: string) =>
-  value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+const subscribeToNothing = () => () => {};
+// false during server render and hydration, true once the client has taken
+// over; no state, no effect, no cascading render.
+const useHydrated = () =>
+  useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
 
 const scoreFor = (state: FlowState) =>
   state.lapAnswers.reduce<number>((total, answer, index) => {
@@ -589,7 +603,9 @@ function CircuitMap({
     lossTagDirectionRefs,
   );
 
-  useEffect(() => {
+  // Layout effect so the first paint already carries the measured scale; the
+  // CSS fallback assumes a 390px map, which is wrong on wide layouts.
+  useLayoutEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
@@ -599,6 +615,7 @@ function CircuitMap({
         "--map-scale",
         String(Math.min(width / 945, height / 510)),
       );
+      map.dataset.mapMeasured = "true";
     };
 
     updateMapScale();
@@ -999,6 +1016,14 @@ function QuizPanel({
   const quizScrollRef = useRef<HTMLDivElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
 
+  // The panel is mounted once for the whole race, so the verdict auto-scroll
+  // would otherwise carry over and open the next lap with its heading
+  // scrolled out of view (design-qa-ios.md IOS-06).
+  useEffect(() => {
+    const scroller = quizScrollRef.current;
+    if (scroller) scroller.scrollTop = 0;
+  }, [state.currentLap]);
+
   useEffect(() => {
     if (!verdict) return;
 
@@ -1042,7 +1067,7 @@ function QuizPanel({
             Q {Math.min(state.currentLap + 1, 6)} / 6
           </MicroText>
         </div>
-        <h2>{sentenceCase(question.prompt)}</h2>
+        <h2>{question.prompt}</h2>
         <div className={styles.options}>
           {question.options.map((option, index) => {
             const chosen = selected === index;
@@ -1067,7 +1092,7 @@ function QuizPanel({
                   dimmed && styles.optionDimmed,
                 )}
               >
-                {sentenceCase(option)}
+                {option}
               </Button>
             );
           })}
@@ -1090,7 +1115,7 @@ function QuizPanel({
               <strong className={verdict === "correct" ? styles.goodText : styles.badText}>
                 {verdict === "correct" ? "CORRECT" : "INCORRECT"}
               </strong>
-              <p>{sentenceCase(question.fact)}</p>
+              <p>{question.fact}</p>
               {manualRaceAdvance && onManualRaceAdvance && (
                 <Button
                   radius="none"
@@ -1137,9 +1162,35 @@ function WarmupOverlay({
   const selected = state.tutorialAnswers[stepIndex] ?? null;
   const reveal = selected !== null && !locked;
   const correct = selected === warmup.answer;
+  const overlayRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (overlay) overlay.scrollTop = 0;
+  }, [stepIndex]);
+
+  // On phones the verdict and the NEXT button land below the fold with no
+  // cue that the overlay scrolls; bring them into view once they appear
+  // (design-qa-ios.md IOS-05).
+  useEffect(() => {
+    if (!reveal) return;
+    const frame = requestAnimationFrame(() => {
+      const overlay = overlayRef.current;
+      if (!overlay) return;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      overlay.scrollTo({
+        top: overlay.scrollHeight,
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [reveal]);
 
   return (
     <section
+      ref={overlayRef}
       className={styles.lowerOverlay}
       aria-label={`Formation warmup ${stepIndex + 1} of ${WARMUP_COUNT}`}
     >
@@ -1411,11 +1462,7 @@ function JumpCard({ onRetry }: { onRetry: MonzaV2SkinProps["onRetryStart"] }) {
     <div className={styles.mapModal}>
       <div className={cx(styles.compactCard, styles.jumpCard)} role="alert">
         <h2>Jump start</h2>
-        <p>
-          <MicroText scale={0.5625} origin="center">
-            LIGHTS WERE STILL ON — BACK TO THE GRID
-          </MicroText>
-        </p>
+        <p>LIGHTS WERE STILL ON — BACK TO THE GRID</p>
         <Button radius="none" disableRipple onPress={onRetry} className={styles.dangerButton}>
           RETRY THE START
         </Button>
@@ -1513,14 +1560,8 @@ function FinishReport({
   return (
     <section className={styles.finishOverlay} aria-labelledby="monza-finish-title">
       <header>
-        <span>
-          <MicroText scale={0.59375}>CHEQUERED FLAG</MicroText>
-        </span>
-        <span>
-          <MicroText scale={0.5625} origin="right center">
-            MONZA {mode === "notte" ? "/" : "·"} RACE REPORT
-          </MicroText>
-        </span>
+        <span>CHEQUERED FLAG</span>
+        <span>MONZA {mode === "notte" ? "/" : "·"} RACE REPORT</span>
       </header>
       <div className={styles.finishArt}>
         <FinishIllustration mode={mode} scene={scene} position={position} />
@@ -1653,6 +1694,9 @@ export function MonzaV2Skin({
         ? "question"
         : "result");
   const formationHolding = useFormationHolding(raceSim);
+  // Until this flips, the stylesheet may honour the pre-hydration
+  // html[data-v2-mode] attribute in place of the (not yet loaded) mode state.
+  const hydrated = useHydrated();
   const banner =
     controlledBanner ??
     state.racePresentation.banner ??
@@ -1699,6 +1743,8 @@ export function MonzaV2Skin({
   return (
     <section
       data-mode={mode}
+      data-hydrated={hydrated ? "true" : undefined}
+      data-intro={isFormationIntro ? "true" : undefined}
       data-stage={state.stage}
       data-difficulty={difficulty}
       data-grid-ready={
@@ -1742,21 +1788,26 @@ export function MonzaV2Skin({
         </div>
       </header>
 
-      <CircuitMap
-        classification={classification}
-        playerPosition={playerPosition}
-        tagsVisible={tagsVisible}
-        banner={banner}
-        showLights={showLights}
-        lightsOnCount={state.startDrill.lightsOnCount}
-        isGo={isGo}
-        racePhase={state.stage === "race" ? racePhase : undefined}
-        onSkipLap={onSkipLap}
-        raceSim={raceSim}
-      />
+      {/* Pane wrappers are display: contents on phones (layout unchanged) and
+          become the map / print columns of the desktop grid. */}
+      <div className={styles.mapPane}>
+        <CircuitMap
+          classification={classification}
+          playerPosition={playerPosition}
+          tagsVisible={tagsVisible}
+          banner={banner}
+          showLights={showLights}
+          lightsOnCount={state.startDrill.lightsOnCount}
+          isGo={isGo}
+          racePhase={state.stage === "race" ? racePhase : undefined}
+          onSkipLap={onSkipLap}
+          raceSim={raceSim}
+        />
 
-      <ClassificationStrip entries={classification} />
+        <ClassificationStrip entries={classification} />
+      </div>
 
+      <div className={styles.printPane}>
       <div
         className={cx(styles.content, contentInactive && styles.contentMuted)}
         aria-hidden={contentInactive}
@@ -1806,6 +1857,7 @@ export function MonzaV2Skin({
           onRace={onBeginRace}
         />
       )}
+      </div>
       {isFormationIntro && (
         <IntroOverlay
           onStart={onStartFormation}
@@ -1831,7 +1883,7 @@ export function MonzaV2Skin({
           radius="none"
           variant="light"
           disableRipple
-          onPress={onLaunchTap}
+          onPressStart={onLaunchTap}
           aria-label="Launch — tap at lights out"
           className={styles.launchTap}
         />
@@ -1851,6 +1903,10 @@ export function MonzaV2Skin({
       >
         V2
       </Button>
+
+      <p className={styles.rotateNotice} aria-hidden="true">
+        TURN YOUR PHONE — MONZA RUNS IN PORTRAIT
+      </p>
     </section>
   );
 }

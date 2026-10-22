@@ -38,7 +38,12 @@ import {
   type RaceSimGameSnapshot,
   type RaceSimPhase,
 } from "./race-sim/raceSim";
-import { loadUiPreferences, saveUiPreferences } from "./ui-preferences";
+import {
+  loadUiPreferences,
+  readStorage,
+  saveUiPreferences,
+  writeStorage,
+} from "./ui-preferences";
 import { formationWarmupsV1 } from "./formation-warmups";
 import { MonzaV2Skin } from "../components/monza-v2";
 
@@ -238,16 +243,19 @@ const chequeredMarkerFillStyle = {
 
 const getNowMs = () => performance.now();
 
+const BEST_REACTION_KEY = "f1-best-reaction-ms";
+const BEST_SCORE_KEY = "f1-best-score";
+
 const getStoredBestReaction = () => {
-  if (typeof window === "undefined") return null;
-  const stored = window.localStorage.getItem("f1-best-reaction-ms");
-  return stored ? Number(stored) : null;
+  const stored = readStorage(BEST_REACTION_KEY);
+  const value = stored ? Number(stored) : NaN;
+  return Number.isFinite(value) ? value : null;
 };
 
 const getStoredBestScore = () => {
-  if (typeof window === "undefined") return 0;
-  const stored = window.localStorage.getItem("f1-best-score");
-  return stored ? Number(stored) : 0;
+  const stored = readStorage(BEST_SCORE_KEY);
+  const value = stored ? Number(stored) : NaN;
+  return Number.isFinite(value) ? value : 0;
 };
 
 const getStageTitle = (opts: {
@@ -620,6 +628,13 @@ export default function Home() {
     document.documentElement.dataset.uiVersion = uiVersion;
     document.documentElement.dataset.v2Mode = v2Mode;
     document.documentElement.dataset.difficulty = difficulty;
+    // React hoists a second copy of the viewport meta on hydration, so
+    // update every theme-color tag rather than the first.
+    const themeColor =
+      uiVersion === "v2" ? (v2Mode === "notte" ? "#0e0e0e" : "#f3edde") : "#fff7ed";
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((meta) => meta.setAttribute("content", themeColor));
 
     if (skipInitialPreferenceSaveRef.current) {
       skipInitialPreferenceSaveRef.current = false;
@@ -806,15 +821,75 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (bestReactionMs === null) return;
-    window.localStorage.setItem("f1-best-reaction-ms", String(bestReactionMs));
+    writeStorage(BEST_REACTION_KEY, String(bestReactionMs));
   }, [bestReactionMs]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("f1-best-score", String(bestScore));
+    writeStorage(BEST_SCORE_KEY, String(bestScore));
   }, [bestScore]);
+
+  // Background handling. iOS suspends the page on Home/lock: pending
+  // setTimeouts fire back-to-back on resume and performance.now() keeps
+  // ticking, so a countdown that was hidden produced a bogus reaction time
+  // (persisted as the all-time best) and a hidden pit stop counted the
+  // absence. Abort a live start-drill on hide and re-arm it on return;
+  // shift the pit clock by the hidden interval (design-qa-ios.md IOS-04).
+  useEffect(() => {
+    let hiddenAt: number | null = null;
+    let drillInterrupted = false;
+    let rearmTimer: number | null = null;
+
+    const onHidden = () => {
+      if (hiddenAt !== null) return;
+      hiddenAt = getNowMs();
+      const current = flowStateRef.current;
+      const liveDrill =
+        current.stage === "formation" &&
+        current.formationMode === "drill" &&
+        (current.startDrill.phase === "countdown" ||
+          current.startDrill.phase === "go");
+      if (liveDrill) {
+        clearTimerList(timersRef);
+        goTimeRef.current = null;
+        dispatch({ type: "START_DRILL_ABORT" });
+        drillInterrupted = true;
+      }
+    };
+
+    const onVisible = () => {
+      if (hiddenAt === null) return;
+      const hiddenForMs = Math.max(0, getNowMs() - hiddenAt);
+      hiddenAt = null;
+      if (pitStartRef.current !== null) {
+        pitStartRef.current += hiddenForMs;
+      }
+      if (drillInterrupted) {
+        drillInterrupted = false;
+        // Give Safari a moment to repaint before the lights restart so the
+        // first light is not lost behind the blank restore frame.
+        rearmTimer = window.setTimeout(() => {
+          rearmTimer = null;
+          formationAutoStartedRef.current = false;
+        }, 600);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") onHidden();
+      else onVisible();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onHidden);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onHidden);
+      window.removeEventListener("pageshow", onVisible);
+      if (rearmTimer !== null) window.clearTimeout(rearmTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (!pitStarted || pitStartRef.current === null || uiVersion !== "v2") return;
@@ -1171,10 +1246,14 @@ export default function Home() {
     startReactionSequence("v2", false);
   };
 
+  // Wired to onPressStart (pointer-down), not onPress (pointer-up), so a
+  // touch reaction time does not include the finger-lift latency and a hold
+  // that begins before lights-out counts as the jump start it is.
   const handleReactionTap = () => {
     dispatch({ type: "START_DRILL_LAUNCH" });
+    const phase = flowStateRef.current.startDrill.phase;
 
-    if (reactionPhase === "countdown") {
+    if (phase === "countdown") {
       setJumpStartCount((count) => count + 1);
       clearReactionTimers();
       dispatch({ type: "START_DRILL_EARLY" });
@@ -1182,7 +1261,7 @@ export default function Home() {
       return;
     }
 
-    if (reactionPhase === "go" && goTimeRef.current !== null) {
+    if (phase === "go" && goTimeRef.current !== null) {
       const time = Math.round(getNowMs() - goTimeRef.current);
       dispatch({ type: "START_DRILL_COMPLETE", timeMs: time });
       clearReactionTimers();
@@ -1556,9 +1635,7 @@ export default function Home() {
         data-skin="v2"
         data-mode={v2Mode}
         data-phase={v2RacePhase}
-        className={`fixed inset-0 flex h-[100svh] w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${
-          v2Mode === "notte" ? "bg-[#0e0e0e]" : "bg-[#f3edde]"
-        }`}
+        className="fixed inset-0 flex w-full justify-center overflow-clip overscroll-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       >
         <motion.div
           className="flex h-full w-full justify-center"
@@ -1615,7 +1692,7 @@ export default function Home() {
     <main
       data-skin="v1"
       data-phase={flowState.racePresentation.phase}
-      className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] px-3 py-1.5 sm:px-5 sm:py-2"
+      className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_#fee2e2_0%,_#fff7ed_45%,_#f5f5f4_100%)] pt-[max(0.375rem,env(safe-area-inset-top))] pb-[max(0.375rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:pt-[max(0.5rem,env(safe-area-inset-top))] sm:pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pl-[max(1.25rem,env(safe-area-inset-left))] sm:pr-[max(1.25rem,env(safe-area-inset-right))]"
     >
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-1.5 sm:gap-2">
         <motion.div
@@ -2175,7 +2252,7 @@ export default function Home() {
                         >
                           &lt;- previous
                         </Button>
-                        <Button color="warning" onPress={handleReactionTap} className="font-semibold">
+                        <Button color="warning" onPressStart={handleReactionTap} className="font-semibold">
                           LAUNCH
                         </Button>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-red-100">
@@ -2193,7 +2270,7 @@ export default function Home() {
                         >
                           &lt;- previous
                         </Button>
-                        <Button color="warning" onPress={handleReactionTap} className="font-semibold">
+                        <Button color="warning" onPressStart={handleReactionTap} className="font-semibold">
                           LAUNCH
                         </Button>
                         <p className="font-[family-name:var(--font-manrope)] text-sm text-emerald-100">
@@ -2315,7 +2392,7 @@ export default function Home() {
                     </div>
 
                     <h2 className="font-[family-name:var(--font-space-grotesk)] text-[19.5px] font-semibold leading-tight text-white sm:text-[1.325rem]">
-                      {question.prompt}
+                      {question.prompt.toLowerCase()}
                     </h2>
 
                     <div className="grid gap-2">
@@ -2349,7 +2426,7 @@ export default function Home() {
                             className={className}
                             onPress={() => handlePick(index)}
                           >
-                            {option}
+                            {option.toLowerCase()}
                           </Button>
                         );
                       })}
@@ -2367,7 +2444,7 @@ export default function Home() {
                           >
                             {isCurrentLapCorrect ? "Correct:" : "Incorrect:"}
                           </span>{" "}
-                          {question.fact}
+                          {question.fact.toLowerCase()}
                         </p>
                       </motion.div>
                     ) : (

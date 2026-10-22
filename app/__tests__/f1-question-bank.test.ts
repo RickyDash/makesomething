@@ -89,7 +89,7 @@ describe("question bank integrity", () => {
     ]);
 
     const asksForAPerson = (prompt: string) =>
-      /(^|\s)who\s|which (driver|team principal|team boss|legendary commentator)/.test(prompt);
+      /(^|\s)who\s|which (driver|team principal|team boss|legendary commentator)/.test(prompt.toLowerCase());
 
     for (const q of questionBank) {
       const correct = q.correct.toLowerCase();

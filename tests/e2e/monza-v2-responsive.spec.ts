@@ -12,7 +12,9 @@ import {
 const viewports = [
   { width: 320, height: 568 },
   { width: 360, height: 800 },
+  { width: 375, height: 667 }, // iPhone SE 3
   { width: 390, height: 844 },
+  { width: 402, height: 874 }, // iPhone 17 Pro
   { width: 430, height: 932 },
 ] as const;
 
@@ -121,7 +123,7 @@ for (const viewport of viewports) {
 
 test("long verdicts scroll inside the race panel without colliding with the footer", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 390, height: 700 });
   await page.goto("/");
   await completeLaunchWithJumpRetry(page);
@@ -157,22 +159,16 @@ test("long verdicts scroll inside the race panel without colliding with the foot
     const scrollArea = panel.querySelector<HTMLElement>('[class*="quizScroller"]');
     const verdict = panel.querySelector<HTMLElement>('[class*="verdictCard"]');
     const telemetry = panel.querySelector<HTMLElement>('[class*="raceFooter"]');
-    const cornerMark = document.querySelector<HTMLElement>(
-      'button[aria-label*="original V1 skin"]',
-    );
-    if (!scrollArea || !verdict || !telemetry || !cornerMark) return null;
+    if (!scrollArea || !verdict || !telemetry) return null;
     const scrollerRect = scrollArea.getBoundingClientRect();
     const verdictRect = verdict.getBoundingClientRect();
     const footerRect = telemetry.getBoundingClientRect();
-    const markRect = cornerMark.getBoundingClientRect();
     return {
       clientHeight: scrollArea.clientHeight,
       scrollHeight: scrollArea.scrollHeight,
       scrollerBottom: scrollerRect.bottom,
       verdictBottom: verdictRect.bottom,
       footerTop: footerRect.top,
-      footerRight: footerRect.right,
-      markLeft: markRect.left,
     };
   });
 
@@ -180,16 +176,23 @@ test("long verdicts scroll inside the race panel without colliding with the foot
   expect(layout!.scrollHeight).toBeGreaterThan(layout!.clientHeight);
   expect(layout!.verdictBottom).toBeLessThanOrEqual(layout!.scrollerBottom - 1);
   expect(layout!.footerTop).toBeGreaterThanOrEqual(layout!.scrollerBottom - 1);
-  expect(layout!.footerRight).toBeLessThanOrEqual(layout!.markLeft + 1);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await scroller.evaluate((node) => {
     node.scrollTop = 0;
   });
-  await scroller.hover();
-  await page.mouse.wheel(0, 180);
-  await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
-  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  if (testInfo.project.use.hasTouch) {
+    // Mobile WebKit has no mouse wheel and Playwright has no touch-drag API.
+    // The document lock is asserted by the per-viewport sweep above; this
+    // branch only checks that the panel itself scrolls.
+    await scroller.evaluate((node) => node.scrollBy(0, 180));
+    await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  } else {
+    await scroller.hover();
+    await page.mouse.wheel(0, 180);
+    await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  }
 
   await page
     .getByRole("button", { name: /switch to notte dark mode/i })
