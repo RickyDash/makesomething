@@ -510,6 +510,33 @@ describe("Monza shared race state", () => {
     expect(defend.raceCurve).toBe("defend");
   });
 
+  it("aborts an interrupted countdown without keeping a stale result", () => {
+    const initial = makeState();
+    const drill = run(initial, [
+      { type: "NAVIGATE", target: { kind: "formation_drill" } },
+    ]);
+    const rerun = run(drill, [
+      { type: "START_DRILL_INITIATE" },
+      { type: "START_DRILL_GO" },
+      { type: "START_DRILL_COMPLETE", timeMs: 214 },
+      { type: "START_DRILL_RETRY" },
+      { type: "START_DRILL_INITIATE" },
+    ]);
+    expect(rerun.startDrill).toMatchObject({ phase: "countdown", resultMs: 214 });
+
+    const aborted = flowReducer(rerun, { type: "START_DRILL_ABORT" });
+    expect(aborted.startDrill).toEqual({
+      resultMs: null,
+      attemptStarted: true,
+      needsAttention: false,
+      phase: "idle",
+      lightsOnCount: 0,
+    });
+    expect(aborted.bestReactionMs).toBe(214);
+
+    expect(flowReducer(initial, { type: "START_DRILL_ABORT" })).toBe(initial);
+  });
+
   it("disables the hidden version mark only during countdown and go", () => {
     const drill = run(makeState(), [
       { type: "NAVIGATE", target: { kind: "formation_drill" } },

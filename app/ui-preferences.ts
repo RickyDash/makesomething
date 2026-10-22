@@ -14,13 +14,37 @@ export const DEFAULT_UI_PREFERENCES: UiPreferences = {
   difficulty: "beginner",
 };
 
+/**
+ * Safe localStorage access. iOS Safari throws a SecurityError on every
+ * localStorage call when "Block All Cookies" is on (and other browsers do the
+ * same in locked-down or quota-exhausted contexts). A throw inside a React
+ * initialiser or effect takes the whole page down, so every read and write
+ * goes through these helpers and degrades to in-memory state instead.
+ */
+export const readStorage = (key: string): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+export const writeStorage = (key: string, value: string): boolean => {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const loadUiPreferences = (): UiPreferences => {
-  if (typeof window === "undefined") return DEFAULT_UI_PREFERENCES;
+  const stored = readStorage(UI_PREFERENCES_KEY);
+  if (!stored) return DEFAULT_UI_PREFERENCES;
 
   try {
-    const stored = window.localStorage.getItem(UI_PREFERENCES_KEY);
-    if (!stored) return DEFAULT_UI_PREFERENCES;
-
     const parsed = JSON.parse(stored) as Partial<UiPreferences>;
     return {
       uiVersion: parsed.uiVersion === "v1" ? "v1" : "v2",
@@ -35,12 +59,8 @@ export const loadUiPreferences = (): UiPreferences => {
 export const saveUiPreferences = (preferences: UiPreferences) => {
   if (typeof window === "undefined") return;
 
-  try {
-    window.localStorage.setItem(UI_PREFERENCES_KEY, JSON.stringify(preferences));
-    document.documentElement.dataset.uiVersion = preferences.uiVersion;
-    document.documentElement.dataset.v2Mode = preferences.v2Mode;
-    document.documentElement.dataset.difficulty = preferences.difficulty;
-  } catch {
-    // Device storage can be unavailable in private browsing. The quiz still works in memory.
-  }
+  writeStorage(UI_PREFERENCES_KEY, JSON.stringify(preferences));
+  document.documentElement.dataset.uiVersion = preferences.uiVersion;
+  document.documentElement.dataset.v2Mode = preferences.v2Mode;
+  document.documentElement.dataset.difficulty = preferences.difficulty;
 };

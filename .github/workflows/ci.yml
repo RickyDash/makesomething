@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Audit high and critical vulnerabilities
-        run: npm audit --audit-level=high
+        run: npm run audit:security
 
       - name: Lint
         run: npm run lint
@@ -72,15 +72,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
 
-      - name: Run 18 functional browser tests
+      - name: Run functional browser tests in Chromium and WebKit
         run: >-
           npx playwright test
           tests/e2e/monza-v2-flow.spec.ts
           tests/e2e/monza-v2-preferences-and-marks.spec.ts
           tests/e2e/monza-v2-responsive.spec.ts
+          tests/e2e/monza-v2-wide-layout.spec.ts
+          tests/e2e/ios-regressions.spec.ts
+          tests/e2e/launch-press-start.spec.ts
           tests/e2e/start-drill-state.spec.ts
           tests/e2e/v1-full-regression.spec.ts
           --workers=1

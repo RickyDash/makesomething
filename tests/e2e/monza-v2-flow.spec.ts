@@ -184,7 +184,7 @@ test.describe("Monza V2 shared race flow", () => {
 
   test("completes a full notte weekend through the chequered flag", async ({
     page,
-  }) => {
+  }, testInfo) => {
     await page.goto("/");
     await page.getByRole("button", { name: /switch to notte dark mode/i }).click();
     await completeLaunchWithJumpRetry(page);
@@ -211,6 +211,27 @@ test.describe("Monza V2 shared race flow", () => {
         name: "Top step, trophy lift, flares, and confetti",
       }),
     ).toBeVisible();
+
+    // iPhone SE width: the report header's right label must fit and the
+    // title must sit below the artwork band (design-qa-ios.md IOS-03, IOS-15).
+    await page.setViewportSize({ width: 375, height: 667 });
+    const reportHeaderLabel = page
+      .locator('[class*="finishOverlay"] > header > span')
+      .last();
+    const headerFit = await reportHeaderLabel.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      right: element.getBoundingClientRect().right,
+      headerRight: element.parentElement!.getBoundingClientRect().right,
+    }));
+    expect(headerFit.scrollWidth).toBeLessThanOrEqual(headerFit.clientWidth + 1);
+    expect(headerFit.right).toBeLessThanOrEqual(headerFit.headerRight - 12);
+    const artBox = await page.locator('[class*="finishArt"]').boundingBox();
+    const titleBox = await page.getByRole("heading", { name: "Race Winner" }).boundingBox();
+    expect(artBox).not.toBeNull();
+    expect(titleBox).not.toBeNull();
+    expect(titleBox!.y).toBeGreaterThanOrEqual(artBox!.y + artBox!.height);
+    await page.screenshot({ path: testInfo.outputPath("finish-375x667.png") });
 
     await page.reload();
     await expect(v2Root(page)).toHaveAttribute("data-mode", "notte");
